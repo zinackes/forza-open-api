@@ -1,0 +1,46 @@
+# Forza Open API
+
+> Free, open, community-driven REST API for Forza Horizon game data (FH6 first,
+> FH5 backfill). Read-only public data: car catalog, festival playlist, tracks,
+> map features, hidden cars, upgrades, journal. Contract-first: the OpenAPI 3.1
+> document at /openapi.yaml is the source of truth.
+
+Conventions:
+- All multi-game resources require `?game=` (fh6 | fh5).
+- Lists paginate with `page` (1-based) and `page_size` (default 50, max 100)
+  and return `{items, total, page, pageSize}`.
+- Errors follow RFC 9457 (application/problem+json).
+- Auth is optional for reads: send `X-API-Key` for higher rate limits.
+- `updated_since` (RFC 3339) on /v1/cars and /v1/tracks enables incremental sync.
+
+## Endpoints
+
+- GET /v1/cars: list cars (filters: make, class, pi_min/pi_max, drivetrain, category, q, dlc, updated_since)
+- GET /v1/cars/random: one random car matching the filters (never cached)
+- GET /v1/cars/{id}: one car
+- GET /v1/cars/{id}/obtain: every known way to obtain the car (autoshow price, DLC packs, barn find, treasure car, journal rewards, mastery unlocks)
+- GET /v1/cars/{id}/upgrades: upgrade parts available for the car
+- GET /v1/cars/{id}/mastery: the car's Car Mastery perk grid
+- GET /v1/manufacturers: manufacturers with car counts (filters: country, q)
+- GET /v1/reference: enums + counts (classes, drivetrains, body types, countries, categories, regions, track/event/PR-stunt types, games) to bootstrap client filters
+- GET /v1/search: cross-resource name search for autocomplete (q, kinds, limit)
+- GET /v1/changes: data change feed — cars added/updated, packs released… (resource, action, since)
+- GET /v1/dlc-packs and /v1/dlc-packs/{id}: DLC / Car Pass / expansions (filter: kind)
+- GET /v1/playlist/current, /v1/playlist/series, /v1/playlist/series/{id}: Festival Playlist
+- GET /v1/tracks, /v1/tracks/random, /v1/tracks/{id}: indexed routes/circuits (filters: type, region, q, updated_since)
+- GET /v1/pr-stunts and /v1/pr-stunts/{id}: speed traps, speed zones, drift zones, danger signs (filters: type, region, q)
+- GET /v1/events and /v1/events/{id}: races and events incl. showcases (filters: type, region, q)
+- GET /v1/barn-finds and /v1/barn-finds/{id}: hidden barn find cars (filters: region, car_id)
+- GET /v1/treasure-cars and /v1/treasure-cars/{id}: postcard treasure cars (filters: region, car_id)
+- GET /v1/upgrade-parts: global upgrade part catalog (filter: category)
+- GET /v1/journal: FH6 Collection Journal tiers — wristbands + stamps (filter: track)
+- GET /v1/stories: Discover Japan narrative missions (filter: region)
+- GET /v1/tours: guided Discovery tours (filter: region)
+
+## Reference
+
+- OpenAPI 3.1 contract: /openapi.yaml
+- Health probe: /healthz
+- Data sourcing policy: only clean public sources (official web, community
+  datasets, official telemetry, crowdsourcing). Unsourced fields are omitted,
+  never invented.

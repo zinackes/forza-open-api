@@ -19,6 +19,11 @@ Pour chaque type : la source PROPRE et la méthode. Off-limits en bas.
 - **Data Out** officiel (UDP one-way, fréquence = framerate). ⚠️ Le format FH6 est **fixe et distinct de FH4/FH5** : 3 champs supplémentaires (`CarGroup`, `SmashableVelDiff`, `SmashableMass`) insérés après `NumCylinders`, avant `PositionX` — pas de sélection de format in-game. Réf. : doc officielle « Forza Horizon 6 Data Out Documentation » (support.forza.net). Companion desktop **read-only** → POST /v1/sessions.
 - On construit **nos** leaderboards. On ne lit pas ceux du jeu.
 
+## Stories & Tours (Discovery FH6)
+
+- **Wiki Fandom** (API MediaWiki) : pages Stories / Tours of Japan. Même pipeline que le catalogue (cmd/seed), champs non sourcés → NULL.
+- Les récompenses (stamps, voitures) recoupent le Collection Journal (`journal_tiers`).
+
 ## Tunes & liveries
 
 - **Crowdsourcing** : share codes soumis par la communauté (auth légère + modération).

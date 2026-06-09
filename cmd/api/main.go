@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -12,11 +13,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zinackes/forza-open-api/api"
 	"github.com/zinackes/forza-open-api/internal/config"
 	"github.com/zinackes/forza-open-api/internal/handler"
 	"github.com/zinackes/forza-open-api/internal/oas"
 	"github.com/zinackes/forza-open-api/internal/store"
 )
+
+// llmsTxt décrit l'API pour les assistants IA (convention llms.txt) ; servi en
+// statique comme /openapi.yaml — DX sans coût, aucune donnée dynamique.
+//
+//go:embed llms.txt
+var llmsTxt []byte
 
 func main() {
 	cfg := config.Load()
@@ -50,7 +58,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthz(st))
-	mux.Handle("/", oasSrv) // routes du contrat (/v1/...) ; /healthz reste prioritaire
+	mux.HandleFunc("GET /openapi.yaml", staticFile("application/yaml", api.OpenAPI))
+	mux.HandleFunc("GET /llms.txt", staticFile("text/plain; charset=utf-8", llmsTxt))
+	mux.Handle("/", oasSrv) // routes du contrat (/v1/...) ; les statiques restent prioritaires
 
 	srv := &http.Server{
 		Addr:    cfg.Addr,
@@ -77,6 +87,16 @@ func main() {
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("shutdown", "err", err)
+	}
+}
+
+// staticFile sert un contenu embarqué immuable (contrat, llms.txt) avec un
+// cache long : le contenu ne change qu'au déploiement.
+func staticFile(contentType string, body []byte) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		_, _ = w.Write(body)
 	}
 }
 
