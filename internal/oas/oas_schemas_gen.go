@@ -501,6 +501,34 @@ func (s *CarClass) UnmarshalText(data []byte) error {
 	}
 }
 
+// CarHeaders wraps Car with response headers.
+type CarHeaders struct {
+	CacheControl OptString
+	Response     Car
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *CarHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *CarHeaders) GetResponse() Car {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *CarHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *CarHeaders) SetResponse(val Car) {
+	s.Response = val
+}
+
+func (*CarHeaders) getRandomCarRes() {}
+
 // Ref: #/components/schemas/CarList
 type CarList struct {
 	Items    []Car `json:"items"`
@@ -1622,6 +1650,22 @@ func (*GetCurrentPlaylistTooManyRequests) getCurrentPlaylistRes() {}
 type GetCurrentPlaylistUnauthorized Error
 
 func (*GetCurrentPlaylistUnauthorized) getCurrentPlaylistRes() {}
+
+type GetRandomCarBadRequest Error
+
+func (*GetRandomCarBadRequest) getRandomCarRes() {}
+
+type GetRandomCarNotFound Error
+
+func (*GetRandomCarNotFound) getRandomCarRes() {}
+
+type GetRandomCarTooManyRequests Error
+
+func (*GetRandomCarTooManyRequests) getRandomCarRes() {}
+
+type GetRandomCarUnauthorized Error
+
+func (*GetRandomCarUnauthorized) getRandomCarRes() {}
 
 type GetReferenceBadRequest Error
 

@@ -13,6 +13,10 @@ type GetCurrentPlaylistRes interface {
 	getCurrentPlaylistRes()
 }
 
+type GetRandomCarRes interface {
+	getRandomCarRes()
+}
+
 type GetReferenceRes interface {
 	getReferenceRes()
 }

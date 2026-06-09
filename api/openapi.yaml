@@ -103,6 +103,59 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
+  /v1/cars/random:
+    get:
+      operationId: getRandomCar
+      summary: Renvoie une voiture aléatoire satisfaisant les filtres.
+      description: >
+        Tire une seule voiture au hasard parmi celles qui satisfont les filtres
+        (mêmes filtres optionnels que /v1/cars). Pensé pour les bots Discord
+        ("bagnole random du jour"), défis communautaires et easter-eggs sur la
+        landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
+        re-tire. 404 si aucune voiture ne correspond.
+      tags: [Cars]
+      x-ogen-operation-group: Cars
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: make
+          in: query
+          description: Filtre par constructeur (ex. "Ford").
+          schema: { type: string }
+        - name: class
+          in: query
+          description: Filtre par classe PI.
+          schema: { $ref: '#/components/schemas/CarClass' }
+        - name: pi_min
+          in: query
+          description: Performance Index minimum (inclus).
+          schema: { type: integer, minimum: 100, maximum: 999 }
+        - name: pi_max
+          in: query
+          description: Performance Index maximum (inclus).
+          schema: { type: integer, minimum: 100, maximum: 999 }
+        - name: drivetrain
+          in: query
+          description: Filtre par transmission.
+          schema: { $ref: '#/components/schemas/Drivetrain' }
+        - name: category
+          in: query
+          description: Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Une voiture tirée au hasard parmi les correspondances.
+          headers:
+            Cache-Control:
+              description: Toujours no-store (tirage aléatoire, jamais mis en cache).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Car' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
   /v1/cars/{id}:
     get:
       operationId: getCar

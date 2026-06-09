@@ -143,6 +143,57 @@ func TestListCarsFilterByCategory(t *testing.T) {
 	}
 }
 
+// TestRandomCar vérifie que RandomCar ne tire que des voitures satisfaisant les
+// filtres, scope bien par jeu, et renvoie nil (→ 404 côté handler) quand aucune
+// voiture ne correspond. Le tirage étant aléatoire, on boucle pour couvrir
+// plusieurs résultats possibles.
+func TestRandomCar(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain, category) VALUES
+		('rnd-1','fh6','296 GTB','Ferrari','A',780,'RWD','Modern Supercars'),
+		('rnd-2','fh6','488','Ferrari','S1',850,'RWD','Modern Supercars'),
+		('rnd-3','fh6','Civic','Honda','D',500,'FWD','Retro Hot Hatch'),
+		('rnd-4','fh5','GT','Ford','S2',920,'AWD','Modern Supercars')`)
+
+	// Filtre make=Ferrari (game fh6) : seules rnd-1 et rnd-2 sont éligibles.
+	make := "Ferrari"
+	allowed := map[string]bool{"rnd-1": true, "rnd-2": true}
+	for i := 0; i < 30; i++ {
+		c, err := st.RandomCar(ctx, store.CarFilter{Game: "fh6", Make: &make})
+		if err != nil {
+			t.Fatalf("RandomCar make: %v", err)
+		}
+		if c == nil {
+			t.Fatal("RandomCar make: nil, want une Ferrari fh6")
+		}
+		if !allowed[c.ID] {
+			t.Fatalf("RandomCar a tiré %q hors du filtre make=Ferrari/game=fh6", c.ID)
+		}
+	}
+
+	// Filtres combinés class=A + drivetrain=RWD : seule rnd-1 correspond.
+	class, dt := "A", "RWD"
+	c, err := st.RandomCar(ctx, store.CarFilter{Game: "fh6", Class: &class, Drivetrain: &dt})
+	if err != nil {
+		t.Fatalf("RandomCar class+drivetrain: %v", err)
+	}
+	if c == nil || c.ID != "rnd-1" {
+		t.Fatalf("RandomCar class=A/RWD = %v, want rnd-1", c)
+	}
+
+	// Borne PI : pi_min=900 sur fh6 ne matche rien (rnd-4 est fh5) → nil.
+	piMin := 900
+	none, err := st.RandomCar(ctx, store.CarFilter{Game: "fh6", PIMin: &piMin})
+	if err != nil {
+		t.Fatalf("RandomCar pi_min: %v", err)
+	}
+	if none != nil {
+		t.Fatalf("RandomCar pi_min=900/fh6 = %q, want nil (aucun match)", none.ID)
+	}
+}
+
 // TestListDlcPacks vérifie le filtre par jeu et l'ordre (sortis d'abord, packs
 // planifiés released_at NULL en dernier).
 func TestListDlcPacks(t *testing.T) {

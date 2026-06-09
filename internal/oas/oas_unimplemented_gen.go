@@ -43,6 +43,18 @@ func (UnimplementedHandler) GetCurrentPlaylist(ctx context.Context, params GetCu
 	return r, ht.ErrNotImplemented
 }
 
+// GetRandomCar implements getRandomCar operation.
+//
+// Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
+// que /v1/cars). Pensé pour les bots Discord ("bagnole random du jour"), défis communautaires et
+// easter-eggs sur la landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
+// re-tire. 404 si aucune voiture ne correspond.
+//
+// GET /v1/cars/random
+func (UnimplementedHandler) GetRandomCar(ctx context.Context, params GetRandomCarParams) (r GetRandomCarRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetReference implements getReference operation.
 //
 // Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI

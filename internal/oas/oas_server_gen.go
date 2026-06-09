@@ -45,6 +45,15 @@ type CarsHandler interface {
 	//
 	// GET /v1/cars/{id}
 	GetCar(ctx context.Context, params GetCarParams) (GetCarRes, error)
+	// GetRandomCar implements getRandomCar operation.
+	//
+	// Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
+	// que /v1/cars). Pensé pour les bots Discord ("bagnole random du jour"), défis communautaires et
+	// easter-eggs sur la landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
+	// re-tire. 404 si aucune voiture ne correspond.
+	//
+	// GET /v1/cars/random
+	GetRandomCar(ctx context.Context, params GetRandomCarParams) (GetRandomCarRes, error)
 	// ListCars implements listCars operation.
 	//
 	// Liste les voitures du catalogue.

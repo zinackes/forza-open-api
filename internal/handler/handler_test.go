@@ -133,6 +133,38 @@ func TestJournalEndpointValidation(t *testing.T) {
 	}
 }
 
+// TestRandomCarEndpointValidation vérifie que /v1/cars/random applique la
+// validation du contrat AVANT le handler : game est requis (multi-jeux), et les
+// filtres bornés par enum (class, drivetrain) rejettent une valeur hors domaine
+// en 400. Avec un store nil, un 400 prouve qu'on n'a jamais touché la DB.
+func TestRandomCarEndpointValidation(t *testing.T) {
+	cases := []struct {
+		name   string
+		target string
+		want   int
+	}{
+		{"random sans game", "/v1/cars/random", http.StatusBadRequest},
+		{"random game invalide", "/v1/cars/random?game=fh99", http.StatusBadRequest},
+		{"random class invalide", "/v1/cars/random?game=fh6&class=Z", http.StatusBadRequest},
+		{"random drivetrain invalide", "/v1/cars/random?game=fh6&drivetrain=4WD", http.StatusBadRequest},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, tc.target, nil)
+
+			newServer(t).ServeHTTP(rec, req)
+
+			if rec.Code != tc.want {
+				t.Fatalf("status = %d, want %d\nbody: %s", rec.Code, tc.want, rec.Body.String())
+			}
+			if ct := rec.Header().Get("Content-Type"); ct != "application/problem+json" {
+				t.Errorf("Content-Type = %q, want application/problem+json", ct)
+			}
+		})
+	}
+}
+
 // TestReferenceEndpointValidation vérifie que /v1/reference applique la validation
 // du contrat AVANT le handler : game est requis (multi-jeux), sa valeur est bornée
 // par l'enum Game. Avec un store nil, un 400 prouve qu'on n'a jamais touché la DB.

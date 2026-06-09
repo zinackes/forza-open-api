@@ -212,6 +212,464 @@ func decodeGetCurrentPlaylistParams(args [0]string, argsEscaped bool, r *http.Re
 	return params, nil
 }
 
+// GetRandomCarParams is parameters of getRandomCar operation.
+type GetRandomCarParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par constructeur (ex. "Ford").
+	Make OptString `json:",omitempty,omitzero"`
+	// Filtre par classe PI.
+	Class OptCarClass `json:",omitempty,omitzero"`
+	// Performance Index minimum (inclus).
+	PiMin OptInt `json:",omitempty,omitzero"`
+	// Performance Index maximum (inclus).
+	PiMax OptInt `json:",omitempty,omitzero"`
+	// Filtre par transmission.
+	Drivetrain OptDrivetrain `json:",omitempty,omitzero"`
+	// Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+	Category OptString `json:",omitempty,omitzero"`
+}
+
+func unpackGetRandomCarParams(packed middleware.Parameters) (params GetRandomCarParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "make",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Make = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "class",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Class = v.(OptCarClass)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "pi_min",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PiMin = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "pi_max",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PiMax = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "drivetrain",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Drivetrain = v.(OptDrivetrain)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "category",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Category = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeGetRandomCarParams(args [0]string, argsEscaped bool, r *http.Request) (params GetRandomCarParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: make.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "make",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotMakeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotMakeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Make.SetTo(paramsDotMakeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "make",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: class.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "class",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotClassVal CarClass
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotClassVal = CarClass(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Class.SetTo(paramsDotClassVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Class.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "class",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: pi_min.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "pi_min",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPiMinVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPiMinVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PiMin.SetTo(paramsDotPiMinVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PiMin.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           100,
+							MaxSet:        true,
+							Max:           999,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pi_min",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: pi_max.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "pi_max",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPiMaxVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPiMaxVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PiMax.SetTo(paramsDotPiMaxVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PiMax.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           100,
+							MaxSet:        true,
+							Max:           999,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pi_max",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: drivetrain.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "drivetrain",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotDrivetrainVal Drivetrain
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotDrivetrainVal = Drivetrain(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Drivetrain.SetTo(paramsDotDrivetrainVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Drivetrain.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "drivetrain",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: category.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCategoryVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCategoryVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Category.SetTo(paramsDotCategoryVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "category",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetReferenceParams is parameters of getReference operation.
 type GetReferenceParams struct {
 	// Jeu cible (obligatoire sur les ressources multi-jeux).
