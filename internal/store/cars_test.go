@@ -226,7 +226,7 @@ func TestListManufacturers(t *testing.T) {
 		('fh6','Mystery',NULL),
 		('fh5','Volkswagen','Germany')`)
 
-	ms, err := st.ListManufacturers(ctx, "fh6")
+	ms, err := st.ListManufacturers(ctx, store.ManufacturerFilter{Game: "fh6"})
 	if err != nil {
 		t.Fatalf("ListManufacturers: %v", err)
 	}
@@ -264,7 +264,7 @@ func TestListManufacturers(t *testing.T) {
 	}
 
 	// Jeu sans constructeurs sourcés → liste vide (pas d'erreur).
-	none, err := st.ListManufacturers(ctx, "ghost")
+	none, err := st.ListManufacturers(ctx, store.ManufacturerFilter{Game: "ghost"})
 	if err != nil {
 		t.Fatalf("ListManufacturers ghost: %v", err)
 	}

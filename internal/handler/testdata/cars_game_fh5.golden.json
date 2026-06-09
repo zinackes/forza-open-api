@@ -9,7 +9,8 @@
       "pi": 400,
       "drivetrain": "RWD",
       "bodyType": "hatchback",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     }
   ],
   "total": 1,

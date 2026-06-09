@@ -16,17 +16,18 @@ import (
 func (h *Handler) ListCars(ctx context.Context, params oas.ListCarsParams) (oas.ListCarsRes, error) {
 	page, size := pageParams(params.Page, params.PageSize)
 	rows, total, err := h.store.ListCars(ctx, store.CarFilter{
-		Game:       string(params.Game),
-		Make:       optFilter(params.Make.Set, params.Make.Value),
-		Class:      optFilter(params.Class.Set, string(params.Class.Value)),
-		PIMin:      optIntFilter(params.PiMin),
-		PIMax:      optIntFilter(params.PiMax),
-		Drivetrain: optFilter(params.Drivetrain.Set, string(params.Drivetrain.Value)),
-		Category:   optFilter(params.Category.Set, params.Category.Value),
-		Q:          optFilter(params.Q.Set, params.Q.Value),
-		Dlc:        optFilter(params.Dlc.Set, params.Dlc.Value),
-		Limit:      size,
-		Offset:     (page - 1) * size,
+		Game:         string(params.Game),
+		Make:         optFilter(params.Make.Set, params.Make.Value),
+		Class:        optFilter(params.Class.Set, string(params.Class.Value)),
+		PIMin:        optIntFilter(params.PiMin),
+		PIMax:        optIntFilter(params.PiMax),
+		Drivetrain:   optFilter(params.Drivetrain.Set, string(params.Drivetrain.Value)),
+		Category:     optFilter(params.Category.Set, params.Category.Value),
+		Q:            optFilter(params.Q.Set, params.Q.Value),
+		Dlc:          optFilter(params.Dlc.Set, params.Dlc.Value),
+		UpdatedSince: optTimeFilter(params.UpdatedSince),
+		Limit:        size,
+		Offset:       (page - 1) * size,
 	})
 	if err != nil {
 		return nil, err
@@ -110,6 +111,7 @@ func mapCar(c store.Car) oas.Car {
 		ObtainMethod: optString(c.ObtainMethod),
 		ImageUrl:     optURI(c.ImageURL),
 		CreatedAt:    oas.NewOptDateTime(c.CreatedAt),
+		UpdatedAt:    oas.NewOptDateTime(c.UpdatedAt),
 	}
 }
 

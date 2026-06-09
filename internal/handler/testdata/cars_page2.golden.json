@@ -11,7 +11,8 @@
       "pi": 780,
       "drivetrain": "RWD",
       "bodyType": "coupe",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     },
     {
       "id": "audi-r8",
@@ -23,7 +24,8 @@
       "drivetrain": "AWD",
       "bodyType": "coupe",
       "category": "Modern Supercars",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     }
   ],
   "total": 5,

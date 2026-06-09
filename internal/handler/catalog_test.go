@@ -32,10 +32,10 @@ import (
 
 var update = flag.Bool("update", false, "met à jour les fichiers .golden")
 
-// createdAtRE neutralise le champ volatil createdAt avant la comparaison golden :
-// l'instant exact (et son fuseau de sérialisation) ne fait pas partie du contrat
-// qu'on fige ici. On le remplace par un marqueur stable.
-var createdAtRE = regexp.MustCompile(`"createdAt":"[^"]*"`)
+// timestampRE neutralise les champs volatils createdAt/updatedAt avant la
+// comparaison golden : l'instant exact (et son fuseau de sérialisation) ne fait
+// pas partie du contrat qu'on fige ici. On les remplace par un marqueur stable.
+var timestampRE = regexp.MustCompile(`"(createdAt|updatedAt)":"[^"]*"`)
 
 // newSeededCatalogServer lève un Postgres jetable, applique db/init.sql, sème un
 // catalogue fixe, et renvoie le serveur ogen branché dessus (Redis nil : les
@@ -180,7 +180,7 @@ func assertGolden(t *testing.T, name string, raw []byte) {
 // stables, indépendants du fuseau et de l'instant de création.
 func normalizeJSON(t *testing.T, raw []byte) []byte {
 	t.Helper()
-	b := createdAtRE.ReplaceAll(raw, []byte(`"createdAt":"<ts>"`))
+	b := timestampRE.ReplaceAll(raw, []byte(`"$1":"<ts>"`))
 	var buf bytes.Buffer
 	if err := json.Indent(&buf, b, "", "  "); err != nil {
 		t.Fatalf("indent json: %v\nbody: %s", err, b)

@@ -18,6 +18,11 @@ import (
 var (
 	canonicalClasses     = []string{"D", "C", "B", "A", "S1", "S2", "X", "R"}
 	canonicalDrivetrains = []string{"FWD", "RWD", "AWD"}
+	// cf. CHECK tracks.type / events.type / pr_stunts.type et les enums
+	// TrackType / EventType / PRStuntType du contrat.
+	canonicalTrackTypes   = []string{"circuit", "road", "dirt", "cross", "street", "touge", "horizon_rush"}
+	canonicalEventTypes   = []string{"circuit", "road", "dirt", "cross", "street", "touge_battle", "horizon_rush", "drag_meet", "time_attack", "showcase"}
+	canonicalPRStuntTypes = []string{"speed_trap", "speed_zone", "drift_zone", "danger_sign"}
 )
 
 // RefCount est une valeur de facette et son nombre d'occurrences.
@@ -34,14 +39,19 @@ type GameCount struct {
 }
 
 // Reference agrège les facettes de référence d'un jeu. classes/drivetrains/
-// bodyTypes/countries/categories sont scopés au jeu demandé ; games est global.
+// bodyTypes/countries/categories/regions/*Types sont scopés au jeu demandé ;
+// games est global.
 type Reference struct {
-	Classes     []RefCount
-	Drivetrains []RefCount
-	BodyTypes   []RefCount
-	Countries   []RefCount
-	Categories  []RefCount
-	Games       []GameCount
+	Classes      []RefCount
+	Drivetrains  []RefCount
+	BodyTypes    []RefCount
+	Countries    []RefCount
+	Categories   []RefCount
+	Regions      []RefCount
+	TrackTypes   []RefCount
+	EventTypes   []RefCount
+	PRStuntTypes []RefCount
+	Games        []GameCount
 }
 
 // GetReference renvoie les facettes de référence pour un jeu. Jeu inconnu →
@@ -57,19 +67,70 @@ func (s *Store) GetReference(ctx context.Context, game string) (Reference, error
 		return Reference{}, err
 	}
 
+	geoFacets, err := s.geoFacetCounts(ctx, game)
+	if err != nil {
+		return Reference{}, err
+	}
+
 	games, err := s.gameCounts(ctx)
 	if err != nil {
 		return Reference{}, err
 	}
 
 	return Reference{
-		Classes:     expandCanonical(canonicalClasses, carFacets["class"]),
-		Drivetrains: expandCanonical(canonicalDrivetrains, carFacets["drivetrain"]),
-		BodyTypes:   presentByCount(carFacets["body_type"]),
-		Categories:  presentByCount(carFacets["category"]),
-		Countries:   presentByCount(countries),
-		Games:       games,
+		Classes:      expandCanonical(canonicalClasses, carFacets["class"]),
+		Drivetrains:  expandCanonical(canonicalDrivetrains, carFacets["drivetrain"]),
+		BodyTypes:    presentByCount(carFacets["body_type"]),
+		Categories:   presentByCount(carFacets["category"]),
+		Countries:    presentByCount(countries),
+		Regions:      presentByCount(geoFacets["region"]),
+		TrackTypes:   expandCanonical(canonicalTrackTypes, geoFacets["track_type"]),
+		EventTypes:   expandCanonical(canonicalEventTypes, geoFacets["event_type"]),
+		PRStuntTypes: expandCanonical(canonicalPRStuntTypes, geoFacets["stunt_type"]),
+		Games:        games,
 	}, nil
+}
+
+// geoFacetCounts compte, pour un jeu, les ressources carte par type (tracks,
+// events, pr_stunts) et par région (union des trois tables) en une seule requête
+// (UNION ALL). Renvoie facet → code → count ; régions NULL exclues.
+func (s *Store) geoFacetCounts(ctx context.Context, game string) (map[string]map[string]int64, error) {
+	const q = `
+SELECT 'track_type' AS facet, type AS code, count(*) AS n FROM tracks    WHERE game = $1 GROUP BY type
+UNION ALL
+SELECT 'event_type' AS facet, type AS code, count(*) AS n FROM events    WHERE game = $1 GROUP BY type
+UNION ALL
+SELECT 'stunt_type' AS facet, type AS code, count(*) AS n FROM pr_stunts WHERE game = $1 GROUP BY type
+UNION ALL
+SELECT 'region' AS facet, region AS code, count(*) AS n FROM (
+    SELECT region FROM tracks    WHERE game = $1 AND region IS NOT NULL
+    UNION ALL
+    SELECT region FROM events    WHERE game = $1 AND region IS NOT NULL
+    UNION ALL
+    SELECT region FROM pr_stunts WHERE game = $1 AND region IS NOT NULL
+) r GROUP BY region`
+	rows, err := s.DB.Query(ctx, q, game)
+	if err != nil {
+		return nil, fmt.Errorf("query geo facets: %w", err)
+	}
+	defer rows.Close()
+
+	out := map[string]map[string]int64{}
+	for rows.Next() {
+		var facet, code string
+		var n int64
+		if err := rows.Scan(&facet, &code, &n); err != nil {
+			return nil, fmt.Errorf("scan geo facet: %w", err)
+		}
+		if out[facet] == nil {
+			out[facet] = map[string]int64{}
+		}
+		out[facet][code] = n
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate geo facets: %w", err)
+	}
+	return out, nil
 }
 
 // carFacetCounts compte, pour un jeu, les voitures par class/drivetrain/body_type/

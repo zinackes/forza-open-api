@@ -205,7 +205,7 @@ func TestListDlcPacks(t *testing.T) {
 		('fh6-exp-1','fh6','Expansion 1 (planifiée)','expansion',NULL),
 		('fh5-hot-wheels','fh5','Hot Wheels','expansion','2021-07-01T00:00:00Z')`)
 
-	packs, err := st.ListDlcPacks(ctx, "fh6")
+	packs, err := st.ListDlcPacks(ctx, "fh6", nil)
 	if err != nil {
 		t.Fatalf("ListDlcPacks: %v", err)
 	}

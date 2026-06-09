@@ -22,21 +22,26 @@ func (h *Handler) ListJournalTiers(ctx context.Context, params oas.ListJournalTi
 
 	items := make(oas.ListJournalTiersOKApplicationJSON, 0, len(rows))
 	for _, j := range rows {
-		items = append(items, oas.JournalTier{
-			ID:                 j.ID,
-			Game:               oas.Game(j.Game),
-			Track:              oas.JournalTrack(j.Track),
-			Level:              j.Level,
-			Color:              optJournalColor(j.Color),
-			Name:               j.Name,
-			PointsRequired:     optInt(j.PointsRequired),
-			RewardCarId:        optString(j.RewardCarID),
-			UnlocksDescription: optString(j.UnlocksDescription),
-			Source:             optString(j.Source),
-			LastVerified:       optTime(j.LastVerified),
-		})
+		items = append(items, mapJournalTier(j))
 	}
 	return &items, nil
+}
+
+// mapJournalTier projette la vue DB d'un palier sur le modèle du contrat.
+func mapJournalTier(j store.JournalTier) oas.JournalTier {
+	return oas.JournalTier{
+		ID:                 j.ID,
+		Game:               oas.Game(j.Game),
+		Track:              oas.JournalTrack(j.Track),
+		Level:              j.Level,
+		Color:              optJournalColor(j.Color),
+		Name:               j.Name,
+		PointsRequired:     optInt(j.PointsRequired),
+		RewardCarId:        optString(j.RewardCarID),
+		UnlocksDescription: optString(j.UnlocksDescription),
+		Source:             optString(j.Source),
+		LastVerified:       optTime(j.LastVerified),
+	}
 }
 
 // optJournalColor convertit la couleur DB (nil pour les stamps Discover Japan)

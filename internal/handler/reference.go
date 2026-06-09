@@ -26,13 +26,17 @@ func (h *Handler) GetReference(ctx context.Context, params oas.GetReferenceParam
 	return &oas.ReferenceHeaders{
 		CacheControl: oas.NewOptString(referenceCacheControl),
 		Response: oas.Reference{
-			Game:        params.Game,
-			Classes:     mapRefCounts(ref.Classes),
-			Drivetrains: mapRefCounts(ref.Drivetrains),
-			BodyTypes:   mapRefCounts(ref.BodyTypes),
-			Countries:   mapRefCounts(ref.Countries),
-			Categories:  mapRefCounts(ref.Categories),
-			Games:       mapGameCounts(ref.Games),
+			Game:         params.Game,
+			Classes:      mapRefCounts(ref.Classes),
+			Drivetrains:  mapRefCounts(ref.Drivetrains),
+			BodyTypes:    mapRefCounts(ref.BodyTypes),
+			Countries:    mapRefCounts(ref.Countries),
+			Categories:   mapRefCounts(ref.Categories),
+			Regions:      mapRefCounts(ref.Regions),
+			TrackTypes:   mapRefCounts(ref.TrackTypes),
+			EventTypes:   mapRefCounts(ref.EventTypes),
+			PrStuntTypes: mapRefCounts(ref.PRStuntTypes),
+			Games:        mapGameCounts(ref.Games),
 		},
 	}, nil
 }
