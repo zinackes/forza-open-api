@@ -71,6 +71,57 @@ CREATE TABLE IF NOT EXISTS challenges (
 );
 CREATE INDEX IF NOT EXISTS challenges_series_idx ON challenges (series_id);
 
+-- Carte : tracés, PR stunts, événements --------------------------------------
+-- Fonde les leaderboards (Phase 8) et la carte (Phase 9). Sources propres
+-- (wiki Fandom, datasets communautaires) ; jamais le jeu. Coords NULL si absentes.
+CREATE TABLE IF NOT EXISTS tracks (
+    id            TEXT PRIMARY KEY,
+    game          TEXT NOT NULL,
+    name          TEXT NOT NULL,
+    type          TEXT NOT NULL CHECK (type IN ('circuit','road','dirt','cross','street','touge','horizon_rush')),
+    region        TEXT,
+    length_m      INT,
+    surface_mix   TEXT,
+    start_lat     NUMERIC,
+    start_lng     NUMERIC,
+    source        TEXT,
+    last_verified TIMESTAMPTZ,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS tracks_game_type_idx   ON tracks (game, type);
+CREATE INDEX IF NOT EXISTS tracks_game_region_idx ON tracks (game, region);
+
+CREATE TABLE IF NOT EXISTS pr_stunts (
+    id           TEXT PRIMARY KEY,
+    game         TEXT NOT NULL,
+    type         TEXT NOT NULL CHECK (type IN ('speed_trap','speed_zone','drift_zone','danger_sign')),
+    name         TEXT NOT NULL,
+    region       TEXT,
+    lat          NUMERIC,
+    lng          NUMERIC,
+    target_score INT
+);
+CREATE INDEX IF NOT EXISTS pr_stunts_game_type_idx   ON pr_stunts (game, type);
+CREATE INDEX IF NOT EXISTS pr_stunts_game_region_idx ON pr_stunts (game, region);
+
+CREATE TABLE IF NOT EXISTS events (
+    id                    TEXT PRIMARY KEY,
+    game                  TEXT NOT NULL,
+    name                  TEXT NOT NULL,
+    type                  TEXT NOT NULL CHECK (type IN ('circuit','road','dirt','cross','street','touge_battle','horizon_rush','drag_meet','time_attack')),
+    region                TEXT,
+    start_lat             NUMERIC,
+    start_lng             NUMERIC,
+    end_lat               NUMERIC,
+    end_lng               NUMERIC,
+    route_geojson         JSONB,
+    car_class_restriction TEXT,
+    length_m              INT
+);
+CREATE INDEX IF NOT EXISTS events_game_type_idx   ON events (game, type);
+CREATE INDEX IF NOT EXISTS events_game_region_idx ON events (game, region);
+
 -- Clés API (jamais la clé en clair : seul le hash sha256 est stocké) -----------
 CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,
