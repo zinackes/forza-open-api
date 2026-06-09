@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": "vw-beetle",
+      "game": "fh5",
+      "name": "Beetle",
+      "make": "Volkswagen",
+      "class": "D",
+      "pi": 400,
+      "drivetrain": "RWD",
+      "bodyType": "hatchback",
+      "createdAt": "<ts>"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 50
+}

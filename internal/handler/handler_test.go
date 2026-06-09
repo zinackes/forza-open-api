@@ -24,11 +24,11 @@ func newServer(t *testing.T) http.Handler {
 
 // TestUnimplementedReturns501 vérifie qu'un endpoint non encore implémenté répond
 // 501 en RFC 9457 (application/problem+json). game=fh6 est requis pour passer
-// la validation du contrat et atteindre le stub. /v1/manufacturers reste un stub
-// (cars, tracks, pr-stunts, events, dlc-packs sont eux implémentés).
+// la validation du contrat et atteindre le stub. /v1/playlist/series reste un stub
+// (cars, manufacturers, tracks, pr-stunts, events, dlc-packs sont eux implémentés).
 func TestUnimplementedReturns501(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/v1/manufacturers?game=fh6", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/playlist/series?game=fh6", nil)
 
 	newServer(t).ServeHTTP(rec, req)
 

@@ -48,13 +48,13 @@ type Car struct {
 	CreatedAt    time.Time
 }
 
-// ListCars renvoie une page de voitures filtrées + le total (count fenêtré).
-// Le filtre Dlc joint car_dlc (EXISTS) : seules les voitures du pack remontent.
+// ListCars renvoie une page de voitures filtrées + le total. Le total vient d'un
+// COUNT(*) séparé (et non d'un count(*) OVER()) : il reste exact même quand la page
+// demandée dépasse les données. Le filtre Dlc joint car_dlc (EXISTS) : seules les
+// voitures du pack remontent. fromWhere est partagé par le COUNT et le SELECT pour
+// éviter toute dérive des filtres (concat de constantes, pas de donnée runtime).
 func (s *Store) ListCars(ctx context.Context, f CarFilter) ([]Car, int64, error) {
-	const q = `
-SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
-       c.drivetrain, c.stats, c.body_type, c.category, c.rarity, c.value_cr,
-       c.obtain_method, c.image_url, c.created_at, count(*) OVER() AS total
+	const fromWhere = `
 FROM cars c
 WHERE c.game = $1
   AND ($2::text IS NULL OR c.make = $2)
@@ -65,7 +65,19 @@ WHERE c.game = $1
   AND ($7::text IS NULL OR c.category = $7)
   AND ($8::text IS NULL OR c.name ILIKE '%' || $8 || '%' OR c.model ILIKE '%' || $8 || '%')
   AND ($9::text IS NULL OR EXISTS (
-        SELECT 1 FROM car_dlc cd WHERE cd.car_id = c.id AND cd.dlc_id = $9))
+        SELECT 1 FROM car_dlc cd WHERE cd.car_id = c.id AND cd.dlc_id = $9))`
+
+	var total int64
+	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
+		f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
+		f.Drivetrain, f.Category, f.Q, f.Dlc).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count cars: %w", err)
+	}
+
+	const q = `
+SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
+       c.drivetrain, c.stats, c.body_type, c.category, c.rarity, c.value_cr,
+       c.obtain_method, c.image_url, c.created_at` + fromWhere + `
 ORDER BY c.pi, c.name, c.id
 LIMIT $10 OFFSET $11`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
@@ -76,12 +88,11 @@ LIMIT $10 OFFSET $11`
 	defer rows.Close()
 
 	out := make([]Car, 0, f.Limit)
-	var total int64
 	for rows.Next() {
 		var c Car
 		if err := rows.Scan(&c.ID, &c.Game, &c.Name, &c.Make, &c.Model, &c.Year,
 			&c.Class, &c.PI, &c.Drivetrain, &c.Stats, &c.BodyType, &c.Category, &c.Rarity,
-			&c.ValueCr, &c.ObtainMethod, &c.ImageURL, &c.CreatedAt, &total); err != nil {
+			&c.ValueCr, &c.ObtainMethod, &c.ImageURL, &c.CreatedAt); err != nil {
 			return nil, 0, fmt.Errorf("scan car: %w", err)
 		}
 		out = append(out, c)
@@ -90,6 +101,58 @@ LIMIT $10 OFFSET $11`
 		return nil, 0, fmt.Errorf("iterate cars: %w", err)
 	}
 	return out, total, nil
+}
+
+// GetCar renvoie une voiture par son identifiant stable. Renvoie (nil, nil) si
+// aucune voiture ne porte cet id — le handler en fait un 404.
+func (s *Store) GetCar(ctx context.Context, id string) (*Car, error) {
+	const q = `
+SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
+       c.drivetrain, c.stats, c.body_type, c.category, c.rarity, c.value_cr,
+       c.obtain_method, c.image_url, c.created_at
+FROM cars c
+WHERE c.id = $1`
+	var c Car
+	err := s.DB.QueryRow(ctx, q, id).Scan(&c.ID, &c.Game, &c.Name, &c.Make,
+		&c.Model, &c.Year, &c.Class, &c.PI, &c.Drivetrain, &c.Stats, &c.BodyType,
+		&c.Category, &c.Rarity, &c.ValueCr, &c.ObtainMethod, &c.ImageURL, &c.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query car %s: %w", id, err)
+	}
+	return &c, nil
+}
+
+// UpsertCars insère ou met à jour des voitures de façon idempotente (ON CONFLICT
+// sur l'id). Rejouable sans doublon. Appelé par l'ingestion (cmd/seed), jamais un
+// handler. Stats est du JSONB brut (nil → NULL) ; les pointeurs nil → NULL.
+func (s *Store) UpsertCars(ctx context.Context, cars []Car) error {
+	const q = `
+INSERT INTO cars (id, game, name, make, model, year, class, pi, drivetrain,
+                  stats, body_type, category, rarity, value_cr, obtain_method,
+                  image_url)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+ON CONFLICT (id) DO UPDATE SET
+    game = EXCLUDED.game, name = EXCLUDED.name, make = EXCLUDED.make,
+    model = EXCLUDED.model, year = EXCLUDED.year, class = EXCLUDED.class,
+    pi = EXCLUDED.pi, drivetrain = EXCLUDED.drivetrain, stats = EXCLUDED.stats,
+    body_type = EXCLUDED.body_type, category = EXCLUDED.category,
+    rarity = EXCLUDED.rarity, value_cr = EXCLUDED.value_cr,
+    obtain_method = EXCLUDED.obtain_method, image_url = EXCLUDED.image_url`
+	for _, c := range cars {
+		var stats any // nil []byte → NULL ; sinon JSONB brut
+		if len(c.Stats) > 0 {
+			stats = c.Stats
+		}
+		if _, err := s.DB.Exec(ctx, q, c.ID, c.Game, c.Name, c.Make, c.Model,
+			c.Year, c.Class, c.PI, c.Drivetrain, stats, c.BodyType, c.Category,
+			c.Rarity, c.ValueCr, c.ObtainMethod, c.ImageURL); err != nil {
+			return fmt.Errorf("upsert car %s: %w", c.ID, err)
+		}
+	}
+	return nil
 }
 
 // RandomCar tire une voiture au hasard parmi celles satisfaisant les filtres

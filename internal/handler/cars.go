@@ -72,6 +72,24 @@ func (h *Handler) GetRandomCar(ctx context.Context, params oas.GetRandomCarParam
 	}, nil
 }
 
+// GetCar implémente GET /v1/cars/{id} : la voiture demandée, ou un 404 RFC 9457
+// (application/problem+json) si l'identifiant est inconnu.
+func (h *Handler) GetCar(ctx context.Context, params oas.GetCarParams) (oas.GetCarRes, error) {
+	c, err := h.store.GetCar(ctx, params.ID)
+	if err != nil {
+		return nil, err
+	}
+	if c == nil {
+		return &oas.GetCarNotFound{
+			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
+			Status: oas.NewOptInt(http.StatusNotFound),
+			Detail: oas.NewOptString("no car with the given id"),
+		}, nil
+	}
+	car := mapCar(*c)
+	return &car, nil
+}
+
 // mapCar projette la vue DB d'une voiture sur le modèle du contrat.
 func mapCar(c store.Car) oas.Car {
 	return oas.Car{
