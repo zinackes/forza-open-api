@@ -36,7 +36,10 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 var operationRolesApiKeyAuth = map[string][]string{
 	GetCarOperation:             []string{},
 	GetCurrentPlaylistOperation: []string{},
+	GetSeriesOperation:          []string{},
 	ListCarsOperation:           []string{},
+	ListManufacturersOperation:  []string{},
+	ListSeriesOperation:         []string{},
 }
 
 // GetRolesForApiKeyAuth returns the required roles for the given operation.
