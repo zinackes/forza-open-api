@@ -10,6 +10,7 @@ import (
 type Handler interface {
 	BarnFindsHandler
 	CarsHandler
+	ChangesHandler
 	DLCHandler
 	EventsHandler
 	JournalHandler
@@ -18,6 +19,9 @@ type Handler interface {
 	PRStuntsHandler
 	PlaylistHandler
 	ReferenceHandler
+	SearchHandler
+	StoriesHandler
+	ToursHandler
 	TracksHandler
 	TreasureCarsHandler
 	UpgradesHandler
@@ -27,6 +31,12 @@ type Handler interface {
 //
 // x-ogen-operation-group: BarnFinds
 type BarnFindsHandler interface {
+	// GetBarnFind implements getBarnFind operation.
+	//
+	// Récupère un Barn Find par identifiant.
+	//
+	// GET /v1/barn-finds/{id}
+	GetBarnFind(ctx context.Context, params GetBarnFindParams) (GetBarnFindRes, error)
 	// ListBarnFinds implements listBarnFinds operation.
 	//
 	// Liste les Barn Finds (épaves cachées à trouver puis restaurer).
@@ -45,6 +55,15 @@ type CarsHandler interface {
 	//
 	// GET /v1/cars/{id}
 	GetCar(ctx context.Context, params GetCarParams) (GetCarRes, error)
+	// GetCarObtain implements getCarObtain operation.
+	//
+	// Agrège toutes les voies d'obtention connues d'une voiture : méthode du catalogue (autoshow,
+	// wheelspin…) + prix, packs DLC qui la contiennent, Barn Find, Treasure Car, paliers du Collection
+	// Journal qui la récompensent et perks Car Mastery (car_unlock) qui la débloquent. Sources
+	// absentes → listes vides / champs omis (rien d'inventé). 404 si la voiture est inconnue.
+	//
+	// GET /v1/cars/{id}/obtain
+	GetCarObtain(ctx context.Context, params GetCarObtainParams) (GetCarObtainRes, error)
 	// GetRandomCar implements getRandomCar operation.
 	//
 	// Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
@@ -62,10 +81,30 @@ type CarsHandler interface {
 	ListCars(ctx context.Context, params ListCarsParams) (ListCarsRes, error)
 }
 
+// ChangesHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Changes
+type ChangesHandler interface {
+	// ListChanges implements listChanges operation.
+	//
+	// Flux des changements du jeu de données (voiture ajoutée/modifiée, pack sorti, série
+	// publiée…), alimenté par les jobs d'ingestion. Donne aux clients un « what's new » et la base
+	// d'une synchro incrémentale. Plus récents d'abord.
+	//
+	// GET /v1/changes
+	ListChanges(ctx context.Context, params ListChangesParams) (ListChangesRes, error)
+}
+
 // DLCHandler handles operations described by OpenAPI v3 specification.
 //
 // x-ogen-operation-group: DLC
 type DLCHandler interface {
+	// GetDlcPack implements getDlcPack operation.
+	//
+	// Récupère un pack DLC par identifiant.
+	//
+	// GET /v1/dlc-packs/{id}
+	GetDlcPack(ctx context.Context, params GetDlcPackParams) (GetDlcPackRes, error)
 	// ListDlcPacks implements listDlcPacks operation.
 	//
 	// Liste les packs DLC / extensions d'un jeu.
@@ -78,6 +117,12 @@ type DLCHandler interface {
 //
 // x-ogen-operation-group: Events
 type EventsHandler interface {
+	// GetEvent implements getEvent operation.
+	//
+	// Récupère un événement par identifiant.
+	//
+	// GET /v1/events/{id}
+	GetEvent(ctx context.Context, params GetEventParams) (GetEventRes, error)
 	// ListEvents implements listEvents operation.
 	//
 	// Liste les événements / courses.
@@ -133,6 +178,12 @@ type MasteryHandler interface {
 //
 // x-ogen-operation-group: PRStunts
 type PRStuntsHandler interface {
+	// GetPrStunt implements getPrStunt operation.
+	//
+	// Récupère un PR Stunt par identifiant.
+	//
+	// GET /v1/pr-stunts/{id}
+	GetPrStunt(ctx context.Context, params GetPrStuntParams) (GetPrStuntRes, error)
 	// ListPrStunts implements listPrStunts operation.
 	//
 	// Liste les PR Stunts (speed trap, speed zone, drift zone, danger sign).
@@ -181,10 +232,65 @@ type ReferenceHandler interface {
 	GetReference(ctx context.Context, params GetReferenceParams) (GetReferenceRes, error)
 }
 
+// SearchHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Search
+type SearchHandler interface {
+	// Search implements search operation.
+	//
+	// Recherche plein texte sur les ressources nommées (voitures, tracés, événements, PR stunts,
+	// constructeurs, packs DLC) en un seul appel. Pensé pour l'autocomplete d'un site ou d'un bot.
+	// Résultats bornés par limit (pas de pagination) ; kinds restreint les types cherchés.
+	//
+	// GET /v1/search
+	Search(ctx context.Context, params SearchParams) (SearchRes, error)
+}
+
+// StoriesHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Stories
+type StoriesHandler interface {
+	// ListStories implements listStories operation.
+	//
+	// Stories FH6 : missions narratives de Discover Japan, qui rapportent des stamps au Collection
+	// Journal. Sources propres (wiki Fandom) ; champs non sourcés → omis.
+	//
+	// GET /v1/stories
+	ListStories(ctx context.Context, params ListStoriesParams) (ListStoriesRes, error)
+}
+
+// ToursHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Tours
+type ToursHandler interface {
+	// ListTours implements listTours operation.
+	//
+	// Tours of Japan FH6 : visites guidées de l'activité Discovery, qui rapportent des stamps au
+	// Collection Journal. Sources propres (wiki Fandom) ; champs non sourcés → omis.
+	//
+	// GET /v1/tours
+	ListTours(ctx context.Context, params ListToursParams) (ListToursRes, error)
+}
+
 // TracksHandler handles operations described by OpenAPI v3 specification.
 //
 // x-ogen-operation-group: Tracks
 type TracksHandler interface {
+	// GetRandomTrack implements getRandomTrack operation.
+	//
+	// Tire un seul tracé au hasard parmi ceux qui satisfont les filtres (mêmes filtres optionnels que
+	// /v1/tracks, hors q et pagination). Pensé pour les bots Discord et défis communautaires («
+	// course aléatoire du jour »). Réponse non cacheable (Cache-Control: no-store) : chaque appel
+	// re-tire. 404 si aucun tracé ne correspond.
+	//
+	// GET /v1/tracks/random
+	GetRandomTrack(ctx context.Context, params GetRandomTrackParams) (GetRandomTrackRes, error)
+	// GetTrack implements getTrack operation.
+	//
+	// Récupère un tracé par identifiant.
+	//
+	// GET /v1/tracks/{id}
+	GetTrack(ctx context.Context, params GetTrackParams) (GetTrackRes, error)
 	// ListTracks implements listTracks operation.
 	//
 	// Liste les tracés / circuits indexés.
@@ -197,6 +303,12 @@ type TracksHandler interface {
 //
 // x-ogen-operation-group: TreasureCars
 type TreasureCarsHandler interface {
+	// GetTreasureCar implements getTreasureCar operation.
+	//
+	// Récupère une Treasure Car par identifiant.
+	//
+	// GET /v1/treasure-cars/{id}
+	GetTreasureCar(ctx context.Context, params GetTreasureCarParams) (GetTreasureCarRes, error)
 	// ListTreasureCars implements listTreasureCars operation.
 	//
 	// Liste les Treasure Cars (voitures liées aux postcards).

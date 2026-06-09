@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// GetBarnFind implements getBarnFind operation.
+//
+// Récupère un Barn Find par identifiant.
+//
+// GET /v1/barn-finds/{id}
+func (UnimplementedHandler) GetBarnFind(ctx context.Context, params GetBarnFindParams) (r GetBarnFindRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetCar implements getCar operation.
 //
 // Récupère une voiture par identifiant.
@@ -34,12 +43,51 @@ func (UnimplementedHandler) GetCarMastery(ctx context.Context, params GetCarMast
 	return r, ht.ErrNotImplemented
 }
 
+// GetCarObtain implements getCarObtain operation.
+//
+// Agrège toutes les voies d'obtention connues d'une voiture : méthode du catalogue (autoshow,
+// wheelspin…) + prix, packs DLC qui la contiennent, Barn Find, Treasure Car, paliers du Collection
+// Journal qui la récompensent et perks Car Mastery (car_unlock) qui la débloquent. Sources
+// absentes → listes vides / champs omis (rien d'inventé). 404 si la voiture est inconnue.
+//
+// GET /v1/cars/{id}/obtain
+func (UnimplementedHandler) GetCarObtain(ctx context.Context, params GetCarObtainParams) (r GetCarObtainRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetCurrentPlaylist implements getCurrentPlaylist operation.
 //
 // Festival Playlist courante d'un jeu.
 //
 // GET /v1/playlist/current
 func (UnimplementedHandler) GetCurrentPlaylist(ctx context.Context, params GetCurrentPlaylistParams) (r GetCurrentPlaylistRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetDlcPack implements getDlcPack operation.
+//
+// Récupère un pack DLC par identifiant.
+//
+// GET /v1/dlc-packs/{id}
+func (UnimplementedHandler) GetDlcPack(ctx context.Context, params GetDlcPackParams) (r GetDlcPackRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetEvent implements getEvent operation.
+//
+// Récupère un événement par identifiant.
+//
+// GET /v1/events/{id}
+func (UnimplementedHandler) GetEvent(ctx context.Context, params GetEventParams) (r GetEventRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPrStunt implements getPrStunt operation.
+//
+// Récupère un PR Stunt par identifiant.
+//
+// GET /v1/pr-stunts/{id}
+func (UnimplementedHandler) GetPrStunt(ctx context.Context, params GetPrStuntParams) (r GetPrStuntRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -52,6 +100,18 @@ func (UnimplementedHandler) GetCurrentPlaylist(ctx context.Context, params GetCu
 //
 // GET /v1/cars/random
 func (UnimplementedHandler) GetRandomCar(ctx context.Context, params GetRandomCarParams) (r GetRandomCarRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetRandomTrack implements getRandomTrack operation.
+//
+// Tire un seul tracé au hasard parmi ceux qui satisfont les filtres (mêmes filtres optionnels que
+// /v1/tracks, hors q et pagination). Pensé pour les bots Discord et défis communautaires («
+// course aléatoire du jour »). Réponse non cacheable (Cache-Control: no-store) : chaque appel
+// re-tire. 404 si aucun tracé ne correspond.
+//
+// GET /v1/tracks/random
+func (UnimplementedHandler) GetRandomTrack(ctx context.Context, params GetRandomTrackParams) (r GetRandomTrackRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -74,6 +134,24 @@ func (UnimplementedHandler) GetReference(ctx context.Context, params GetReferenc
 //
 // GET /v1/playlist/series/{id}
 func (UnimplementedHandler) GetSeries(ctx context.Context, params GetSeriesParams) (r GetSeriesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetTrack implements getTrack operation.
+//
+// Récupère un tracé par identifiant.
+//
+// GET /v1/tracks/{id}
+func (UnimplementedHandler) GetTrack(ctx context.Context, params GetTrackParams) (r GetTrackRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetTreasureCar implements getTreasureCar operation.
+//
+// Récupère une Treasure Car par identifiant.
+//
+// GET /v1/treasure-cars/{id}
+func (UnimplementedHandler) GetTreasureCar(ctx context.Context, params GetTreasureCarParams) (r GetTreasureCarRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -103,6 +181,17 @@ func (UnimplementedHandler) ListCarUpgrades(ctx context.Context, params ListCarU
 //
 // GET /v1/cars
 func (UnimplementedHandler) ListCars(ctx context.Context, params ListCarsParams) (r ListCarsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListChanges implements listChanges operation.
+//
+// Flux des changements du jeu de données (voiture ajoutée/modifiée, pack sorti, série
+// publiée…), alimenté par les jobs d'ingestion. Donne aux clients un « what's new » et la base
+// d'une synchro incrémentale. Plus récents d'abord.
+//
+// GET /v1/changes
+func (UnimplementedHandler) ListChanges(ctx context.Context, params ListChangesParams) (r ListChangesRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -164,6 +253,26 @@ func (UnimplementedHandler) ListSeries(ctx context.Context, params ListSeriesPar
 	return r, ht.ErrNotImplemented
 }
 
+// ListStories implements listStories operation.
+//
+// Stories FH6 : missions narratives de Discover Japan, qui rapportent des stamps au Collection
+// Journal. Sources propres (wiki Fandom) ; champs non sourcés → omis.
+//
+// GET /v1/stories
+func (UnimplementedHandler) ListStories(ctx context.Context, params ListStoriesParams) (r ListStoriesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListTours implements listTours operation.
+//
+// Tours of Japan FH6 : visites guidées de l'activité Discovery, qui rapportent des stamps au
+// Collection Journal. Sources propres (wiki Fandom) ; champs non sourcés → omis.
+//
+// GET /v1/tours
+func (UnimplementedHandler) ListTours(ctx context.Context, params ListToursParams) (r ListToursRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListTracks implements listTracks operation.
 //
 // Liste les tracés / circuits indexés.
@@ -188,5 +297,16 @@ func (UnimplementedHandler) ListTreasureCars(ctx context.Context, params ListTre
 //
 // GET /v1/upgrade-parts
 func (UnimplementedHandler) ListUpgradeParts(ctx context.Context, params ListUpgradePartsParams) (r ListUpgradePartsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// Search implements search operation.
+//
+// Recherche plein texte sur les ressources nommées (voitures, tracés, événements, PR stunts,
+// constructeurs, packs DLC) en un seul appel. Pensé pour l'autocomplete d'un site ou d'un bot.
+// Résultats bornés par limit (pas de pagination) ; kinds restreint les types cherchés.
+//
+// GET /v1/search
+func (UnimplementedHandler) Search(ctx context.Context, params SearchParams) (r SearchRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

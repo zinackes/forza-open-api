@@ -34,24 +34,36 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 
 // operationRolesApiKeyAuth is a private map storing roles per operation.
 var operationRolesApiKeyAuth = map[string][]string{
+	GetBarnFindOperation:        []string{},
 	GetCarOperation:             []string{},
 	GetCarMasteryOperation:      []string{},
+	GetCarObtainOperation:       []string{},
 	GetCurrentPlaylistOperation: []string{},
+	GetDlcPackOperation:         []string{},
+	GetEventOperation:           []string{},
+	GetPrStuntOperation:         []string{},
 	GetRandomCarOperation:       []string{},
+	GetRandomTrackOperation:     []string{},
 	GetReferenceOperation:       []string{},
 	GetSeriesOperation:          []string{},
+	GetTrackOperation:           []string{},
+	GetTreasureCarOperation:     []string{},
 	ListBarnFindsOperation:      []string{},
 	ListCarUpgradesOperation:    []string{},
 	ListCarsOperation:           []string{},
+	ListChangesOperation:        []string{},
 	ListDlcPacksOperation:       []string{},
 	ListEventsOperation:         []string{},
 	ListJournalTiersOperation:   []string{},
 	ListManufacturersOperation:  []string{},
 	ListPrStuntsOperation:       []string{},
 	ListSeriesOperation:         []string{},
+	ListStoriesOperation:        []string{},
+	ListToursOperation:          []string{},
 	ListTracksOperation:         []string{},
 	ListTreasureCarsOperation:   []string{},
 	ListUpgradePartsOperation:   []string{},
+	SearchOperation:             []string{},
 }
 
 // GetRolesForApiKeyAuth returns the required roles for the given operation.
