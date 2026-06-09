@@ -222,3 +222,134 @@ func TestListTreasureCars(t *testing.T) {
 		t.Fatalf("filtre region: total=%d len=%d id=%v, want 1/1/tc-1", total, len(kanto), kanto)
 	}
 }
+
+// TestListUpgradeParts vérifie le filtre par game/category, l'ordre (category,
+// level NULLS LAST, name) et le mapping des deltas (NULL → nil).
+func TestListUpgradeParts(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	// Catégorie 'engine' < 'tires' à l'ORDER BY ; up-fh5 exclu par le filtre game.
+	mustExec(t, st, `INSERT INTO upgrade_parts
+		(id, game, category, name, level, pi_delta, weight_delta_kg, power_delta_hp, torque_delta_nm, source, last_verified) VALUES
+		('up-eng-1','fh6','engine','Sport Engine Swap',2,40,NULL,80,90,'forzagarage','2026-01-01T00:00:00Z'),
+		('up-tire-1','fh6','tires','Sport Tires',1,NULL,NULL,NULL,NULL,'fandom',NULL),
+		('up-fh5','fh5','aero','Race Wing',3,15,5,NULL,NULL,'fandom',NULL)`)
+
+	parts, total, err := st.ListUpgradeParts(ctx, store.UpgradePartFilter{Game: "fh6", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListUpgradeParts: %v", err)
+	}
+	if total != 2 || len(parts) != 2 {
+		t.Fatalf("fh6: total=%d len=%d, want 2/2 (fh5 exclu)", total, len(parts))
+	}
+	// ORDER BY category : engine (up-eng-1) avant tires (up-tire-1).
+	if parts[0].ID != "up-eng-1" || parts[1].ID != "up-tire-1" {
+		t.Errorf("ordre = [%s, %s], want [up-eng-1, up-tire-1]", parts[0].ID, parts[1].ID)
+	}
+	// up-eng-1 : deltas présents, weight_delta NULL → nil.
+	if parts[0].PIDelta == nil || *parts[0].PIDelta != 40 {
+		t.Errorf("up-eng-1 pi_delta = %v, want 40", parts[0].PIDelta)
+	}
+	if parts[0].PowerDeltaHp == nil || *parts[0].PowerDeltaHp != 80 {
+		t.Errorf("up-eng-1 power_delta_hp = %v, want 80", parts[0].PowerDeltaHp)
+	}
+	if parts[0].WeightDeltaKg != nil {
+		t.Errorf("up-eng-1 weight_delta_kg = %v, want nil", parts[0].WeightDeltaKg)
+	}
+	// up-tire-1 : tous les deltas NULL → nil, source présente.
+	if parts[1].PIDelta != nil || parts[1].PowerDeltaHp != nil || parts[1].LastVerified != nil {
+		t.Errorf("up-tire-1 deltas/last_verified non nil: %v/%v/%v",
+			parts[1].PIDelta, parts[1].PowerDeltaHp, parts[1].LastVerified)
+	}
+
+	// Filtre category : seule la pièce engine.
+	cat := "engine"
+	eng, total, err := st.ListUpgradeParts(ctx, store.UpgradePartFilter{Game: "fh6", Category: &cat, Limit: 50})
+	if err != nil {
+		t.Fatalf("ListUpgradeParts category: %v", err)
+	}
+	if total != 1 || len(eng) != 1 || eng[0].ID != "up-eng-1" {
+		t.Fatalf("filtre category: total=%d len=%d id=%v, want 1/1/up-eng-1", total, len(eng), eng)
+	}
+}
+
+// TestListCarUpgrades vérifie la jointure car_upgrades → upgrade_parts, le filtre
+// par voiture/catégorie, l'ordre, et le mapping des contraintes (requires_part_id,
+// exclusive_group, NULL → nil).
+func TestListCarUpgrades(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
+		('cu-car-1','fh6','Mazda RX-7','Mazda','A',800,'RWD'),
+		('cu-car-2','fh6','Toyota AE86','Toyota','B',600,'RWD')`)
+	mustExec(t, st, `INSERT INTO upgrade_parts (id, game, category, name, level) VALUES
+		('p-eng-1','fh6','engine','Street Engine',1),
+		('p-eng-2','fh6','engine','Sport Engine',2),
+		('p-tire-race','fh6','tires','Race Tires',3)`)
+	// cu-car-1 : Sport Engine (requiert Street Engine) + Race Tires (groupe exclusif).
+	// cu-car-2 : Street Engine seul (sans prérequis ni groupe).
+	mustExec(t, st, `INSERT INTO car_upgrades (car_id, part_id, requires_part_id, exclusive_group) VALUES
+		('cu-car-1','p-eng-2','p-eng-1',NULL),
+		('cu-car-1','p-tire-race',NULL,'tires'),
+		('cu-car-2','p-eng-1',NULL,NULL)`)
+
+	ups, total, err := st.ListCarUpgrades(ctx, store.CarUpgradeFilter{CarID: "cu-car-1", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCarUpgrades: %v", err)
+	}
+	if total != 2 || len(ups) != 2 {
+		t.Fatalf("cu-car-1: total=%d len=%d, want 2/2", total, len(ups))
+	}
+	// ORDER BY category : engine (p-eng-2) avant tires (p-tire-race).
+	if ups[0].Part.ID != "p-eng-2" || ups[1].Part.ID != "p-tire-race" {
+		t.Errorf("ordre = [%s, %s], want [p-eng-2, p-tire-race]", ups[0].Part.ID, ups[1].Part.ID)
+	}
+	// p-eng-2 : prérequis présent, pas de groupe exclusif.
+	if ups[0].RequiresPartID == nil || *ups[0].RequiresPartID != "p-eng-1" {
+		t.Errorf("p-eng-2 requires = %v, want p-eng-1", ups[0].RequiresPartID)
+	}
+	if ups[0].ExclusiveGroup != nil {
+		t.Errorf("p-eng-2 exclusive_group = %v, want nil", ups[0].ExclusiveGroup)
+	}
+	// La jointure remonte bien les champs de la pièce.
+	if ups[0].Part.Category != "engine" || ups[0].Part.Name != "Sport Engine" {
+		t.Errorf("p-eng-2 part = %q/%q, want engine/Sport Engine", ups[0].Part.Category, ups[0].Part.Name)
+	}
+	// p-tire-race : groupe exclusif présent, pas de prérequis.
+	if ups[1].ExclusiveGroup == nil || *ups[1].ExclusiveGroup != "tires" {
+		t.Errorf("p-tire-race exclusive_group = %v, want tires", ups[1].ExclusiveGroup)
+	}
+	if ups[1].RequiresPartID != nil {
+		t.Errorf("p-tire-race requires = %v, want nil", ups[1].RequiresPartID)
+	}
+
+	// Filtre category : seule la pièce tires de cu-car-1.
+	cat := "tires"
+	tires, total, err := st.ListCarUpgrades(ctx, store.CarUpgradeFilter{CarID: "cu-car-1", Category: &cat, Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCarUpgrades category: %v", err)
+	}
+	if total != 1 || len(tires) != 1 || tires[0].Part.ID != "p-tire-race" {
+		t.Fatalf("filtre category: total=%d len=%d, want 1/1/p-tire-race", total, len(tires))
+	}
+
+	// cu-car-2 : une seule pièce, isolée de cu-car-1.
+	car2, total, err := st.ListCarUpgrades(ctx, store.CarUpgradeFilter{CarID: "cu-car-2", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCarUpgrades cu-car-2: %v", err)
+	}
+	if total != 1 || len(car2) != 1 || car2[0].Part.ID != "p-eng-1" {
+		t.Fatalf("cu-car-2: total=%d len=%d, want 1/1/p-eng-1", total, len(car2))
+	}
+
+	// Voiture inconnue → page vide (pas d'erreur).
+	none, total, err := st.ListCarUpgrades(ctx, store.CarUpgradeFilter{CarID: "ghost", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCarUpgrades inconnue: %v", err)
+	}
+	if total != 0 || len(none) != 0 {
+		t.Fatalf("voiture inconnue: total=%d len=%d, want 0/0", total, len(none))
+	}
+}

@@ -38,6 +38,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	GetCurrentPlaylistOperation: []string{},
 	GetSeriesOperation:          []string{},
 	ListBarnFindsOperation:      []string{},
+	ListCarUpgradesOperation:    []string{},
 	ListCarsOperation:           []string{},
 	ListDlcPacksOperation:       []string{},
 	ListEventsOperation:         []string{},
@@ -46,6 +47,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	ListSeriesOperation:         []string{},
 	ListTracksOperation:         []string{},
 	ListTreasureCarsOperation:   []string{},
+	ListUpgradePartsOperation:   []string{},
 }
 
 // GetRolesForApiKeyAuth returns the required roles for the given operation.

@@ -36,6 +36,8 @@ tags:
     description: Barn Finds (épaves cachées débloquées via les stamps Discover Japan, puis restaurées).
   - name: TreasureCars
     description: Treasure Cars (voitures liées aux postcards, conduisibles après la cutscene de lavage).
+  - name: Upgrades
+    description: Catalogue des pièces d'upgrade et upgrades disponibles par voiture.
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -111,6 +113,39 @@ paths:
               schema: { $ref: '#/components/schemas/Car' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/cars/{id}/upgrades:
+    get:
+      operationId: listCarUpgrades
+      summary: Liste les upgrades disponibles pour une voiture.
+      description: >
+        Pièces d'upgrade montables sur la voiture, avec leurs contraintes
+        d'installation (prérequis, groupe exclusif). Le jeu est déterminé par la
+        voiture (pas de paramètre game). Voiture inconnue ou sans upgrade
+        sourcé → page vide.
+      tags: [Upgrades]
+      x-ogen-operation-group: Upgrades
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la voiture.
+          schema: { type: string }
+        - name: category
+          in: query
+          description: Filtre par catégorie de pièce.
+          schema: { $ref: '#/components/schemas/UpgradePartCategory' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page d'upgrades disponibles pour la voiture.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarUpgradeList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /v1/manufacturers:
@@ -342,6 +377,30 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TreasureCarList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/upgrade-parts:
+    get:
+      operationId: listUpgradeParts
+      summary: Catalogue global des pièces d'upgrade.
+      tags: [Upgrades]
+      x-ogen-operation-group: Upgrades
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: category
+          in: query
+          description: Filtre par catégorie de pièce.
+          schema: { $ref: '#/components/schemas/UpgradePartCategory' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de pièces d'upgrade.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UpgradePartList' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -696,6 +755,74 @@ components:
         items:
           type: array
           items: { $ref: '#/components/schemas/TreasureCar' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    UpgradePartCategory:
+      type: string
+      description: Catégorie de pièce d'upgrade.
+      enum: [engine, drivetrain, aspiration, tires, weight, aero, brakes, transmission, intake, exhaust, cooling, fuel_system]
+
+    UpgradePart:
+      type: object
+      description: >
+        Pièce du catalogue d'upgrade (générique, indépendante d'une voiture).
+        Les deltas sont relatifs au palier inférieur ; NULL si non sourcés
+        (précision > exhaustivité). Sourcing progressif : voitures populaires
+        d'abord, extension par séries ensuite.
+      required: [id, game, category, name]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        category: { $ref: '#/components/schemas/UpgradePartCategory' }
+        name: { type: string }
+        level:
+          type: integer
+          minimum: 1
+          description: Palier de la pièce (1 = premier niveau). Omis si non applicable.
+        piDelta: { type: integer, description: Variation de Performance Index apportée par la pièce. }
+        weightDeltaKg: { type: integer, description: Variation de poids (kg). Négatif = allègement. }
+        powerDeltaHp: { type: integer, description: Variation de puissance (ch). }
+        torqueDeltaNm: { type: integer, description: Variation de couple (Nm). }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    UpgradePartList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/UpgradePart' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    CarUpgrade:
+      type: object
+      description: >
+        Upgrade disponible pour une voiture : une pièce du catalogue assortie de
+        ses contraintes d'installation (prérequis, groupe exclusif).
+      required: [part]
+      properties:
+        part: { $ref: '#/components/schemas/UpgradePart' }
+        requiresPartId:
+          type: string
+          description: Pièce prérequise (réf. upgrade-parts) à monter avant celle-ci. Absent si aucune.
+        exclusiveGroup:
+          type: string
+          description: >
+            Groupe exclusif : une seule pièce d'un même groupe peut être montée
+            à la fois (ex. compounds de pneus). Absent si non concerné.
+
+    CarUpgradeList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CarUpgrade' }
         total: { type: integer, format: int64 }
         page: { type: integer }
         pageSize: { type: integer }

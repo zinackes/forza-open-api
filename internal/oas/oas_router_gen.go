@@ -14,13 +14,13 @@ var (
 	rn8AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn9AllowedHeaders = map[string]string{
+	rn10AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn2AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn10AllowedHeaders = map[string]string{
+	rn9AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn11AllowedHeaders = map[string]string{
@@ -29,22 +29,28 @@ var (
 	rn12AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
+	rn13AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
 	rn4AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn15AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn7AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn14AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn16AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn18AllowedHeaders = map[string]string{
+	rn7AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn15AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn17AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn19AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn20AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 )
@@ -140,7 +146,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn9AllowedHeaders,
+							allowedHeaders: rn10AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -158,16 +164,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					}
 
 					// Param: "id"
-					// Leaf parameter, slashes are prohibited
+					// Match until "/"
 					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
+					if idx < 0 {
+						idx = len(elem)
 					}
-					args[0] = elem
-					elem = ""
+					args[0] = elem[:idx]
+					elem = elem[idx:]
 
 					if len(elem) == 0 {
-						// Leaf node.
 						switch r.Method {
 						case "GET":
 							s.handleGetCarRequest([1]string{
@@ -183,6 +188,35 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						}
 
 						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/upgrades"
+
+						if l := len("/upgrades"); len(elem) >= l && elem[0:l] == "/upgrades" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleListCarUpgradesRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, notAllowedParams{
+									allowedMethods: "GET",
+									allowedHeaders: rn9AllowedHeaders,
+									acceptPost:     "",
+									acceptPatch:    "",
+								})
+							}
+
+							return
+						}
+
 					}
 
 				}
@@ -203,7 +237,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn10AllowedHeaders,
+							allowedHeaders: rn11AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -228,7 +262,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn11AllowedHeaders,
+							allowedHeaders: rn12AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -253,7 +287,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn12AllowedHeaders,
+							allowedHeaders: rn13AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -326,7 +360,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn15AllowedHeaders,
+									allowedHeaders: rn16AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -391,7 +425,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn14AllowedHeaders,
+								allowedHeaders: rn15AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -430,7 +464,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn16AllowedHeaders,
+								allowedHeaders: rn17AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -455,7 +489,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn18AllowedHeaders,
+								allowedHeaders: rn19AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -464,6 +498,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 
+				}
+
+			case 'u': // Prefix: "upgrade-parts"
+
+				if l := len("upgrade-parts"); len(elem) >= l && elem[0:l] == "upgrade-parts" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleListUpgradePartsRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET",
+							allowedHeaders: rn20AllowedHeaders,
+							acceptPost:     "",
+							acceptPatch:    "",
+						})
+					}
+
+					return
 				}
 
 			}
@@ -624,16 +683,15 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					}
 
 					// Param: "id"
-					// Leaf parameter, slashes are prohibited
+					// Match until "/"
 					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
+					if idx < 0 {
+						idx = len(elem)
 					}
-					args[0] = elem
-					elem = ""
+					args[0] = elem[:idx]
+					elem = elem[idx:]
 
 					if len(elem) == 0 {
-						// Leaf node.
 						switch method {
 						case "GET":
 							r.name = GetCarOperation
@@ -647,6 +705,33 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						default:
 							return
 						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/upgrades"
+
+						if l := len("/upgrades"); len(elem) >= l && elem[0:l] == "/upgrades" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = ListCarUpgradesOperation
+								r.summary = "Liste les upgrades disponibles pour une voiture."
+								r.operationID = "listCarUpgrades"
+								r.operationGroup = "Upgrades"
+								r.pathPattern = "/v1/cars/{id}/upgrades"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
 					}
 
 				}
@@ -926,6 +1011,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						}
 					}
 
+				}
+
+			case 'u': // Prefix: "upgrade-parts"
+
+				if l := len("upgrade-parts"); len(elem) >= l && elem[0:l] == "upgrade-parts" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = ListUpgradePartsOperation
+						r.summary = "Catalogue global des pièces d'upgrade."
+						r.operationID = "listUpgradeParts"
+						r.operationGroup = "Upgrades"
+						r.pathPattern = "/v1/upgrade-parts"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 
 			}

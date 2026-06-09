@@ -103,3 +103,35 @@ func TestGeoEndpointsRequireGame(t *testing.T) {
 		})
 	}
 }
+
+// TestUpgradeEndpointsValidation vérifie que la validation du contrat s'applique
+// AVANT le handler. /v1/upgrade-parts exige game (multi-jeux) ; une catégorie hors
+// enum est rejetée en 400 sur les deux routes. /v1/cars/{id}/upgrades ne prend pas
+// game (déterminé par la voiture). Avec un store nil, un 400 prouve qu'on n'a
+// jamais touché la DB.
+func TestUpgradeEndpointsValidation(t *testing.T) {
+	cases := []struct {
+		name   string
+		target string
+		want   int
+	}{
+		{"upgrade-parts sans game", "/v1/upgrade-parts", http.StatusBadRequest},
+		{"upgrade-parts catégorie invalide", "/v1/upgrade-parts?game=fh6&category=nope", http.StatusBadRequest},
+		{"car upgrades catégorie invalide", "/v1/cars/car-1/upgrades?category=nope", http.StatusBadRequest},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, tc.target, nil)
+
+			newServer(t).ServeHTTP(rec, req)
+
+			if rec.Code != tc.want {
+				t.Fatalf("status = %d, want %d\nbody: %s", rec.Code, tc.want, rec.Body.String())
+			}
+			if ct := rec.Header().Get("Content-Type"); ct != "application/problem+json" {
+				t.Errorf("Content-Type = %q, want application/problem+json", ct)
+			}
+		})
+	}
+}

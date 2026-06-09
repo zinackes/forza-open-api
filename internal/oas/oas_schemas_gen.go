@@ -614,6 +614,98 @@ func (s *CarStatsAdditional) init() CarStatsAdditional {
 	return m
 }
 
+// Upgrade disponible pour une voiture : une pièce du catalogue assortie de ses contraintes
+// d'installation (prérequis, groupe exclusif).
+// Ref: #/components/schemas/CarUpgrade
+type CarUpgrade struct {
+	Part UpgradePart `json:"part"`
+	// Pièce prérequise (réf. upgrade-parts) à monter avant celle-ci. Absent si aucune.
+	RequiresPartId OptString `json:"requiresPartId"`
+	// Groupe exclusif : une seule pièce d'un même groupe peut être montée à la fois (ex. compounds
+	// de pneus). Absent si non concerné.
+	ExclusiveGroup OptString `json:"exclusiveGroup"`
+}
+
+// GetPart returns the value of Part.
+func (s *CarUpgrade) GetPart() UpgradePart {
+	return s.Part
+}
+
+// GetRequiresPartId returns the value of RequiresPartId.
+func (s *CarUpgrade) GetRequiresPartId() OptString {
+	return s.RequiresPartId
+}
+
+// GetExclusiveGroup returns the value of ExclusiveGroup.
+func (s *CarUpgrade) GetExclusiveGroup() OptString {
+	return s.ExclusiveGroup
+}
+
+// SetPart sets the value of Part.
+func (s *CarUpgrade) SetPart(val UpgradePart) {
+	s.Part = val
+}
+
+// SetRequiresPartId sets the value of RequiresPartId.
+func (s *CarUpgrade) SetRequiresPartId(val OptString) {
+	s.RequiresPartId = val
+}
+
+// SetExclusiveGroup sets the value of ExclusiveGroup.
+func (s *CarUpgrade) SetExclusiveGroup(val OptString) {
+	s.ExclusiveGroup = val
+}
+
+// Ref: #/components/schemas/CarUpgradeList
+type CarUpgradeList struct {
+	Items    []CarUpgrade `json:"items"`
+	Total    int64        `json:"total"`
+	Page     int          `json:"page"`
+	PageSize int          `json:"pageSize"`
+}
+
+// GetItems returns the value of Items.
+func (s *CarUpgradeList) GetItems() []CarUpgrade {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *CarUpgradeList) GetTotal() int64 {
+	return s.Total
+}
+
+// GetPage returns the value of Page.
+func (s *CarUpgradeList) GetPage() int {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *CarUpgradeList) GetPageSize() int {
+	return s.PageSize
+}
+
+// SetItems sets the value of Items.
+func (s *CarUpgradeList) SetItems(val []CarUpgrade) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *CarUpgradeList) SetTotal(val int64) {
+	s.Total = val
+}
+
+// SetPage sets the value of Page.
+func (s *CarUpgradeList) SetPage(val int) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *CarUpgradeList) SetPageSize(val int) {
+	s.PageSize = val
+}
+
+func (*CarUpgradeList) listCarUpgradesRes() {}
+
 // Ref: #/components/schemas/Challenge
 type Challenge struct {
 	ID          string      `json:"id"`
@@ -1326,6 +1418,18 @@ type ListBarnFindsUnauthorized Error
 
 func (*ListBarnFindsUnauthorized) listBarnFindsRes() {}
 
+type ListCarUpgradesBadRequest Error
+
+func (*ListCarUpgradesBadRequest) listCarUpgradesRes() {}
+
+type ListCarUpgradesTooManyRequests Error
+
+func (*ListCarUpgradesTooManyRequests) listCarUpgradesRes() {}
+
+type ListCarUpgradesUnauthorized Error
+
+func (*ListCarUpgradesUnauthorized) listCarUpgradesRes() {}
+
 type ListCarsBadRequest Error
 
 func (*ListCarsBadRequest) listCarsRes() {}
@@ -1433,6 +1537,18 @@ func (*ListTreasureCarsTooManyRequests) listTreasureCarsRes() {}
 type ListTreasureCarsUnauthorized Error
 
 func (*ListTreasureCarsUnauthorized) listTreasureCarsRes() {}
+
+type ListUpgradePartsBadRequest Error
+
+func (*ListUpgradePartsBadRequest) listUpgradePartsRes() {}
+
+type ListUpgradePartsTooManyRequests Error
+
+func (*ListUpgradePartsTooManyRequests) listUpgradePartsRes() {}
+
+type ListUpgradePartsUnauthorized Error
+
+func (*ListUpgradePartsUnauthorized) listUpgradePartsRes() {}
 
 // Ref: #/components/schemas/Manufacturer
 type Manufacturer struct {
@@ -2109,6 +2225,52 @@ func (o OptURI) Get() (v url.URL, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptURI) Or(d url.URL) url.URL {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptUpgradePartCategory returns new OptUpgradePartCategory with value set to v.
+func NewOptUpgradePartCategory(v UpgradePartCategory) OptUpgradePartCategory {
+	return OptUpgradePartCategory{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptUpgradePartCategory is optional UpgradePartCategory.
+type OptUpgradePartCategory struct {
+	Value UpgradePartCategory
+	Set   bool
+}
+
+// IsSet returns true if OptUpgradePartCategory was set.
+func (o OptUpgradePartCategory) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptUpgradePartCategory) Reset() {
+	var v UpgradePartCategory
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptUpgradePartCategory) SetTo(v UpgradePartCategory) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptUpgradePartCategory) Get() (v UpgradePartCategory, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptUpgradePartCategory) Or(d UpgradePartCategory) UpgradePartCategory {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2933,3 +3095,300 @@ func (s *TreasureCarList) SetPageSize(val int) {
 }
 
 func (*TreasureCarList) listTreasureCarsRes() {}
+
+// Pièce du catalogue d'upgrade (générique, indépendante d'une voiture). Les deltas sont relatifs
+// au palier inférieur ; NULL si non sourcés (précision > exhaustivité). Sourcing progressif :
+// voitures populaires d'abord, extension par séries ensuite.
+// Ref: #/components/schemas/UpgradePart
+type UpgradePart struct {
+	ID       string              `json:"id"`
+	Game     Game                `json:"game"`
+	Category UpgradePartCategory `json:"category"`
+	Name     string              `json:"name"`
+	// Palier de la pièce (1 = premier niveau). Omis si non applicable.
+	Level OptInt `json:"level"`
+	// Variation de Performance Index apportée par la pièce.
+	PiDelta OptInt `json:"piDelta"`
+	// Variation de poids (kg). Négatif = allègement.
+	WeightDeltaKg OptInt `json:"weightDeltaKg"`
+	// Variation de puissance (ch).
+	PowerDeltaHp OptInt `json:"powerDeltaHp"`
+	// Variation de couple (Nm).
+	TorqueDeltaNm OptInt `json:"torqueDeltaNm"`
+	// Source propre de la donnée.
+	Source       OptString   `json:"source"`
+	LastVerified OptDateTime `json:"lastVerified"`
+}
+
+// GetID returns the value of ID.
+func (s *UpgradePart) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *UpgradePart) GetGame() Game {
+	return s.Game
+}
+
+// GetCategory returns the value of Category.
+func (s *UpgradePart) GetCategory() UpgradePartCategory {
+	return s.Category
+}
+
+// GetName returns the value of Name.
+func (s *UpgradePart) GetName() string {
+	return s.Name
+}
+
+// GetLevel returns the value of Level.
+func (s *UpgradePart) GetLevel() OptInt {
+	return s.Level
+}
+
+// GetPiDelta returns the value of PiDelta.
+func (s *UpgradePart) GetPiDelta() OptInt {
+	return s.PiDelta
+}
+
+// GetWeightDeltaKg returns the value of WeightDeltaKg.
+func (s *UpgradePart) GetWeightDeltaKg() OptInt {
+	return s.WeightDeltaKg
+}
+
+// GetPowerDeltaHp returns the value of PowerDeltaHp.
+func (s *UpgradePart) GetPowerDeltaHp() OptInt {
+	return s.PowerDeltaHp
+}
+
+// GetTorqueDeltaNm returns the value of TorqueDeltaNm.
+func (s *UpgradePart) GetTorqueDeltaNm() OptInt {
+	return s.TorqueDeltaNm
+}
+
+// GetSource returns the value of Source.
+func (s *UpgradePart) GetSource() OptString {
+	return s.Source
+}
+
+// GetLastVerified returns the value of LastVerified.
+func (s *UpgradePart) GetLastVerified() OptDateTime {
+	return s.LastVerified
+}
+
+// SetID sets the value of ID.
+func (s *UpgradePart) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *UpgradePart) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetCategory sets the value of Category.
+func (s *UpgradePart) SetCategory(val UpgradePartCategory) {
+	s.Category = val
+}
+
+// SetName sets the value of Name.
+func (s *UpgradePart) SetName(val string) {
+	s.Name = val
+}
+
+// SetLevel sets the value of Level.
+func (s *UpgradePart) SetLevel(val OptInt) {
+	s.Level = val
+}
+
+// SetPiDelta sets the value of PiDelta.
+func (s *UpgradePart) SetPiDelta(val OptInt) {
+	s.PiDelta = val
+}
+
+// SetWeightDeltaKg sets the value of WeightDeltaKg.
+func (s *UpgradePart) SetWeightDeltaKg(val OptInt) {
+	s.WeightDeltaKg = val
+}
+
+// SetPowerDeltaHp sets the value of PowerDeltaHp.
+func (s *UpgradePart) SetPowerDeltaHp(val OptInt) {
+	s.PowerDeltaHp = val
+}
+
+// SetTorqueDeltaNm sets the value of TorqueDeltaNm.
+func (s *UpgradePart) SetTorqueDeltaNm(val OptInt) {
+	s.TorqueDeltaNm = val
+}
+
+// SetSource sets the value of Source.
+func (s *UpgradePart) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetLastVerified sets the value of LastVerified.
+func (s *UpgradePart) SetLastVerified(val OptDateTime) {
+	s.LastVerified = val
+}
+
+// Catégorie de pièce d'upgrade.
+// Ref: #/components/schemas/UpgradePartCategory
+type UpgradePartCategory string
+
+const (
+	UpgradePartCategoryEngine       UpgradePartCategory = "engine"
+	UpgradePartCategoryDrivetrain   UpgradePartCategory = "drivetrain"
+	UpgradePartCategoryAspiration   UpgradePartCategory = "aspiration"
+	UpgradePartCategoryTires        UpgradePartCategory = "tires"
+	UpgradePartCategoryWeight       UpgradePartCategory = "weight"
+	UpgradePartCategoryAero         UpgradePartCategory = "aero"
+	UpgradePartCategoryBrakes       UpgradePartCategory = "brakes"
+	UpgradePartCategoryTransmission UpgradePartCategory = "transmission"
+	UpgradePartCategoryIntake       UpgradePartCategory = "intake"
+	UpgradePartCategoryExhaust      UpgradePartCategory = "exhaust"
+	UpgradePartCategoryCooling      UpgradePartCategory = "cooling"
+	UpgradePartCategoryFuelSystem   UpgradePartCategory = "fuel_system"
+)
+
+// AllValues returns all UpgradePartCategory values.
+func (UpgradePartCategory) AllValues() []UpgradePartCategory {
+	return []UpgradePartCategory{
+		UpgradePartCategoryEngine,
+		UpgradePartCategoryDrivetrain,
+		UpgradePartCategoryAspiration,
+		UpgradePartCategoryTires,
+		UpgradePartCategoryWeight,
+		UpgradePartCategoryAero,
+		UpgradePartCategoryBrakes,
+		UpgradePartCategoryTransmission,
+		UpgradePartCategoryIntake,
+		UpgradePartCategoryExhaust,
+		UpgradePartCategoryCooling,
+		UpgradePartCategoryFuelSystem,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s UpgradePartCategory) MarshalText() ([]byte, error) {
+	switch s {
+	case UpgradePartCategoryEngine:
+		return []byte(s), nil
+	case UpgradePartCategoryDrivetrain:
+		return []byte(s), nil
+	case UpgradePartCategoryAspiration:
+		return []byte(s), nil
+	case UpgradePartCategoryTires:
+		return []byte(s), nil
+	case UpgradePartCategoryWeight:
+		return []byte(s), nil
+	case UpgradePartCategoryAero:
+		return []byte(s), nil
+	case UpgradePartCategoryBrakes:
+		return []byte(s), nil
+	case UpgradePartCategoryTransmission:
+		return []byte(s), nil
+	case UpgradePartCategoryIntake:
+		return []byte(s), nil
+	case UpgradePartCategoryExhaust:
+		return []byte(s), nil
+	case UpgradePartCategoryCooling:
+		return []byte(s), nil
+	case UpgradePartCategoryFuelSystem:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *UpgradePartCategory) UnmarshalText(data []byte) error {
+	switch UpgradePartCategory(data) {
+	case UpgradePartCategoryEngine:
+		*s = UpgradePartCategoryEngine
+		return nil
+	case UpgradePartCategoryDrivetrain:
+		*s = UpgradePartCategoryDrivetrain
+		return nil
+	case UpgradePartCategoryAspiration:
+		*s = UpgradePartCategoryAspiration
+		return nil
+	case UpgradePartCategoryTires:
+		*s = UpgradePartCategoryTires
+		return nil
+	case UpgradePartCategoryWeight:
+		*s = UpgradePartCategoryWeight
+		return nil
+	case UpgradePartCategoryAero:
+		*s = UpgradePartCategoryAero
+		return nil
+	case UpgradePartCategoryBrakes:
+		*s = UpgradePartCategoryBrakes
+		return nil
+	case UpgradePartCategoryTransmission:
+		*s = UpgradePartCategoryTransmission
+		return nil
+	case UpgradePartCategoryIntake:
+		*s = UpgradePartCategoryIntake
+		return nil
+	case UpgradePartCategoryExhaust:
+		*s = UpgradePartCategoryExhaust
+		return nil
+	case UpgradePartCategoryCooling:
+		*s = UpgradePartCategoryCooling
+		return nil
+	case UpgradePartCategoryFuelSystem:
+		*s = UpgradePartCategoryFuelSystem
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/UpgradePartList
+type UpgradePartList struct {
+	Items    []UpgradePart `json:"items"`
+	Total    int64         `json:"total"`
+	Page     int           `json:"page"`
+	PageSize int           `json:"pageSize"`
+}
+
+// GetItems returns the value of Items.
+func (s *UpgradePartList) GetItems() []UpgradePart {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *UpgradePartList) GetTotal() int64 {
+	return s.Total
+}
+
+// GetPage returns the value of Page.
+func (s *UpgradePartList) GetPage() int {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *UpgradePartList) GetPageSize() int {
+	return s.PageSize
+}
+
+// SetItems sets the value of Items.
+func (s *UpgradePartList) SetItems(val []UpgradePart) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *UpgradePartList) SetTotal(val int64) {
+	s.Total = val
+}
+
+// SetPage sets the value of Page.
+func (s *UpgradePartList) SetPage(val int) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *UpgradePartList) SetPageSize(val int) {
+	s.PageSize = val
+}
+
+func (*UpgradePartList) listUpgradePartsRes() {}

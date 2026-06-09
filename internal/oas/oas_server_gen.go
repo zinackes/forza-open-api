@@ -17,6 +17,7 @@ type Handler interface {
 	PlaylistHandler
 	TracksHandler
 	TreasureCarsHandler
+	UpgradesHandler
 }
 
 // BarnFindsHandler handles operations described by OpenAPI v3 specification.
@@ -143,6 +144,26 @@ type TreasureCarsHandler interface {
 	//
 	// GET /v1/treasure-cars
 	ListTreasureCars(ctx context.Context, params ListTreasureCarsParams) (ListTreasureCarsRes, error)
+}
+
+// UpgradesHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Upgrades
+type UpgradesHandler interface {
+	// ListCarUpgrades implements listCarUpgrades operation.
+	//
+	// Pièces d'upgrade montables sur la voiture, avec leurs contraintes d'installation (prérequis,
+	// groupe exclusif). Le jeu est déterminé par la voiture (pas de paramètre game). Voiture inconnue
+	// ou sans upgrade sourcé → page vide.
+	//
+	// GET /v1/cars/{id}/upgrades
+	ListCarUpgrades(ctx context.Context, params ListCarUpgradesParams) (ListCarUpgradesRes, error)
+	// ListUpgradeParts implements listUpgradeParts operation.
+	//
+	// Catalogue global des pièces d'upgrade.
+	//
+	// GET /v1/upgrade-parts
+	ListUpgradeParts(ctx context.Context, params ListUpgradePartsParams) (ListUpgradePartsRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

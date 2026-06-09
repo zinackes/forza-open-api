@@ -187,6 +187,41 @@ CREATE INDEX IF NOT EXISTS treasure_cars_game_idx        ON treasure_cars (game)
 CREATE INDEX IF NOT EXISTS treasure_cars_game_region_idx ON treasure_cars (game, region);
 CREATE INDEX IF NOT EXISTS treasure_cars_car_idx         ON treasure_cars (car_id);
 
+-- Catalogue des pièces d'upgrade & upgrades par voiture -----------------------
+-- Sources propres (dataset forzagarage.com, wiki Fandom). Sourcing progressif :
+-- voitures populaires d'abord, extension par séries ensuite. Deltas NULL si non
+-- sourcés (précision > exhaustivité). Tout porte game.
+-- upgrade_parts : pièce générique (delta PI/poids/puissance/couple par palier).
+CREATE TABLE IF NOT EXISTS upgrade_parts (
+    id              TEXT PRIMARY KEY,
+    game            TEXT NOT NULL,
+    category        TEXT NOT NULL CHECK (category IN ('engine','drivetrain','aspiration','tires','weight','aero','brakes','transmission','intake','exhaust','cooling','fuel_system')),
+    name            TEXT NOT NULL,
+    level           INT CHECK (level >= 1),
+    pi_delta        INT,
+    weight_delta_kg INT,
+    power_delta_hp  INT,
+    torque_delta_nm INT,
+    source          TEXT,
+    last_verified   TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS upgrade_parts_game_idx          ON upgrade_parts (game);
+CREATE INDEX IF NOT EXISTS upgrade_parts_game_category_idx ON upgrade_parts (game, category);
+
+-- car_upgrades : N-N voiture ↔ pièce + contraintes d'installation.
+-- requires_part_id : pièce prérequise (chaîne d'upgrade). exclusive_group : une
+-- seule pièce du groupe montable à la fois (ex. compounds de pneus).
+CREATE TABLE IF NOT EXISTS car_upgrades (
+    car_id           TEXT NOT NULL REFERENCES cars (id)          ON DELETE CASCADE,
+    part_id          TEXT NOT NULL REFERENCES upgrade_parts (id) ON DELETE CASCADE,
+    requires_part_id TEXT REFERENCES upgrade_parts (id)          ON DELETE SET NULL,
+    exclusive_group  TEXT,
+    PRIMARY KEY (car_id, part_id)
+);
+-- Le PK couvre les lookups par car_id (préfixe) ; index dédié pour retrouver les
+-- voitures qui montent une pièce donnée.
+CREATE INDEX IF NOT EXISTS car_upgrades_part_idx ON car_upgrades (part_id);
+
 -- Clés API (jamais la clé en clair : seul le hash sha256 est stocké) -----------
 CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,

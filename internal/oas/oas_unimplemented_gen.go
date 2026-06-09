@@ -49,6 +49,17 @@ func (UnimplementedHandler) ListBarnFinds(ctx context.Context, params ListBarnFi
 	return r, ht.ErrNotImplemented
 }
 
+// ListCarUpgrades implements listCarUpgrades operation.
+//
+// Pièces d'upgrade montables sur la voiture, avec leurs contraintes d'installation (prérequis,
+// groupe exclusif). Le jeu est déterminé par la voiture (pas de paramètre game). Voiture inconnue
+// ou sans upgrade sourcé → page vide.
+//
+// GET /v1/cars/{id}/upgrades
+func (UnimplementedHandler) ListCarUpgrades(ctx context.Context, params ListCarUpgradesParams) (r ListCarUpgradesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListCars implements listCars operation.
 //
 // Liste les voitures du catalogue.
@@ -118,5 +129,14 @@ func (UnimplementedHandler) ListTracks(ctx context.Context, params ListTracksPar
 //
 // GET /v1/treasure-cars
 func (UnimplementedHandler) ListTreasureCars(ctx context.Context, params ListTreasureCarsParams) (r ListTreasureCarsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListUpgradeParts implements listUpgradeParts operation.
+//
+// Catalogue global des pièces d'upgrade.
+//
+// GET /v1/upgrade-parts
+func (UnimplementedHandler) ListUpgradeParts(ctx context.Context, params ListUpgradePartsParams) (r ListUpgradePartsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

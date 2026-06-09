@@ -17,6 +17,10 @@ type ListBarnFindsRes interface {
 	listBarnFindsRes()
 }
 
+type ListCarUpgradesRes interface {
+	listCarUpgradesRes()
+}
+
 type ListCarsRes interface {
 	listCarsRes()
 }
@@ -47,4 +51,8 @@ type ListTracksRes interface {
 
 type ListTreasureCarsRes interface {
 	listTreasureCarsRes()
+}
+
+type ListUpgradePartsRes interface {
+	listUpgradePartsRes()
 }
