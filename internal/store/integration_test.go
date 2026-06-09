@@ -120,12 +120,12 @@ func TestListCarsFilterByCategory(t *testing.T) {
 	if total != 2 || len(cars) != 2 {
 		t.Fatalf("filtre category: total=%d len=%d, want 2/2", total, len(cars))
 	}
-	// ORDER BY name : '296 GTB' avant 'GT'. Mapping : category présente.
-	if cars[0].ID != "cat-1" || cars[1].ID != "cat-2" {
-		t.Errorf("ordre = [%s, %s], want [cat-1, cat-2]", cars[0].ID, cars[1].ID)
+	// ORDER BY pi puis name : 'GT' (pi 760) avant '296 GTB' (pi 780). Mapping : category présente.
+	if cars[0].ID != "cat-2" || cars[1].ID != "cat-1" {
+		t.Errorf("ordre = [%s, %s], want [cat-2, cat-1]", cars[0].ID, cars[1].ID)
 	}
 	if cars[0].Category == nil || *cars[0].Category != "Modern Supercars" {
-		t.Errorf("cat-1 category = %v, want Modern Supercars", cars[0].Category)
+		t.Errorf("cat-2 category = %v, want Modern Supercars", cars[0].Category)
 	}
 
 	// Sans filtre : les 4 voitures ; cat-4 a category NULL → nil.

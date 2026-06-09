@@ -66,7 +66,7 @@ WHERE c.game = $1
   AND ($8::text IS NULL OR c.name ILIKE '%' || $8 || '%' OR c.model ILIKE '%' || $8 || '%')
   AND ($9::text IS NULL OR EXISTS (
         SELECT 1 FROM car_dlc cd WHERE cd.car_id = c.id AND cd.dlc_id = $9))
-ORDER BY c.name
+ORDER BY c.pi, c.name, c.id
 LIMIT $10 OFFSET $11`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
 		f.Drivetrain, f.Category, f.Q, f.Dlc, f.Limit, f.Offset)
