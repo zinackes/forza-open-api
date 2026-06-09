@@ -1,0 +1,5 @@
+- **Doctrine zéro gris** (`docs/DATA-SOURCES.md`) : sources propres only. Jamais de scraping du jeu / mémoire / injection / botting.
+- Scrapers : user-agent identifiable, délais polis, **API officielles (Strapi, MediaWiki) > scrape HTML**. Idempotent (upsert ON CONFLICT), rejouable sans doublon.
+- **Ne jamais inventer de donnée** : champ manquant → NULL. Précision > exhaustivité.
+- Tout porte `game`. Migrations via golang-migrate (init.sql en phase 0).
+- Ingestion isolée dans `internal/ingest` + `cmd/seed` ; jamais dans les handlers de lecture.

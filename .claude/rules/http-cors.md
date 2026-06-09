@@ -1,0 +1,6 @@
+- L'API doit être consommable **depuis le navigateur** (overlays, apps web via le SDK TS).
+- Middleware CORS : origines configurables (large en lecture publique, restreint pour les writes), **preflight OPTIONS** géré.
+- Expose les headers utiles : `X-API-Key` (requête), `X-RateLimit-Limit/Remaining/Reset` (réponse).
+- Ajoute des en-têtes de sécurité de base (en coordination avec Cloudflare).
+- La politique CORS est documentée dans `docs/API.md` et implémentée par la carte 2.6 du Kanban.
+- À référencer dans CLAUDE.md : `@.claude/rules/http-cors.md`

@@ -1,0 +1,6 @@
+- **EAC-safe** : toute capture (télémétrie, CV) est read-only, hors-process. Doute → on s'abstient.
+- Clés API : opaques, **hashées** (sha256) en DB, jamais en clair ni loggées. Révocables.
+- Rate-limit par clé (sliding window Redis) + 429.
+- Secrets via env / secret store, jamais dans le repo. Conteneurs nonroot.
+- Writes (tunes, sessions) authentifiés + modération + anti-spam.
+- Pas d'endpoints Xbox privés, pas de relying-party tokens, pas de scraping AH live.

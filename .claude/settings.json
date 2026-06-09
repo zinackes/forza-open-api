@@ -1,0 +1,18 @@
+{
+  "model": "opus",
+  "fallbackModel": ["sonnet"],
+  "permissions": {
+    "allow": ["Bash(task *)", "Bash(go *)", "Bash(docker compose *)", "Bash(git *)"],
+    "deny": []
+  },
+  "hooks": {
+    "PostToolUse": [
+      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": ".claude/hooks/format-on-write.sh" }] }
+    ],
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": ".claude/hooks/dangerous-bash-guard.sh" }] },
+      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": ".claude/hooks/block-secrets.sh" }] }
+    ]
+  },
+  "statusLine": { "type": "command", "command": "ccusage statusline" }
+}

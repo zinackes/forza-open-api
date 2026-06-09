@@ -1,0 +1,5 @@
+- **Lance les tests avant de dire « fini ».**
+- Repo/DB : **testcontainers-go** (Postgres jetable), applique db/init.sql + fixtures.
+- Handlers : tests de table (golden), cas limites (filtres vides, pagination hors borne, 404, 401, 429).
+- Scrapers : tester le parsing sur des **fixtures figées** (HTML/JSON), pas d'appel réseau en test.
+- Les tests tournent en CI (`task test`). Pas de test flaky toléré.

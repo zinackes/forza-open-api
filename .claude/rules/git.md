@@ -1,0 +1,5 @@
+- **Conventional Commits** (feat/fix/chore/docs/refactor/test/ci…).
+- **Ne pousse jamais sur `main`** directement : branche + PR.
+- Commits petits et cohérents ; messages au présent.
+- Plan d'abord pour toute tâche à 3+ étapes ; checkpoint l'avancement dans un `.md` avant un `/clear`.
+- Ne commit jamais de secret ni `.env` (hook block-secrets + .gitignore).

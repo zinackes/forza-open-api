@@ -1,0 +1,263 @@
+openapi: 3.1.0
+info:
+  title: Forza Open API
+  version: 1.0.0
+  description: >
+    API REST ouverte, gratuite et communautaire pour les données Forza Horizon
+    (FH6 d'abord, FH5 en backfill). Contract-first : ce fichier est la source de
+    vérité ; le serveur Go (ogen) et les clients TS en découlent.
+    Champ `game` partout (game-agnostic). Erreurs en RFC 9457.
+  license:
+    name: MIT
+    identifier: MIT
+
+tags:
+  - name: Cars
+    description: Catalogue des voitures.
+  - name: Playlist
+    description: Festival Playlist (séries saisonnières, récompenses, défis).
+
+# Lecture publique possible ({}), clé optionnelle via X-API-Key.
+security:
+  - {}
+  - ApiKeyAuth: []
+
+paths:
+  /v1/cars:
+    get:
+      operationId: listCars
+      summary: Liste les voitures du catalogue.
+      tags: [Cars]
+      x-ogen-operation-group: Cars
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: make
+          in: query
+          description: Filtre par constructeur (ex. "Ford").
+          schema: { type: string }
+        - name: class
+          in: query
+          description: Filtre par classe PI.
+          schema: { $ref: '#/components/schemas/CarClass' }
+        - name: pi_min
+          in: query
+          description: Performance Index minimum (inclus).
+          schema: { type: integer, minimum: 100, maximum: 999 }
+        - name: pi_max
+          in: query
+          description: Performance Index maximum (inclus).
+          schema: { type: integer, minimum: 100, maximum: 999 }
+        - name: drivetrain
+          in: query
+          schema: { $ref: '#/components/schemas/Drivetrain' }
+        - name: q
+          in: query
+          description: Recherche plein texte sur name/model.
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de voitures.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/cars/{id}:
+    get:
+      operationId: getCar
+      summary: Récupère une voiture par identifiant.
+      tags: [Cars]
+      x-ogen-operation-group: Cars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la voiture.
+          schema: { type: string }
+      responses:
+        '200':
+          description: La voiture demandée.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Car' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/playlist:
+    get:
+      operationId: getCurrentPlaylist
+      summary: Festival Playlist courante d'un jeu.
+      tags: [Playlist]
+      x-ogen-operation-group: Playlist
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: La série courante avec ses récompenses et défis.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Series' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    Game:
+      name: game
+      in: query
+      required: true
+      description: Jeu cible (obligatoire sur les ressources multi-jeux).
+      schema: { $ref: '#/components/schemas/Game' }
+    Page:
+      name: page
+      in: query
+      description: Numéro de page (1-based).
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      name: page_size
+      in: query
+      description: Taille de page.
+      schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+
+  responses:
+    BadRequest:
+      description: Requête invalide.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: Clé API absente ou invalide.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Ressource introuvable.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    TooManyRequests:
+      description: Quota de rate-limit dépassé.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    Game:
+      type: string
+      description: Identifiant du jeu.
+      enum: [fh6, fh5]
+
+    CarClass:
+      type: string
+      description: Classe Performance Index.
+      enum: [D, C, B, A, S1, S2, X]
+
+    Drivetrain:
+      type: string
+      enum: [FWD, RWD, AWD]
+
+    CarStats:
+      type: object
+      description: Statistiques de performance (échelle du jeu).
+      properties:
+        speed: { type: number }
+        handling: { type: number }
+        acceleration: { type: number }
+        launch: { type: number }
+        braking: { type: number }
+      additionalProperties: { type: number }
+
+    Car:
+      type: object
+      required: [id, game, name, make, class, pi, drivetrain]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        make: { type: string }
+        model: { type: string }
+        year: { type: integer }
+        class: { $ref: '#/components/schemas/CarClass' }
+        pi: { type: integer, minimum: 100, maximum: 999 }
+        drivetrain: { $ref: '#/components/schemas/Drivetrain' }
+        stats: { $ref: '#/components/schemas/CarStats' }
+        bodyType: { type: string }
+        rarity: { type: string }
+        valueCr: { type: integer, format: int64 }
+        obtainMethod: { type: string }
+        imageUrl: { type: string, format: uri }
+        createdAt: { type: string, format: date-time }
+
+    CarList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Car' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    Reward:
+      type: object
+      required: [id, atPercent, type, item]
+      properties:
+        id: { type: string }
+        atPercent: { type: integer, minimum: 0, maximum: 100 }
+        type: { type: string }
+        item: { type: string }
+
+    Challenge:
+      type: object
+      required: [id, scope, name, requirement]
+      properties:
+        id: { type: string }
+        scope: { type: string }
+        name: { type: string }
+        requirement: { type: string }
+        reward: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    Series:
+      type: object
+      required: [id, game, series, name, isCurrent]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        series: { type: integer }
+        name: { type: string }
+        season: { type: string }
+        week: { type: integer }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        isCurrent: { type: boolean }
+        rewards:
+          type: array
+          items: { $ref: '#/components/schemas/Reward' }
+        challenges:
+          type: array
+          items: { $ref: '#/components/schemas/Challenge' }
+
+    Problem:
+      type: object
+      description: Erreur au format RFC 9457 (application/problem+json).
+      properties:
+        type: { type: string, format: uri, default: 'about:blank' }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri }

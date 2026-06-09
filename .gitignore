@@ -1,0 +1,22 @@
+# Binaires Go
+/bin/
+*.exe
+*.test
+*.out
+
+# Env & secrets (jamais dans le repo)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Config locale Claude Code
+.claude/settings.local.json
+
+# Index CodeGraph (volumineux, régénérable via `codegraph index`)
+.codegraph/
+
+# OS / éditeurs
+.DS_Store
+*.swp

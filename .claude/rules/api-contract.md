@@ -1,0 +1,7 @@
+- **Contract-first absolu** : toute évolution d'API commence dans `api/openapi.yaml`, puis `task generate`, puis implémentation du handler.
+- Ne jamais ajouter/éditer un endpoint directement dans le code généré.
+- OpenAPI **3.1** (ogen). Grouper via `x-ogen-operation-group`.
+- Erreurs en **RFC 9457** (application/problem+json).
+- Pagination standard (page/page_size, défaut 50/max 100). `game` requis sur les ressources multi-jeux.
+- Le code généré doit **toujours** matcher le spec (CI spec-drift échoue sinon).
+- Versioning : /v1, semver, dépréciations annoncées (cf. `docs/API.md`).

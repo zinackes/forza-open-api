@@ -1,0 +1,45 @@
+// Package config charge la configuration du service depuis l'environnement.
+package config
+
+import (
+	"log/slog"
+	"os"
+)
+
+// Config regroupe les paramètres runtime du serveur API.
+type Config struct {
+	Addr        string     // adresse d'écoute HTTP (ex. ":8080")
+	DatabaseURL string     // DSN Postgres (pgx)
+	RedisURL    string     // URL Valkey/Redis
+	LogLevel    slog.Level // niveau de log slog
+}
+
+// Load lit la config depuis l'environnement avec des défauts orientés dev local.
+func Load() Config {
+	return Config{
+		Addr:        getenv("API_ADDR", ":8080"),
+		DatabaseURL: getenv("DATABASE_URL", "postgres://forza:forza@localhost:5432/forza?sslmode=disable"),
+		RedisURL:    getenv("REDIS_URL", "redis://localhost:6379/0"),
+		LogLevel:    parseLevel(getenv("LOG_LEVEL", "info")),
+	}
+}
+
+func getenv(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+func parseLevel(s string) slog.Level {
+	switch s {
+	case "debug":
+		return slog.LevelDebug
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
+}

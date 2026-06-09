@@ -1,0 +1,7 @@
+- Go 1.26, net/http stdlib, **aucun framework HTTP**.
+- `internal/oas/` est **généré** (ogen) : ne jamais l'éditer à la main ; passer par le contrat + `task generate`.
+- DB via **pgx v5** (pool). Requêtes **paramétrées** uniquement, jamais de concat SQL.
+- Erreurs : wrap avec contexte (`fmt.Errorf("...: %w", err)`), pas de `panic` dans les handlers.
+- Logs : `slog` structuré, niveaux. Pas de `fmt.Println`.
+- `context` propagé partout (timeouts DB/Redis). Arrêt propre (signal → drain).
+- gofmt/goimports + golangci-lint obligatoires (hook + CI).

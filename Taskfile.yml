@@ -1,0 +1,41 @@
+version: '3'
+
+# Charge .env s'il existe (ports hôtes, DSN locaux) ; sinon les défauts du
+# code/compose s'appliquent. Voir .env.example.
+dotenv: ['.env']
+
+tasks:
+  tidy:
+    desc: Synchronise go.mod / go.sum
+    cmds:
+      - go mod tidy
+
+  generate:
+    desc: Génère le serveur depuis le contrat OpenAPI (ogen)
+    cmds:
+      - go generate ./...
+
+  run:
+    desc: Lance l'API en local
+    cmds:
+      - go run ./cmd/api
+
+  build:
+    desc: Compile le binaire API dans bin/
+    cmds:
+      - go build -o bin/api ./cmd/api
+
+  test:
+    desc: Lance la suite de tests
+    cmds:
+      - go test ./...
+
+  up:
+    desc: Lève Postgres + Valkey (docker compose)
+    cmds:
+      - docker compose up -d
+
+  down:
+    desc: Arrête et nettoie les services
+    cmds:
+      - docker compose down

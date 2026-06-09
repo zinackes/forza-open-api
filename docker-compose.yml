@@ -1,0 +1,34 @@
+# Stack de dev local : Postgres 18 (source de vérité) + Valkey (cache/rate-limit).
+# L'API tourne hors compose en Phase 0 (`task run`).
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: forza
+      POSTGRES_PASSWORD: forza
+      POSTGRES_DB: forza
+    ports:
+      - "${PG_HOST_PORT:-5432}:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      # PG18 : VOLUME = /var/lib/postgresql (PGDATA est dans un sous-dossier).
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forza -d forza"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${VALKEY_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
