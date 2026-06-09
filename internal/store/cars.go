@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -67,10 +68,19 @@ WHERE c.game = $1
   AND ($9::text IS NULL OR EXISTS (
         SELECT 1 FROM car_dlc cd WHERE cd.car_id = c.id AND cd.dlc_id = $9))`
 
+	// q est une recherche de sous-chaîne LITTÉRALE : on neutralise les
+	// métacaractères LIKE pour qu'un client ne puisse pas injecter ses propres
+	// wildcards (patterns arbitrairement coûteux).
+	qLit := f.Q
+	if f.Q != nil {
+		esc := escapeLike(*f.Q)
+		qLit = &esc
+	}
+
 	var total int64
 	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
 		f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
-		f.Drivetrain, f.Category, f.Q, f.Dlc).Scan(&total); err != nil {
+		f.Drivetrain, f.Category, qLit, f.Dlc).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count cars: %w", err)
 	}
 
@@ -81,7 +91,7 @@ SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
 ORDER BY c.pi, c.name, c.id
 LIMIT $10 OFFSET $11`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
-		f.Drivetrain, f.Category, f.Q, f.Dlc, f.Limit, f.Offset)
+		f.Drivetrain, f.Category, qLit, f.Dlc, f.Limit, f.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("query cars: %w", err)
 	}
@@ -128,6 +138,8 @@ WHERE c.id = $1`
 // UpsertCars insère ou met à jour des voitures de façon idempotente (ON CONFLICT
 // sur l'id). Rejouable sans doublon. Appelé par l'ingestion (cmd/seed), jamais un
 // handler. Stats est du JSONB brut (nil → NULL) ; les pointeurs nil → NULL.
+// pgx.Batch dans une transaction : un seul aller-retour réseau (vs un par
+// voiture) et tout-ou-rien — pas de catalogue partiel en cas d'échec.
 func (s *Store) UpsertCars(ctx context.Context, cars []Car) error {
 	const q = `
 INSERT INTO cars (id, game, name, make, model, year, class, pi, drivetrain,
@@ -141,18 +153,43 @@ ON CONFLICT (id) DO UPDATE SET
     body_type = EXCLUDED.body_type, category = EXCLUDED.category,
     rarity = EXCLUDED.rarity, value_cr = EXCLUDED.value_cr,
     obtain_method = EXCLUDED.obtain_method, image_url = EXCLUDED.image_url`
+	batch := &pgx.Batch{}
 	for _, c := range cars {
 		var stats any // nil []byte → NULL ; sinon JSONB brut
 		if len(c.Stats) > 0 {
 			stats = c.Stats
 		}
-		if _, err := s.DB.Exec(ctx, q, c.ID, c.Game, c.Name, c.Make, c.Model,
+		batch.Queue(q, c.ID, c.Game, c.Name, c.Make, c.Model,
 			c.Year, c.Class, c.PI, c.Drivetrain, stats, c.BodyType, c.Category,
-			c.Rarity, c.ValueCr, c.ObtainMethod, c.ImageURL); err != nil {
+			c.Rarity, c.ValueCr, c.ObtainMethod, c.ImageURL)
+	}
+
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin upsert cars: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }() // no-op après Commit
+
+	br := tx.SendBatch(ctx, batch)
+	for _, c := range cars {
+		if _, err := br.Exec(); err != nil {
+			_ = br.Close()
 			return fmt.Errorf("upsert car %s: %w", c.ID, err)
 		}
 	}
+	if err := br.Close(); err != nil {
+		return fmt.Errorf("close upsert batch: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit upsert cars: %w", err)
+	}
 	return nil
+}
+
+// escapeLike neutralise les métacaractères LIKE/ILIKE (\, %, _) pour traiter
+// l'entrée comme une sous-chaîne littérale (ESCAPE par défaut : backslash).
+func escapeLike(s string) string {
+	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(s)
 }
 
 // RandomCar tire une voiture au hasard parmi celles satisfaisant les filtres

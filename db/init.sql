@@ -29,6 +29,11 @@ CREATE INDEX IF NOT EXISTS cars_game_pi_idx       ON cars (game, pi);
 CREATE INDEX IF NOT EXISTS cars_game_make_idx     ON cars (game, make);
 -- Facette categories de GET /v1/reference (GROUP BY category scopé au jeu).
 CREATE INDEX IF NOT EXISTS cars_game_category_idx ON cars (game, category);
+-- Recherche q (ILIKE '%…%') : un pattern à wildcard de tête ne peut pas user
+-- d'un btree → index trigram GIN sur name/model pour éviter le seq scan.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX IF NOT EXISTS cars_name_trgm_idx  ON cars USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS cars_model_trgm_idx ON cars USING gin (model gin_trgm_ops);
 
 -- Constructeurs ---------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS manufacturers (
