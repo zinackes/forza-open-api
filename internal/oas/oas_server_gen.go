@@ -9,6 +9,7 @@ import (
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
 	CarsHandler
+	DLCHandler
 	EventsHandler
 	ManufacturersHandler
 	PRStuntsHandler
@@ -32,6 +33,18 @@ type CarsHandler interface {
 	//
 	// GET /v1/cars
 	ListCars(ctx context.Context, params ListCarsParams) (ListCarsRes, error)
+}
+
+// DLCHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: DLC
+type DLCHandler interface {
+	// ListDlcPacks implements listDlcPacks operation.
+	//
+	// Liste les packs DLC / extensions d'un jeu.
+	//
+	// GET /v1/dlc-packs
+	ListDlcPacks(ctx context.Context, params ListDlcPacksParams) (ListDlcPacksRes, error)
 }
 
 // EventsHandler handles operations described by OpenAPI v3 specification.

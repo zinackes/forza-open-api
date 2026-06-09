@@ -22,12 +22,13 @@ func newServer(t *testing.T) http.Handler {
 	return srv
 }
 
-// TestListCarsReturns501 vérifie qu'un endpoint non encore implémenté répond
+// TestUnimplementedReturns501 vérifie qu'un endpoint non encore implémenté répond
 // 501 en RFC 9457 (application/problem+json). game=fh6 est requis pour passer
-// la validation du contrat et atteindre le stub.
-func TestListCarsReturns501(t *testing.T) {
+// la validation du contrat et atteindre le stub. /v1/manufacturers reste un stub
+// (cars, tracks, pr-stunts, events, dlc-packs sont eux implémentés).
+func TestUnimplementedReturns501(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/v1/cars?game=fh6", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/manufacturers?game=fh6", nil)
 
 	newServer(t).ServeHTTP(rec, req)
 
@@ -50,15 +51,19 @@ func TestListCarsReturns501(t *testing.T) {
 }
 
 // TestMissingGameReturns400 documente que la validation du contrat s'applique
-// avant le stub : sans le paramètre requis game, on obtient un 400.
+// avant le handler : sans le paramètre requis game, on obtient un 400. Vaut pour
+// /v1/cars comme pour /v1/dlc-packs (avec store nil, un 400 prouve qu'on n'a
+// jamais touché la DB).
 func TestMissingGameReturns400(t *testing.T) {
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/v1/cars", nil)
+	for _, target := range []string{"/v1/cars", "/v1/dlc-packs"} {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, target, nil)
 
-	newServer(t).ServeHTTP(rec, req)
+		newServer(t).ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want 400\nbody: %s", rec.Code, rec.Body.String())
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("%s: status = %d, want 400\nbody: %s", target, rec.Code, rec.Body.String())
+		}
 	}
 }
 

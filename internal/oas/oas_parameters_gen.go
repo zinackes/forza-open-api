@@ -228,6 +228,8 @@ type ListCarsParams struct {
 	Drivetrain OptDrivetrain `json:",omitempty,omitzero"`
 	// Recherche plein texte sur name/model.
 	Q OptString `json:",omitempty,omitzero"`
+	// Filtre par pack DLC (identifiant d'un dlc_packs) ; liste les voitures du pack.
+	Dlc OptString `json:",omitempty,omitzero"`
 	// Numéro de page (1-based).
 	Page OptInt `json:",omitempty,omitzero"`
 	// Taille de page.
@@ -294,6 +296,15 @@ func unpackListCarsParams(packed middleware.Parameters) (params ListCarsParams) 
 		}
 		if v, ok := packed[key]; ok {
 			params.Q = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "dlc",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Dlc = v.(OptString)
 		}
 	}
 	{
@@ -689,6 +700,47 @@ func decodeListCarsParams(args [0]string, argsEscaped bool, r *http.Request) (pa
 			Err:  err,
 		}
 	}
+	// Decode query: dlc.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "dlc",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotDlcVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotDlcVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Dlc.SetTo(paramsDotDlcVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "dlc",
+			In:   "query",
+			Err:  err,
+		}
+	}
 	// Set default value for query: page.
 	{
 		val := int(1)
@@ -827,6 +879,72 @@ func decodeListCarsParams(args [0]string, argsEscaped bool, r *http.Request) (pa
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListDlcPacksParams is parameters of listDlcPacks operation.
+type ListDlcPacksParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+}
+
+func unpackListDlcPacksParams(packed middleware.Parameters) (params ListDlcPacksParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	return params
+}
+
+func decodeListDlcPacksParams(args [0]string, argsEscaped bool, r *http.Request) (params ListDlcPacksParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
 			In:   "query",
 			Err:  err,
 		}

@@ -49,6 +49,15 @@ func (UnimplementedHandler) ListCars(ctx context.Context, params ListCarsParams)
 	return r, ht.ErrNotImplemented
 }
 
+// ListDlcPacks implements listDlcPacks operation.
+//
+// Liste les packs DLC / extensions d'un jeu.
+//
+// GET /v1/dlc-packs
+func (UnimplementedHandler) ListDlcPacks(ctx context.Context, params ListDlcPacksParams) (r ListDlcPacksRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListEvents implements listEvents operation.
 //
 // Liste les événements / courses.

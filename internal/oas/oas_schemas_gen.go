@@ -497,6 +497,151 @@ func (s *Challenge) SetExpiresAt(val OptDateTime) {
 	s.ExpiresAt = val
 }
 
+// Type de pack DLC.
+// Ref: #/components/schemas/DlcKind
+type DlcKind string
+
+const (
+	DlcKindCarPass    DlcKind = "car_pass"
+	DlcKindExpansion  DlcKind = "expansion"
+	DlcKindStandalone DlcKind = "standalone"
+)
+
+// AllValues returns all DlcKind values.
+func (DlcKind) AllValues() []DlcKind {
+	return []DlcKind{
+		DlcKindCarPass,
+		DlcKindExpansion,
+		DlcKindStandalone,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DlcKind) MarshalText() ([]byte, error) {
+	switch s {
+	case DlcKindCarPass:
+		return []byte(s), nil
+	case DlcKindExpansion:
+		return []byte(s), nil
+	case DlcKindStandalone:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DlcKind) UnmarshalText(data []byte) error {
+	switch DlcKind(data) {
+	case DlcKindCarPass:
+		*s = DlcKindCarPass
+		return nil
+	case DlcKindExpansion:
+		*s = DlcKindExpansion
+		return nil
+	case DlcKindStandalone:
+		*s = DlcKindStandalone
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Pack DLC / extension (Car Pass, expansion, standalone).
+// Ref: #/components/schemas/DlcPack
+type DlcPack struct {
+	ID   string  `json:"id"`
+	Game Game    `json:"game"`
+	Name string  `json:"name"`
+	Kind DlcKind `json:"kind"`
+	// Date de sortie. Absente si pack annoncé mais pas encore sorti.
+	ReleasedAt  OptDateTime `json:"releasedAt"`
+	Description OptString   `json:"description"`
+	// Source propre de la donnée.
+	Source       OptString   `json:"source"`
+	LastVerified OptDateTime `json:"lastVerified"`
+}
+
+// GetID returns the value of ID.
+func (s *DlcPack) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *DlcPack) GetGame() Game {
+	return s.Game
+}
+
+// GetName returns the value of Name.
+func (s *DlcPack) GetName() string {
+	return s.Name
+}
+
+// GetKind returns the value of Kind.
+func (s *DlcPack) GetKind() DlcKind {
+	return s.Kind
+}
+
+// GetReleasedAt returns the value of ReleasedAt.
+func (s *DlcPack) GetReleasedAt() OptDateTime {
+	return s.ReleasedAt
+}
+
+// GetDescription returns the value of Description.
+func (s *DlcPack) GetDescription() OptString {
+	return s.Description
+}
+
+// GetSource returns the value of Source.
+func (s *DlcPack) GetSource() OptString {
+	return s.Source
+}
+
+// GetLastVerified returns the value of LastVerified.
+func (s *DlcPack) GetLastVerified() OptDateTime {
+	return s.LastVerified
+}
+
+// SetID sets the value of ID.
+func (s *DlcPack) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *DlcPack) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetName sets the value of Name.
+func (s *DlcPack) SetName(val string) {
+	s.Name = val
+}
+
+// SetKind sets the value of Kind.
+func (s *DlcPack) SetKind(val DlcKind) {
+	s.Kind = val
+}
+
+// SetReleasedAt sets the value of ReleasedAt.
+func (s *DlcPack) SetReleasedAt(val OptDateTime) {
+	s.ReleasedAt = val
+}
+
+// SetDescription sets the value of Description.
+func (s *DlcPack) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetSource sets the value of Source.
+func (s *DlcPack) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetLastVerified sets the value of LastVerified.
+func (s *DlcPack) SetLastVerified(val OptDateTime) {
+	s.LastVerified = val
+}
+
 // Transmission.
 // Ref: #/components/schemas/Drivetrain
 type Drivetrain string
@@ -993,6 +1138,22 @@ func (*ListCarsTooManyRequests) listCarsRes() {}
 type ListCarsUnauthorized Error
 
 func (*ListCarsUnauthorized) listCarsRes() {}
+
+type ListDlcPacksBadRequest Error
+
+func (*ListDlcPacksBadRequest) listDlcPacksRes() {}
+
+type ListDlcPacksOKApplicationJSON []DlcPack
+
+func (*ListDlcPacksOKApplicationJSON) listDlcPacksRes() {}
+
+type ListDlcPacksTooManyRequests Error
+
+func (*ListDlcPacksTooManyRequests) listDlcPacksRes() {}
+
+type ListDlcPacksUnauthorized Error
+
+func (*ListDlcPacksUnauthorized) listDlcPacksRes() {}
 
 type ListEventsBadRequest Error
 

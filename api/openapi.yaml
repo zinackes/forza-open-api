@@ -30,6 +30,8 @@ tags:
     description: PR Stunts (speed trap, speed zone, drift zone, danger sign).
   - name: Events
     description: Événements / courses (routes fixes, circuits, drag meets…).
+  - name: DLC
+    description: Packs DLC / extensions (Car Pass, expansions, standalone).
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -68,6 +70,10 @@ paths:
         - name: q
           in: query
           description: Recherche plein texte sur name/model.
+          schema: { type: string }
+        - name: dlc
+          in: query
+          description: Filtre par pack DLC (identifiant d'un dlc_packs) ; liste les voitures du pack.
           schema: { type: string }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
@@ -119,6 +125,26 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Manufacturer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/dlc-packs:
+    get:
+      operationId: listDlcPacks
+      summary: Liste les packs DLC / extensions d'un jeu.
+      tags: [DLC]
+      x-ogen-operation-group: DLC
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Les packs DLC connus pour le jeu (plus récents d'abord).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DlcPack' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -381,6 +407,28 @@ components:
         game: { $ref: '#/components/schemas/Game' }
         name: { type: string }
         country: { type: string }
+
+    DlcKind:
+      type: string
+      description: Type de pack DLC.
+      enum: [car_pass, expansion, standalone]
+
+    DlcPack:
+      type: object
+      description: Pack DLC / extension (Car Pass, expansion, standalone).
+      required: [id, game, name, kind]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        kind: { $ref: '#/components/schemas/DlcKind' }
+        releasedAt:
+          type: string
+          format: date-time
+          description: Date de sortie. Absente si pack annoncé mais pas encore sorti.
+        description: { type: string }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
 
     Reward:
       type: object

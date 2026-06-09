@@ -122,6 +122,31 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS events_game_type_idx   ON events (game, type);
 CREATE INDEX IF NOT EXISTS events_game_region_idx ON events (game, region);
 
+-- DLC / extensions : Car Pass, expansions, standalone ------------------------
+-- Référence des packs (sources propres : annonces forza.net + wiki Fandom).
+-- released_at NULL = pack annoncé mais pas encore sorti (expansions planifiées).
+-- Lien N-N vers cars via car_dlc ; permet de lister les voitures d'un pack.
+CREATE TABLE IF NOT EXISTS dlc_packs (
+    id            TEXT PRIMARY KEY,
+    game          TEXT NOT NULL,
+    name          TEXT NOT NULL,
+    kind          TEXT NOT NULL CHECK (kind IN ('car_pass','expansion','standalone')),
+    released_at   TIMESTAMPTZ,
+    description   TEXT,
+    source        TEXT,
+    last_verified TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS dlc_packs_game_idx ON dlc_packs (game);
+
+CREATE TABLE IF NOT EXISTS car_dlc (
+    car_id TEXT NOT NULL REFERENCES cars (id)      ON DELETE CASCADE,
+    dlc_id TEXT NOT NULL REFERENCES dlc_packs (id) ON DELETE CASCADE,
+    PRIMARY KEY (car_id, dlc_id)
+);
+-- Le PK couvre les lookups par car_id (préfixe) ; index dédié pour filtrer par
+-- pack (« voitures du DLC X »).
+CREATE INDEX IF NOT EXISTS car_dlc_dlc_idx ON car_dlc (dlc_id);
+
 -- Clés API (jamais la clé en clair : seul le hash sha256 est stocké) -----------
 CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,

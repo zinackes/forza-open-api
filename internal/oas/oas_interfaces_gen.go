@@ -17,6 +17,10 @@ type ListCarsRes interface {
 	listCarsRes()
 }
 
+type ListDlcPacksRes interface {
+	listDlcPacksRes()
+}
+
 type ListEventsRes interface {
 	listEventsRes()
 }

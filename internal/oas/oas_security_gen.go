@@ -38,6 +38,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	GetCurrentPlaylistOperation: []string{},
 	GetSeriesOperation:          []string{},
 	ListCarsOperation:           []string{},
+	ListDlcPacksOperation:       []string{},
 	ListEventsOperation:         []string{},
 	ListManufacturersOperation:  []string{},
 	ListPrStuntsOperation:       []string{},
