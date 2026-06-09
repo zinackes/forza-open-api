@@ -431,3 +431,73 @@ func TestListCarMasteryPerks(t *testing.T) {
 		t.Fatalf("voiture inconnue: len=%d, want 0", len(none))
 	}
 }
+
+// TestListJournalTiers vérifie le filtre par game/track, l'ordre (track puis
+// niveau croissant), le mapping (color NULL pour les stamps, reward_car_id) et
+// l'isolation entre jeux.
+func TestListJournalTiers(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
+		('gold-reward-car','fh6','Legend Island Car','Make','S2',900,'AWD'),
+		('fh5-car','fh5','FH5 Car','Make','A',800,'RWD')`)
+	// Insertion désordonnée (level 7 avant 1, stamp avant wristband) : l'ordre
+	// attendu vient du tri SQL (track, level).
+	mustExec(t, st, `INSERT INTO journal_tiers
+		(id, game, track, level, color, name, points_required, reward_car_id, unlocks_description, source, last_verified) VALUES
+		('fh6-wb-7','fh6','horizon_festival',7,'gold','Gold',5000,'gold-reward-car','Legend Island + The Goliath','fandom','2026-01-01T00:00:00Z'),
+		('fh6-wb-1','fh6','horizon_festival',1,'yellow','Yellow',0,NULL,NULL,'fandom',NULL),
+		('fh6-st-1','fh6','discover_japan',1,NULL,'Visitor',100,NULL,'Pousse les Barn Finds','fandom',NULL),
+		('fh5-acc-1','fh5','horizon_festival',1,'yellow','Yellow',0,NULL,NULL,'fandom',NULL)`)
+
+	// Sans filtre track : les 3 paliers fh6, triés (discover_japan avant
+	// horizon_festival ; au sein du wristband, niveau 1 avant 7).
+	all, err := st.ListJournalTiers(ctx, store.JournalFilter{Game: "fh6"})
+	if err != nil {
+		t.Fatalf("ListJournalTiers fh6: %v", err)
+	}
+	if len(all) != 3 {
+		t.Fatalf("fh6: len=%d, want 3 (fh5 exclu par le filtre game)", len(all))
+	}
+	wantOrder := []string{"fh6-st-1", "fh6-wb-1", "fh6-wb-7"}
+	for i, id := range wantOrder {
+		if all[i].ID != id {
+			t.Errorf("ordre[%d] = %s, want %s", i, all[i].ID, id)
+		}
+	}
+	// Stamp : color NULL ; wristband Gold : color renseignée + reward_car_id.
+	st1 := all[0] // fh6-st-1
+	if st1.Color != nil {
+		t.Errorf("stamp color = %v, want nil", st1.Color)
+	}
+	wb7 := all[2] // fh6-wb-7
+	if wb7.Color == nil || *wb7.Color != "gold" {
+		t.Errorf("wristband Gold color = %v, want gold", wb7.Color)
+	}
+	if wb7.RewardCarID == nil || *wb7.RewardCarID != "gold-reward-car" {
+		t.Errorf("wristband Gold reward_car_id = %v, want gold-reward-car", wb7.RewardCarID)
+	}
+	if wb7.PointsRequired == nil || *wb7.PointsRequired != 5000 {
+		t.Errorf("wristband Gold points_required = %v, want 5000", wb7.PointsRequired)
+	}
+
+	// Filtre par track : seuls les wristbands fh6.
+	track := "horizon_festival"
+	wb, err := st.ListJournalTiers(ctx, store.JournalFilter{Game: "fh6", Track: &track})
+	if err != nil {
+		t.Fatalf("ListJournalTiers track: %v", err)
+	}
+	if len(wb) != 2 || wb[0].ID != "fh6-wb-1" || wb[1].ID != "fh6-wb-7" {
+		t.Fatalf("filtre track = %v, want [fh6-wb-1, fh6-wb-7]", wb)
+	}
+
+	// Jeu sans paliers sourcés → vide (pas d'erreur).
+	none, err := st.ListJournalTiers(ctx, store.JournalFilter{Game: "ghost"})
+	if err != nil {
+		t.Fatalf("ListJournalTiers inconnu: %v", err)
+	}
+	if len(none) != 0 {
+		t.Fatalf("jeu inconnu: len=%d, want 0", len(none))
+	}
+}

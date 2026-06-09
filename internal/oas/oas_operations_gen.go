@@ -15,6 +15,7 @@ const (
 	ListCarsOperation           OperationName = "ListCars"
 	ListDlcPacksOperation       OperationName = "ListDlcPacks"
 	ListEventsOperation         OperationName = "ListEvents"
+	ListJournalTiersOperation   OperationName = "ListJournalTiers"
 	ListManufacturersOperation  OperationName = "ListManufacturers"
 	ListPrStuntsOperation       OperationName = "ListPrStunts"
 	ListSeriesOperation         OperationName = "ListSeries"

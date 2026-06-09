@@ -1578,6 +1578,265 @@ type GetSeriesUnauthorized Error
 
 func (*GetSeriesUnauthorized) getSeriesRes() {}
 
+// Palier du Collection Journal FH6 : un niveau (1-7) d'une piste (horizon_festival = wristbands
+// colorés Yellow → Gold ; discover_japan = stamps Visitor → Master Explorer). Atteint à
+// pointsRequired points de collection. Peut débloquer une voiture (rewardCarId) et/ou du contenu
+// (unlocksDescription : Legend Island + The Goliath, poussée des Barn Finds…). Remplace les
+// Accolades de FH5. Champs non sourcés → omis.
+// Ref: #/components/schemas/JournalTier
+type JournalTier struct {
+	ID    string       `json:"id"`
+	Game  Game         `json:"game"`
+	Track JournalTrack `json:"track"`
+	// Niveau du palier dans la piste (1-7).
+	Level int                 `json:"level"`
+	Color OptJournalTierColor `json:"color"`
+	// Nom du palier (couleur du wristband ou rang de stamp, ex. "Gold", "Master Explorer").
+	Name string `json:"name"`
+	// Points de collection requis pour atteindre le palier.
+	PointsRequired OptInt `json:"pointsRequired"`
+	// Voiture débloquée par ce palier (réf. /v1/cars). Absent si le palier ne donne pas de voiture.
+	RewardCarId OptString `json:"rewardCarId"`
+	// Contenu débloqué par le palier (ex. "Legend Island + The Goliath", poussée des Barn Finds).
+	// Absent si non sourcé.
+	UnlocksDescription OptString `json:"unlocksDescription"`
+	// Source propre de la donnée.
+	Source       OptString   `json:"source"`
+	LastVerified OptDateTime `json:"lastVerified"`
+}
+
+// GetID returns the value of ID.
+func (s *JournalTier) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *JournalTier) GetGame() Game {
+	return s.Game
+}
+
+// GetTrack returns the value of Track.
+func (s *JournalTier) GetTrack() JournalTrack {
+	return s.Track
+}
+
+// GetLevel returns the value of Level.
+func (s *JournalTier) GetLevel() int {
+	return s.Level
+}
+
+// GetColor returns the value of Color.
+func (s *JournalTier) GetColor() OptJournalTierColor {
+	return s.Color
+}
+
+// GetName returns the value of Name.
+func (s *JournalTier) GetName() string {
+	return s.Name
+}
+
+// GetPointsRequired returns the value of PointsRequired.
+func (s *JournalTier) GetPointsRequired() OptInt {
+	return s.PointsRequired
+}
+
+// GetRewardCarId returns the value of RewardCarId.
+func (s *JournalTier) GetRewardCarId() OptString {
+	return s.RewardCarId
+}
+
+// GetUnlocksDescription returns the value of UnlocksDescription.
+func (s *JournalTier) GetUnlocksDescription() OptString {
+	return s.UnlocksDescription
+}
+
+// GetSource returns the value of Source.
+func (s *JournalTier) GetSource() OptString {
+	return s.Source
+}
+
+// GetLastVerified returns the value of LastVerified.
+func (s *JournalTier) GetLastVerified() OptDateTime {
+	return s.LastVerified
+}
+
+// SetID sets the value of ID.
+func (s *JournalTier) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *JournalTier) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetTrack sets the value of Track.
+func (s *JournalTier) SetTrack(val JournalTrack) {
+	s.Track = val
+}
+
+// SetLevel sets the value of Level.
+func (s *JournalTier) SetLevel(val int) {
+	s.Level = val
+}
+
+// SetColor sets the value of Color.
+func (s *JournalTier) SetColor(val OptJournalTierColor) {
+	s.Color = val
+}
+
+// SetName sets the value of Name.
+func (s *JournalTier) SetName(val string) {
+	s.Name = val
+}
+
+// SetPointsRequired sets the value of PointsRequired.
+func (s *JournalTier) SetPointsRequired(val OptInt) {
+	s.PointsRequired = val
+}
+
+// SetRewardCarId sets the value of RewardCarId.
+func (s *JournalTier) SetRewardCarId(val OptString) {
+	s.RewardCarId = val
+}
+
+// SetUnlocksDescription sets the value of UnlocksDescription.
+func (s *JournalTier) SetUnlocksDescription(val OptString) {
+	s.UnlocksDescription = val
+}
+
+// SetSource sets the value of Source.
+func (s *JournalTier) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetLastVerified sets the value of LastVerified.
+func (s *JournalTier) SetLastVerified(val OptDateTime) {
+	s.LastVerified = val
+}
+
+// Couleur du wristband (track horizon_festival : Yellow → Gold sur 7 niveaux). Absente pour les
+// stamps Discover Japan.
+// Ref: #/components/schemas/JournalTierColor
+type JournalTierColor string
+
+const (
+	JournalTierColorYellow JournalTierColor = "yellow"
+	JournalTierColorGreen  JournalTierColor = "green"
+	JournalTierColorBlue   JournalTierColor = "blue"
+	JournalTierColorPink   JournalTierColor = "pink"
+	JournalTierColorOrange JournalTierColor = "orange"
+	JournalTierColorPurple JournalTierColor = "purple"
+	JournalTierColorGold   JournalTierColor = "gold"
+)
+
+// AllValues returns all JournalTierColor values.
+func (JournalTierColor) AllValues() []JournalTierColor {
+	return []JournalTierColor{
+		JournalTierColorYellow,
+		JournalTierColorGreen,
+		JournalTierColorBlue,
+		JournalTierColorPink,
+		JournalTierColorOrange,
+		JournalTierColorPurple,
+		JournalTierColorGold,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s JournalTierColor) MarshalText() ([]byte, error) {
+	switch s {
+	case JournalTierColorYellow:
+		return []byte(s), nil
+	case JournalTierColorGreen:
+		return []byte(s), nil
+	case JournalTierColorBlue:
+		return []byte(s), nil
+	case JournalTierColorPink:
+		return []byte(s), nil
+	case JournalTierColorOrange:
+		return []byte(s), nil
+	case JournalTierColorPurple:
+		return []byte(s), nil
+	case JournalTierColorGold:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *JournalTierColor) UnmarshalText(data []byte) error {
+	switch JournalTierColor(data) {
+	case JournalTierColorYellow:
+		*s = JournalTierColorYellow
+		return nil
+	case JournalTierColorGreen:
+		*s = JournalTierColorGreen
+		return nil
+	case JournalTierColorBlue:
+		*s = JournalTierColorBlue
+		return nil
+	case JournalTierColorPink:
+		*s = JournalTierColorPink
+		return nil
+	case JournalTierColorOrange:
+		*s = JournalTierColorOrange
+		return nil
+	case JournalTierColorPurple:
+		*s = JournalTierColorPurple
+		return nil
+	case JournalTierColorGold:
+		*s = JournalTierColorGold
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Piste de progression du Collection Journal.
+// Ref: #/components/schemas/JournalTrack
+type JournalTrack string
+
+const (
+	JournalTrackHorizonFestival JournalTrack = "horizon_festival"
+	JournalTrackDiscoverJapan   JournalTrack = "discover_japan"
+)
+
+// AllValues returns all JournalTrack values.
+func (JournalTrack) AllValues() []JournalTrack {
+	return []JournalTrack{
+		JournalTrackHorizonFestival,
+		JournalTrackDiscoverJapan,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s JournalTrack) MarshalText() ([]byte, error) {
+	switch s {
+	case JournalTrackHorizonFestival:
+		return []byte(s), nil
+	case JournalTrackDiscoverJapan:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *JournalTrack) UnmarshalText(data []byte) error {
+	switch JournalTrack(data) {
+	case JournalTrackHorizonFestival:
+		*s = JournalTrackHorizonFestival
+		return nil
+	case JournalTrackDiscoverJapan:
+		*s = JournalTrackDiscoverJapan
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type ListBarnFindsBadRequest Error
 
 func (*ListBarnFindsBadRequest) listBarnFindsRes() {}
@@ -1641,6 +1900,22 @@ func (*ListEventsTooManyRequests) listEventsRes() {}
 type ListEventsUnauthorized Error
 
 func (*ListEventsUnauthorized) listEventsRes() {}
+
+type ListJournalTiersBadRequest Error
+
+func (*ListJournalTiersBadRequest) listJournalTiersRes() {}
+
+type ListJournalTiersOKApplicationJSON []JournalTier
+
+func (*ListJournalTiersOKApplicationJSON) listJournalTiersRes() {}
+
+type ListJournalTiersTooManyRequests Error
+
+func (*ListJournalTiersTooManyRequests) listJournalTiersRes() {}
+
+type ListJournalTiersUnauthorized Error
+
+func (*ListJournalTiersUnauthorized) listJournalTiersRes() {}
 
 type ListManufacturersBadRequest Error
 
@@ -2167,6 +2442,98 @@ func (o OptInt64) Get() (v int64, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt64) Or(d int64) int64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptJournalTierColor returns new OptJournalTierColor with value set to v.
+func NewOptJournalTierColor(v JournalTierColor) OptJournalTierColor {
+	return OptJournalTierColor{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptJournalTierColor is optional JournalTierColor.
+type OptJournalTierColor struct {
+	Value JournalTierColor
+	Set   bool
+}
+
+// IsSet returns true if OptJournalTierColor was set.
+func (o OptJournalTierColor) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptJournalTierColor) Reset() {
+	var v JournalTierColor
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptJournalTierColor) SetTo(v JournalTierColor) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptJournalTierColor) Get() (v JournalTierColor, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptJournalTierColor) Or(d JournalTierColor) JournalTierColor {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptJournalTrack returns new OptJournalTrack with value set to v.
+func NewOptJournalTrack(v JournalTrack) OptJournalTrack {
+	return OptJournalTrack{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptJournalTrack is optional JournalTrack.
+type OptJournalTrack struct {
+	Value JournalTrack
+	Set   bool
+}
+
+// IsSet returns true if OptJournalTrack was set.
+func (o OptJournalTrack) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptJournalTrack) Reset() {
+	var v JournalTrack
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptJournalTrack) SetTo(v JournalTrack) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptJournalTrack) Get() (v JournalTrack, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptJournalTrack) Or(d JournalTrack) JournalTrack {
 	if v, ok := o.Get(); ok {
 		return v
 	}

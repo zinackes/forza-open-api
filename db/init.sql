@@ -249,6 +249,32 @@ CREATE TABLE IF NOT EXISTS car_mastery_perks (
 CREATE INDEX IF NOT EXISTS car_mastery_perks_car_idx          ON car_mastery_perks (car_id);
 CREATE INDEX IF NOT EXISTS car_mastery_perks_unlocked_car_idx ON car_mastery_perks (unlocked_car_id);
 
+-- Collection Journal FH6 : paliers de progression (remplace les Accolades FH5) -
+-- 2 pistes (track) : horizon_festival = 7 wristbands (Yellow → Gold ; Gold
+-- débloque Legend Island + The Goliath), discover_japan = 7 stamps (Visitor →
+-- Master Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables
+-- que via reward_car_id. Sources propres (wiki Fandom + forza.net). color ne
+-- s'applique qu'aux wristbands (NULL pour les stamps). Champs non sourcés → NULL.
+CREATE TABLE IF NOT EXISTS journal_tiers (
+    id                  TEXT PRIMARY KEY,
+    game                TEXT NOT NULL,
+    track               TEXT NOT NULL CHECK (track IN ('horizon_festival','discover_japan')),
+    level               INT  NOT NULL CHECK (level BETWEEN 1 AND 7),
+    color               TEXT CHECK (color IN ('yellow','green','blue','pink','orange','purple','gold')),
+    name                TEXT NOT NULL,
+    points_required     INT,
+    reward_car_id       TEXT REFERENCES cars (id) ON DELETE SET NULL,
+    unlocks_description TEXT,
+    source              TEXT,
+    last_verified       TIMESTAMPTZ
+);
+-- Un seul palier par (jeu, piste, niveau) : garde-fou d'intégrité + upsert
+-- idempotent sur la clé naturelle. Couvre aussi le filtre game (+ track) en préfixe.
+CREATE UNIQUE INDEX IF NOT EXISTS journal_tiers_game_track_level_key
+    ON journal_tiers (game, track, level);
+-- Lookup inverse « quel palier débloque la voiture X ».
+CREATE INDEX IF NOT EXISTS journal_tiers_reward_car_idx ON journal_tiers (reward_car_id);
+
 -- Clés API (jamais la clé en clair : seul le hash sha256 est stocké) -----------
 CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,

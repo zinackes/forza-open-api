@@ -40,6 +40,8 @@ tags:
     description: Catalogue des pièces d'upgrade et upgrades disponibles par voiture.
   - name: Mastery
     description: Arbres Car Mastery (grille de perks par voiture).
+  - name: Journal
+    description: Collection Journal FH6 (Wristbands Horizon Festival + Stamps Discover Japan ; remplace les Accolades de FH5).
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -432,6 +434,37 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/UpgradePartList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/journal:
+    get:
+      operationId: listJournalTiers
+      summary: Liste les paliers du Collection Journal (wristbands + stamps).
+      description: >
+        Paliers de progression du Collection Journal FH6 : 7 Wristbands
+        (track horizon_festival, Yellow → Gold ; Gold débloque Legend Island +
+        The Goliath) et 7 Stamps (track discover_japan, Visitor → Master
+        Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que
+        via les rewardCarId de ces paliers. Remplace les Accolades de FH5.
+        Ensemble borné (≤ 14 par jeu) → pas de pagination.
+      tags: [Journal]
+      x-ogen-operation-group: Journal
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: track
+          in: query
+          description: Filtre par piste de progression.
+          schema: { $ref: '#/components/schemas/JournalTrack' }
+      responses:
+        '200':
+          description: Les paliers du Collection Journal du jeu (par piste, puis niveau croissant).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/JournalTier' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -887,6 +920,55 @@ components:
           description: >
             Voiture cachée débloquée par cette perk (effectType car_unlock ;
             réf. /v1/cars). Absent sinon.
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    JournalTrack:
+      type: string
+      description: Piste de progression du Collection Journal.
+      enum: [horizon_festival, discover_japan]
+
+    JournalTierColor:
+      type: string
+      description: >
+        Couleur du wristband (track horizon_festival : Yellow → Gold sur 7
+        niveaux). Absente pour les stamps Discover Japan.
+      enum: [yellow, green, blue, pink, orange, purple, gold]
+
+    JournalTier:
+      type: object
+      description: >
+        Palier du Collection Journal FH6 : un niveau (1-7) d'une piste
+        (horizon_festival = wristbands colorés Yellow → Gold ; discover_japan =
+        stamps Visitor → Master Explorer). Atteint à pointsRequired points de
+        collection. Peut débloquer une voiture (rewardCarId) et/ou du contenu
+        (unlocksDescription : Legend Island + The Goliath, poussée des Barn
+        Finds…). Remplace les Accolades de FH5. Champs non sourcés → omis.
+      required: [id, game, track, level, name]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        track: { $ref: '#/components/schemas/JournalTrack' }
+        level:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: Niveau du palier dans la piste (1-7).
+        color: { $ref: '#/components/schemas/JournalTierColor' }
+        name:
+          type: string
+          description: Nom du palier (couleur du wristband ou rang de stamp, ex. "Gold", "Master Explorer").
+        pointsRequired:
+          type: integer
+          description: Points de collection requis pour atteindre le palier.
+        rewardCarId:
+          type: string
+          description: Voiture débloquée par ce palier (réf. /v1/cars). Absent si le palier ne donne pas de voiture.
+        unlocksDescription:
+          type: string
+          description: >
+            Contenu débloqué par le palier (ex. "Legend Island + The Goliath",
+            poussée des Barn Finds). Absent si non sourcé.
         source: { type: string, description: Source propre de la donnée. }
         lastVerified: { type: string, format: date-time }
 

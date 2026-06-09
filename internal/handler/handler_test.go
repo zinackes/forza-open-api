@@ -104,6 +104,35 @@ func TestGeoEndpointsRequireGame(t *testing.T) {
 	}
 }
 
+// TestJournalEndpointValidation vérifie que /v1/journal applique la validation du
+// contrat AVANT le handler : game requis (multi-jeux) et track hors enum rejeté
+// en 400. Avec un store nil, un 400 prouve qu'on n'a jamais touché la DB.
+func TestJournalEndpointValidation(t *testing.T) {
+	cases := []struct {
+		name   string
+		target string
+		want   int
+	}{
+		{"journal sans game", "/v1/journal", http.StatusBadRequest},
+		{"journal track invalide", "/v1/journal?game=fh6&track=nope", http.StatusBadRequest},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, tc.target, nil)
+
+			newServer(t).ServeHTTP(rec, req)
+
+			if rec.Code != tc.want {
+				t.Fatalf("status = %d, want %d\nbody: %s", rec.Code, tc.want, rec.Body.String())
+			}
+			if ct := rec.Header().Get("Content-Type"); ct != "application/problem+json" {
+				t.Errorf("Content-Type = %q, want application/problem+json", ct)
+			}
+		})
+	}
+}
+
 // TestUpgradeEndpointsValidation vérifie que la validation du contrat s'applique
 // AVANT le handler. /v1/upgrade-parts exige game (multi-jeux) ; une catégorie hors
 // enum est rejetée en 400 sur les deux routes. /v1/cars/{id}/upgrades ne prend pas

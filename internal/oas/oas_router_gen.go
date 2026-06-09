@@ -35,25 +35,28 @@ var (
 	rn15AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
+	rn16AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
 	rn5AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn18AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn8AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn17AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn19AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn21AllowedHeaders = map[string]string{
+	rn8AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn18AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn20AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn22AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn23AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 )
@@ -315,6 +318,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
+			case 'j': // Prefix: "journal"
+
+				if l := len("journal"); len(elem) >= l && elem[0:l] == "journal" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleListJournalTiersRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET",
+							allowedHeaders: rn15AllowedHeaders,
+							acceptPost:     "",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+
 			case 'm': // Prefix: "manufacturers"
 
 				if l := len("manufacturers"); len(elem) >= l && elem[0:l] == "manufacturers" {
@@ -331,7 +359,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn15AllowedHeaders,
+							allowedHeaders: rn16AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -404,7 +432,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn18AllowedHeaders,
+									allowedHeaders: rn19AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -469,7 +497,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn17AllowedHeaders,
+								allowedHeaders: rn18AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -508,7 +536,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn19AllowedHeaders,
+								allowedHeaders: rn20AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -533,7 +561,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn21AllowedHeaders,
+								allowedHeaders: rn22AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -560,7 +588,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn22AllowedHeaders,
+							allowedHeaders: rn23AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -861,6 +889,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						r.operationID = "listEvents"
 						r.operationGroup = "Events"
 						r.pathPattern = "/v1/events"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'j': // Prefix: "journal"
+
+				if l := len("journal"); len(elem) >= l && elem[0:l] == "journal" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = ListJournalTiersOperation
+						r.summary = "Liste les paliers du Collection Journal (wristbands + stamps)."
+						r.operationID = "listJournalTiers"
+						r.operationGroup = "Journal"
+						r.pathPattern = "/v1/journal"
 						r.args = args
 						r.count = 0
 						return r, true

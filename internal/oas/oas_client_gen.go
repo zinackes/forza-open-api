@@ -32,6 +32,7 @@ type Invoker interface {
 	CarsInvoker
 	DLCInvoker
 	EventsInvoker
+	JournalInvoker
 	ManufacturersInvoker
 	MasteryInvoker
 	PRStuntsInvoker
@@ -93,6 +94,22 @@ type EventsInvoker interface {
 	//
 	// GET /v1/events
 	ListEvents(ctx context.Context, params ListEventsParams) (ListEventsRes, error)
+}
+
+// JournalInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Journal
+type JournalInvoker interface {
+	// ListJournalTiers invokes listJournalTiers operation.
+	//
+	// Paliers de progression du Collection Journal FH6 : 7 Wristbands (track horizon_festival, Yellow
+	// → Gold ; Gold débloque Legend Island + The Goliath) et 7 Stamps (track discover_japan, Visitor
+	// → Master Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que via les
+	// rewardCarId de ces paliers. Remplace les Accolades de FH5. Ensemble borné (≤ 14 par jeu) →
+	// pas de pagination.
+	//
+	// GET /v1/journal
+	ListJournalTiers(ctx context.Context, params ListJournalTiersParams) (ListJournalTiersRes, error)
 }
 
 // ManufacturersInvoker invokes operations described by OpenAPI v3 specification.
@@ -1710,6 +1727,153 @@ func (c *Client) sendListEvents(ctx context.Context, params ListEventsParams) (r
 
 	stage = "DecodeResponse"
 	result, err := decodeListEventsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListJournalTiers invokes listJournalTiers operation.
+//
+// Paliers de progression du Collection Journal FH6 : 7 Wristbands (track horizon_festival, Yellow
+// → Gold ; Gold débloque Legend Island + The Goliath) et 7 Stamps (track discover_japan, Visitor
+// → Master Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que via les
+// rewardCarId de ces paliers. Remplace les Accolades de FH5. Ensemble borné (≤ 14 par jeu) →
+// pas de pagination.
+//
+// GET /v1/journal
+func (c *Client) ListJournalTiers(ctx context.Context, params ListJournalTiersParams) (ListJournalTiersRes, error) {
+	res, err := c.sendListJournalTiers(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListJournalTiers(ctx context.Context, params ListJournalTiersParams) (res ListJournalTiersRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listJournalTiers"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/journal"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListJournalTiersOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/journal"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "track" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "track",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Track.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListJournalTiersOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListJournalTiersResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

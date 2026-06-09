@@ -1961,6 +1961,139 @@ func decodeListEventsParams(args [0]string, argsEscaped bool, r *http.Request) (
 	return params, nil
 }
 
+// ListJournalTiersParams is parameters of listJournalTiers operation.
+type ListJournalTiersParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par piste de progression.
+	Track OptJournalTrack `json:",omitempty,omitzero"`
+}
+
+func unpackListJournalTiersParams(packed middleware.Parameters) (params ListJournalTiersParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "track",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Track = v.(OptJournalTrack)
+		}
+	}
+	return params
+}
+
+func decodeListJournalTiersParams(args [0]string, argsEscaped bool, r *http.Request) (params ListJournalTiersParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: track.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "track",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTrackVal JournalTrack
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTrackVal = JournalTrack(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Track.SetTo(paramsDotTrackVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Track.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "track",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ListManufacturersParams is parameters of listManufacturers operation.
 type ListManufacturersParams struct {
 	// Jeu cible (obligatoire sur les ressources multi-jeux).

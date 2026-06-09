@@ -99,6 +99,19 @@ func (UnimplementedHandler) ListEvents(ctx context.Context, params ListEventsPar
 	return r, ht.ErrNotImplemented
 }
 
+// ListJournalTiers implements listJournalTiers operation.
+//
+// Paliers de progression du Collection Journal FH6 : 7 Wristbands (track horizon_festival, Yellow
+// → Gold ; Gold débloque Legend Island + The Goliath) et 7 Stamps (track discover_japan, Visitor
+// → Master Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que via les
+// rewardCarId de ces paliers. Remplace les Accolades de FH5. Ensemble borné (≤ 14 par jeu) →
+// pas de pagination.
+//
+// GET /v1/journal
+func (UnimplementedHandler) ListJournalTiers(ctx context.Context, params ListJournalTiersParams) (r ListJournalTiersRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListManufacturers implements listManufacturers operation.
 //
 // Liste les constructeurs.

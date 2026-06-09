@@ -37,6 +37,10 @@ type ListEventsRes interface {
 	listEventsRes()
 }
 
+type ListJournalTiersRes interface {
+	listJournalTiersRes()
+}
+
 type ListManufacturersRes interface {
 	listManufacturersRes()
 }

@@ -12,6 +12,7 @@ type Handler interface {
 	CarsHandler
 	DLCHandler
 	EventsHandler
+	JournalHandler
 	ManufacturersHandler
 	MasteryHandler
 	PRStuntsHandler
@@ -73,6 +74,22 @@ type EventsHandler interface {
 	//
 	// GET /v1/events
 	ListEvents(ctx context.Context, params ListEventsParams) (ListEventsRes, error)
+}
+
+// JournalHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Journal
+type JournalHandler interface {
+	// ListJournalTiers implements listJournalTiers operation.
+	//
+	// Paliers de progression du Collection Journal FH6 : 7 Wristbands (track horizon_festival, Yellow
+	// → Gold ; Gold débloque Legend Island + The Goliath) et 7 Stamps (track discover_japan, Visitor
+	// → Master Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que via les
+	// rewardCarId de ces paliers. Remplace les Accolades de FH5. Ensemble borné (≤ 14 par jeu) →
+	// pas de pagination.
+	//
+	// GET /v1/journal
+	ListJournalTiers(ctx context.Context, params ListJournalTiersParams) (ListJournalTiersRes, error)
 }
 
 // ManufacturersHandler handles operations described by OpenAPI v3 specification.
