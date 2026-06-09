@@ -34,6 +34,20 @@ id, car_id (FK → cars), game, share_code, surface (road/dirt/cross — tunes),
 
 id, api_key, game, car_ordinal, raw (JSONB agrégé), created_at. Dérivées → **perfs** (0-100, vmax, freinage, lap) par voiture/tune ; **leaderboards** en Redis (sorted sets), PG = historique autoritaire.
 
+## tracks (carte — Phase 8/9)
+
+id (PK), game, name, type (circuit/road/dirt/cross/street/touge/horizon_rush), region, length_m (INT), surface_mix, start_lat/start_lng (NUMERIC), source, last_verified, created_at, updated_at. Index : (game,type), (game,region).
+
+## pr_stunts (carte)
+
+id (PK), game, type (speed_trap/speed_zone/drift_zone/danger_sign), name, region, lat/lng (NUMERIC), target_score (INT, nullable). Index : (game,type), (game,region).
+
+## events (carte)
+
+id (PK), game, name, type (circuit/road/dirt/cross/street/touge_battle/horizon_rush/drag_meet/time_attack), region, start_lat/lng, end_lat/lng (NUMERIC), route_geojson (JSONB, nullable), car_class_restriction, length_m (INT). Index : (game,type), (game,region).
+
+Ingestion : datasets communautaires / wiki Fandom via `cmd/seed` (`internal/ingest/tracks`), upsert idempotent. Jamais le jeu. Coords/champs absents → NULL.
+
 ## Conventions
 
 Types stricts, FK ON DELETE CASCADE pour rewards/challenges. Pas de donnée inventée (NULL si absent).

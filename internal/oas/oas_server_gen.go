@@ -9,8 +9,12 @@ import (
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
 	CarsHandler
+	DLCHandler
+	EventsHandler
 	ManufacturersHandler
+	PRStuntsHandler
 	PlaylistHandler
+	TracksHandler
 }
 
 // CarsHandler handles operations described by OpenAPI v3 specification.
@@ -31,6 +35,30 @@ type CarsHandler interface {
 	ListCars(ctx context.Context, params ListCarsParams) (ListCarsRes, error)
 }
 
+// DLCHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: DLC
+type DLCHandler interface {
+	// ListDlcPacks implements listDlcPacks operation.
+	//
+	// Liste les packs DLC / extensions d'un jeu.
+	//
+	// GET /v1/dlc-packs
+	ListDlcPacks(ctx context.Context, params ListDlcPacksParams) (ListDlcPacksRes, error)
+}
+
+// EventsHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Events
+type EventsHandler interface {
+	// ListEvents implements listEvents operation.
+	//
+	// Liste les événements / courses.
+	//
+	// GET /v1/events
+	ListEvents(ctx context.Context, params ListEventsParams) (ListEventsRes, error)
+}
+
 // ManufacturersHandler handles operations described by OpenAPI v3 specification.
 //
 // x-ogen-operation-group: Manufacturers
@@ -41,6 +69,18 @@ type ManufacturersHandler interface {
 	//
 	// GET /v1/manufacturers
 	ListManufacturers(ctx context.Context, params ListManufacturersParams) (ListManufacturersRes, error)
+}
+
+// PRStuntsHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: PRStunts
+type PRStuntsHandler interface {
+	// ListPrStunts implements listPrStunts operation.
+	//
+	// Liste les PR Stunts (speed trap, speed zone, drift zone, danger sign).
+	//
+	// GET /v1/pr-stunts
+	ListPrStunts(ctx context.Context, params ListPrStuntsParams) (ListPrStuntsRes, error)
 }
 
 // PlaylistHandler handles operations described by OpenAPI v3 specification.
@@ -65,6 +105,18 @@ type PlaylistHandler interface {
 	//
 	// GET /v1/playlist/series
 	ListSeries(ctx context.Context, params ListSeriesParams) (ListSeriesRes, error)
+}
+
+// TracksHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Tracks
+type TracksHandler interface {
+	// ListTracks implements listTracks operation.
+	//
+	// Liste les tracés / circuits indexés.
+	//
+	// GET /v1/tracks
+	ListTracks(ctx context.Context, params ListTracksParams) (ListTracksRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

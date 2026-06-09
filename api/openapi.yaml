@@ -24,6 +24,14 @@ tags:
     description: Constructeurs automobiles.
   - name: Playlist
     description: Festival Playlist (séries saisonnières, récompenses, défis).
+  - name: Tracks
+    description: Tracés / circuits indexés (fondation des leaderboards et de la carte).
+  - name: PRStunts
+    description: PR Stunts (speed trap, speed zone, drift zone, danger sign).
+  - name: Events
+    description: Événements / courses (routes fixes, circuits, drag meets…).
+  - name: DLC
+    description: Packs DLC / extensions (Car Pass, expansions, standalone).
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -62,6 +70,10 @@ paths:
         - name: q
           in: query
           description: Recherche plein texte sur name/model.
+          schema: { type: string }
+        - name: dlc
+          in: query
+          description: Filtre par pack DLC (identifiant d'un dlc_packs) ; liste les voitures du pack.
           schema: { type: string }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
@@ -113,6 +125,26 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Manufacturer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/dlc-packs:
+    get:
+      operationId: listDlcPacks
+      summary: Liste les packs DLC / extensions d'un jeu.
+      tags: [DLC]
+      x-ogen-operation-group: DLC
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Les packs DLC connus pour le jeu (plus récents d'abord).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DlcPack' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -176,6 +208,90 @@ paths:
               schema: { $ref: '#/components/schemas/Series' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/tracks:
+    get:
+      operationId: listTracks
+      summary: Liste les tracés / circuits indexés.
+      tags: [Tracks]
+      x-ogen-operation-group: Tracks
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: type
+          in: query
+          description: Filtre par catégorie de tracé.
+          schema: { $ref: '#/components/schemas/TrackType' }
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de tracés.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrackList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/pr-stunts:
+    get:
+      operationId: listPrStunts
+      summary: Liste les PR Stunts (speed trap, speed zone, drift zone, danger sign).
+      tags: [PRStunts]
+      x-ogen-operation-group: PRStunts
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: type
+          in: query
+          description: Filtre par type de PR Stunt.
+          schema: { $ref: '#/components/schemas/PRStuntType' }
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de PR Stunts.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PRStuntList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/events:
+    get:
+      operationId: listEvents
+      summary: Liste les événements / courses.
+      tags: [Events]
+      x-ogen-operation-group: Events
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: type
+          in: query
+          description: Filtre par type d'événement.
+          schema: { $ref: '#/components/schemas/EventType' }
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page d'événements.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
 components:
@@ -292,6 +408,28 @@ components:
         name: { type: string }
         country: { type: string }
 
+    DlcKind:
+      type: string
+      description: Type de pack DLC.
+      enum: [car_pass, expansion, standalone]
+
+    DlcPack:
+      type: object
+      description: Pack DLC / extension (Car Pass, expansion, standalone).
+      required: [id, game, name, kind]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        kind: { $ref: '#/components/schemas/DlcKind' }
+        releasedAt:
+          type: string
+          format: date-time
+          description: Date de sortie. Absente si pack annoncé mais pas encore sorti.
+        description: { type: string }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
     Reward:
       type: object
       required: [id, atPercent, type, item]
@@ -331,6 +469,114 @@ components:
         challenges:
           type: array
           items: { $ref: '#/components/schemas/Challenge' }
+
+    Region:
+      type: string
+      description: >
+        Région de la carte (dépend du jeu ; FH6 = 7 régions / 74 districts).
+        Valeur libre : l'ensemble n'est pas figé au contrat. Absente → champ omis.
+
+    TrackType:
+      type: string
+      description: Catégorie de tracé.
+      enum: [circuit, road, dirt, cross, street, touge, horizon_rush]
+
+    Track:
+      type: object
+      description: Tracé indexé (fonde les leaderboards et la carte).
+      required: [id, game, name, type]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        type: { $ref: '#/components/schemas/TrackType' }
+        region: { $ref: '#/components/schemas/Region' }
+        lengthM: { type: integer, description: Longueur en mètres. }
+        surfaceMix: { type: string, description: Répartition des surfaces (texte libre). }
+        startLat: { type: number, format: double }
+        startLng: { type: number, format: double }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    TrackList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Track' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    PRStuntType:
+      type: string
+      description: Type de PR Stunt (épreuve de bord de route).
+      enum: [speed_trap, speed_zone, drift_zone, danger_sign]
+
+    PRStunt:
+      type: object
+      description: PR Stunt (speed trap, speed zone, drift zone, danger sign).
+      required: [id, game, type, name]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        type: { $ref: '#/components/schemas/PRStuntType' }
+        name: { type: string }
+        region: { $ref: '#/components/schemas/Region' }
+        lat: { type: number, format: double }
+        lng: { type: number, format: double }
+        targetScore: { type: integer, description: Score cible (3 étoiles) si connu. }
+
+    PRStuntList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PRStunt' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    EventType:
+      type: string
+      description: Type d'événement / course.
+      enum: [circuit, road, dirt, cross, street, touge_battle, horizon_rush, drag_meet, time_attack]
+
+    Event:
+      type: object
+      description: Événement / course (route fixe ou circuit).
+      required: [id, game, name, type]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        type: { $ref: '#/components/schemas/EventType' }
+        region: { $ref: '#/components/schemas/Region' }
+        startLat: { type: number, format: double }
+        startLng: { type: number, format: double }
+        endLat: { type: number, format: double }
+        endLng: { type: number, format: double }
+        routeGeojson:
+          type: object
+          additionalProperties: true
+          description: Tracé GeoJSON (LineString) si disponible.
+        carClassRestriction: { type: string }
+        lengthM: { type: integer }
+
+    EventList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Event' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
 
     Error:
       type: object

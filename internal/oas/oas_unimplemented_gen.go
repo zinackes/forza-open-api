@@ -49,6 +49,24 @@ func (UnimplementedHandler) ListCars(ctx context.Context, params ListCarsParams)
 	return r, ht.ErrNotImplemented
 }
 
+// ListDlcPacks implements listDlcPacks operation.
+//
+// Liste les packs DLC / extensions d'un jeu.
+//
+// GET /v1/dlc-packs
+func (UnimplementedHandler) ListDlcPacks(ctx context.Context, params ListDlcPacksParams) (r ListDlcPacksRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListEvents implements listEvents operation.
+//
+// Liste les événements / courses.
+//
+// GET /v1/events
+func (UnimplementedHandler) ListEvents(ctx context.Context, params ListEventsParams) (r ListEventsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListManufacturers implements listManufacturers operation.
 //
 // Liste les constructeurs.
@@ -58,11 +76,29 @@ func (UnimplementedHandler) ListManufacturers(ctx context.Context, params ListMa
 	return r, ht.ErrNotImplemented
 }
 
+// ListPrStunts implements listPrStunts operation.
+//
+// Liste les PR Stunts (speed trap, speed zone, drift zone, danger sign).
+//
+// GET /v1/pr-stunts
+func (UnimplementedHandler) ListPrStunts(ctx context.Context, params ListPrStuntsParams) (r ListPrStuntsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListSeries implements listSeries operation.
 //
 // Liste les séries de Festival Playlist.
 //
 // GET /v1/playlist/series
 func (UnimplementedHandler) ListSeries(ctx context.Context, params ListSeriesParams) (r ListSeriesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListTracks implements listTracks operation.
+//
+// Liste les tracés / circuits indexés.
+//
+// GET /v1/tracks
+func (UnimplementedHandler) ListTracks(ctx context.Context, params ListTracksParams) (r ListTracksRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

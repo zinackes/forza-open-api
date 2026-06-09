@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/go-faster/jx"
 )
 
 type ApiKeyAuth struct {
@@ -496,6 +497,151 @@ func (s *Challenge) SetExpiresAt(val OptDateTime) {
 	s.ExpiresAt = val
 }
 
+// Type de pack DLC.
+// Ref: #/components/schemas/DlcKind
+type DlcKind string
+
+const (
+	DlcKindCarPass    DlcKind = "car_pass"
+	DlcKindExpansion  DlcKind = "expansion"
+	DlcKindStandalone DlcKind = "standalone"
+)
+
+// AllValues returns all DlcKind values.
+func (DlcKind) AllValues() []DlcKind {
+	return []DlcKind{
+		DlcKindCarPass,
+		DlcKindExpansion,
+		DlcKindStandalone,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DlcKind) MarshalText() ([]byte, error) {
+	switch s {
+	case DlcKindCarPass:
+		return []byte(s), nil
+	case DlcKindExpansion:
+		return []byte(s), nil
+	case DlcKindStandalone:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DlcKind) UnmarshalText(data []byte) error {
+	switch DlcKind(data) {
+	case DlcKindCarPass:
+		*s = DlcKindCarPass
+		return nil
+	case DlcKindExpansion:
+		*s = DlcKindExpansion
+		return nil
+	case DlcKindStandalone:
+		*s = DlcKindStandalone
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Pack DLC / extension (Car Pass, expansion, standalone).
+// Ref: #/components/schemas/DlcPack
+type DlcPack struct {
+	ID   string  `json:"id"`
+	Game Game    `json:"game"`
+	Name string  `json:"name"`
+	Kind DlcKind `json:"kind"`
+	// Date de sortie. Absente si pack annoncé mais pas encore sorti.
+	ReleasedAt  OptDateTime `json:"releasedAt"`
+	Description OptString   `json:"description"`
+	// Source propre de la donnée.
+	Source       OptString   `json:"source"`
+	LastVerified OptDateTime `json:"lastVerified"`
+}
+
+// GetID returns the value of ID.
+func (s *DlcPack) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *DlcPack) GetGame() Game {
+	return s.Game
+}
+
+// GetName returns the value of Name.
+func (s *DlcPack) GetName() string {
+	return s.Name
+}
+
+// GetKind returns the value of Kind.
+func (s *DlcPack) GetKind() DlcKind {
+	return s.Kind
+}
+
+// GetReleasedAt returns the value of ReleasedAt.
+func (s *DlcPack) GetReleasedAt() OptDateTime {
+	return s.ReleasedAt
+}
+
+// GetDescription returns the value of Description.
+func (s *DlcPack) GetDescription() OptString {
+	return s.Description
+}
+
+// GetSource returns the value of Source.
+func (s *DlcPack) GetSource() OptString {
+	return s.Source
+}
+
+// GetLastVerified returns the value of LastVerified.
+func (s *DlcPack) GetLastVerified() OptDateTime {
+	return s.LastVerified
+}
+
+// SetID sets the value of ID.
+func (s *DlcPack) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *DlcPack) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetName sets the value of Name.
+func (s *DlcPack) SetName(val string) {
+	s.Name = val
+}
+
+// SetKind sets the value of Kind.
+func (s *DlcPack) SetKind(val DlcKind) {
+	s.Kind = val
+}
+
+// SetReleasedAt sets the value of ReleasedAt.
+func (s *DlcPack) SetReleasedAt(val OptDateTime) {
+	s.ReleasedAt = val
+}
+
+// SetDescription sets the value of Description.
+func (s *DlcPack) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetSource sets the value of Source.
+func (s *DlcPack) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetLastVerified sets the value of LastVerified.
+func (s *DlcPack) SetLastVerified(val OptDateTime) {
+	s.LastVerified = val
+}
+
 // Transmission.
 // Ref: #/components/schemas/Drivetrain
 type Drivetrain string
@@ -606,6 +752,298 @@ func (s *Error) SetInstance(val OptURI) {
 	s.Instance = val
 }
 
+// Événement / course (route fixe ou circuit).
+// Ref: #/components/schemas/Event
+type Event struct {
+	ID       string     `json:"id"`
+	Game     Game       `json:"game"`
+	Name     string     `json:"name"`
+	Type     EventType  `json:"type"`
+	Region   OptRegion  `json:"region"`
+	StartLat OptFloat64 `json:"startLat"`
+	StartLng OptFloat64 `json:"startLng"`
+	EndLat   OptFloat64 `json:"endLat"`
+	EndLng   OptFloat64 `json:"endLng"`
+	// Tracé GeoJSON (LineString) si disponible.
+	RouteGeojson        OptEventRouteGeojson `json:"routeGeojson"`
+	CarClassRestriction OptString            `json:"carClassRestriction"`
+	LengthM             OptInt               `json:"lengthM"`
+}
+
+// GetID returns the value of ID.
+func (s *Event) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *Event) GetGame() Game {
+	return s.Game
+}
+
+// GetName returns the value of Name.
+func (s *Event) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *Event) GetType() EventType {
+	return s.Type
+}
+
+// GetRegion returns the value of Region.
+func (s *Event) GetRegion() OptRegion {
+	return s.Region
+}
+
+// GetStartLat returns the value of StartLat.
+func (s *Event) GetStartLat() OptFloat64 {
+	return s.StartLat
+}
+
+// GetStartLng returns the value of StartLng.
+func (s *Event) GetStartLng() OptFloat64 {
+	return s.StartLng
+}
+
+// GetEndLat returns the value of EndLat.
+func (s *Event) GetEndLat() OptFloat64 {
+	return s.EndLat
+}
+
+// GetEndLng returns the value of EndLng.
+func (s *Event) GetEndLng() OptFloat64 {
+	return s.EndLng
+}
+
+// GetRouteGeojson returns the value of RouteGeojson.
+func (s *Event) GetRouteGeojson() OptEventRouteGeojson {
+	return s.RouteGeojson
+}
+
+// GetCarClassRestriction returns the value of CarClassRestriction.
+func (s *Event) GetCarClassRestriction() OptString {
+	return s.CarClassRestriction
+}
+
+// GetLengthM returns the value of LengthM.
+func (s *Event) GetLengthM() OptInt {
+	return s.LengthM
+}
+
+// SetID sets the value of ID.
+func (s *Event) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *Event) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetName sets the value of Name.
+func (s *Event) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *Event) SetType(val EventType) {
+	s.Type = val
+}
+
+// SetRegion sets the value of Region.
+func (s *Event) SetRegion(val OptRegion) {
+	s.Region = val
+}
+
+// SetStartLat sets the value of StartLat.
+func (s *Event) SetStartLat(val OptFloat64) {
+	s.StartLat = val
+}
+
+// SetStartLng sets the value of StartLng.
+func (s *Event) SetStartLng(val OptFloat64) {
+	s.StartLng = val
+}
+
+// SetEndLat sets the value of EndLat.
+func (s *Event) SetEndLat(val OptFloat64) {
+	s.EndLat = val
+}
+
+// SetEndLng sets the value of EndLng.
+func (s *Event) SetEndLng(val OptFloat64) {
+	s.EndLng = val
+}
+
+// SetRouteGeojson sets the value of RouteGeojson.
+func (s *Event) SetRouteGeojson(val OptEventRouteGeojson) {
+	s.RouteGeojson = val
+}
+
+// SetCarClassRestriction sets the value of CarClassRestriction.
+func (s *Event) SetCarClassRestriction(val OptString) {
+	s.CarClassRestriction = val
+}
+
+// SetLengthM sets the value of LengthM.
+func (s *Event) SetLengthM(val OptInt) {
+	s.LengthM = val
+}
+
+// Ref: #/components/schemas/EventList
+type EventList struct {
+	Items    []Event `json:"items"`
+	Total    int64   `json:"total"`
+	Page     int     `json:"page"`
+	PageSize int     `json:"pageSize"`
+}
+
+// GetItems returns the value of Items.
+func (s *EventList) GetItems() []Event {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *EventList) GetTotal() int64 {
+	return s.Total
+}
+
+// GetPage returns the value of Page.
+func (s *EventList) GetPage() int {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *EventList) GetPageSize() int {
+	return s.PageSize
+}
+
+// SetItems sets the value of Items.
+func (s *EventList) SetItems(val []Event) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *EventList) SetTotal(val int64) {
+	s.Total = val
+}
+
+// SetPage sets the value of Page.
+func (s *EventList) SetPage(val int) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *EventList) SetPageSize(val int) {
+	s.PageSize = val
+}
+
+func (*EventList) listEventsRes() {}
+
+// Tracé GeoJSON (LineString) si disponible.
+type EventRouteGeojson map[string]jx.Raw
+
+func (s *EventRouteGeojson) init() EventRouteGeojson {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Type d'événement / course.
+// Ref: #/components/schemas/EventType
+type EventType string
+
+const (
+	EventTypeCircuit     EventType = "circuit"
+	EventTypeRoad        EventType = "road"
+	EventTypeDirt        EventType = "dirt"
+	EventTypeCross       EventType = "cross"
+	EventTypeStreet      EventType = "street"
+	EventTypeTougeBattle EventType = "touge_battle"
+	EventTypeHorizonRush EventType = "horizon_rush"
+	EventTypeDragMeet    EventType = "drag_meet"
+	EventTypeTimeAttack  EventType = "time_attack"
+)
+
+// AllValues returns all EventType values.
+func (EventType) AllValues() []EventType {
+	return []EventType{
+		EventTypeCircuit,
+		EventTypeRoad,
+		EventTypeDirt,
+		EventTypeCross,
+		EventTypeStreet,
+		EventTypeTougeBattle,
+		EventTypeHorizonRush,
+		EventTypeDragMeet,
+		EventTypeTimeAttack,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EventType) MarshalText() ([]byte, error) {
+	switch s {
+	case EventTypeCircuit:
+		return []byte(s), nil
+	case EventTypeRoad:
+		return []byte(s), nil
+	case EventTypeDirt:
+		return []byte(s), nil
+	case EventTypeCross:
+		return []byte(s), nil
+	case EventTypeStreet:
+		return []byte(s), nil
+	case EventTypeTougeBattle:
+		return []byte(s), nil
+	case EventTypeHorizonRush:
+		return []byte(s), nil
+	case EventTypeDragMeet:
+		return []byte(s), nil
+	case EventTypeTimeAttack:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EventType) UnmarshalText(data []byte) error {
+	switch EventType(data) {
+	case EventTypeCircuit:
+		*s = EventTypeCircuit
+		return nil
+	case EventTypeRoad:
+		*s = EventTypeRoad
+		return nil
+	case EventTypeDirt:
+		*s = EventTypeDirt
+		return nil
+	case EventTypeCross:
+		*s = EventTypeCross
+		return nil
+	case EventTypeStreet:
+		*s = EventTypeStreet
+		return nil
+	case EventTypeTougeBattle:
+		*s = EventTypeTougeBattle
+		return nil
+	case EventTypeHorizonRush:
+		*s = EventTypeHorizonRush
+		return nil
+	case EventTypeDragMeet:
+		*s = EventTypeDragMeet
+		return nil
+	case EventTypeTimeAttack:
+		*s = EventTypeTimeAttack
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Identifiant du jeu.
 // Ref: #/components/schemas/Game
 type Game string
@@ -701,6 +1139,34 @@ type ListCarsUnauthorized Error
 
 func (*ListCarsUnauthorized) listCarsRes() {}
 
+type ListDlcPacksBadRequest Error
+
+func (*ListDlcPacksBadRequest) listDlcPacksRes() {}
+
+type ListDlcPacksOKApplicationJSON []DlcPack
+
+func (*ListDlcPacksOKApplicationJSON) listDlcPacksRes() {}
+
+type ListDlcPacksTooManyRequests Error
+
+func (*ListDlcPacksTooManyRequests) listDlcPacksRes() {}
+
+type ListDlcPacksUnauthorized Error
+
+func (*ListDlcPacksUnauthorized) listDlcPacksRes() {}
+
+type ListEventsBadRequest Error
+
+func (*ListEventsBadRequest) listEventsRes() {}
+
+type ListEventsTooManyRequests Error
+
+func (*ListEventsTooManyRequests) listEventsRes() {}
+
+type ListEventsUnauthorized Error
+
+func (*ListEventsUnauthorized) listEventsRes() {}
+
 type ListManufacturersBadRequest Error
 
 func (*ListManufacturersBadRequest) listManufacturersRes() {}
@@ -717,6 +1183,18 @@ type ListManufacturersUnauthorized Error
 
 func (*ListManufacturersUnauthorized) listManufacturersRes() {}
 
+type ListPrStuntsBadRequest Error
+
+func (*ListPrStuntsBadRequest) listPrStuntsRes() {}
+
+type ListPrStuntsTooManyRequests Error
+
+func (*ListPrStuntsTooManyRequests) listPrStuntsRes() {}
+
+type ListPrStuntsUnauthorized Error
+
+func (*ListPrStuntsUnauthorized) listPrStuntsRes() {}
+
 type ListSeriesBadRequest Error
 
 func (*ListSeriesBadRequest) listSeriesRes() {}
@@ -732,6 +1210,18 @@ func (*ListSeriesTooManyRequests) listSeriesRes() {}
 type ListSeriesUnauthorized Error
 
 func (*ListSeriesUnauthorized) listSeriesRes() {}
+
+type ListTracksBadRequest Error
+
+func (*ListTracksBadRequest) listTracksRes() {}
+
+type ListTracksTooManyRequests Error
+
+func (*ListTracksTooManyRequests) listTracksRes() {}
+
+type ListTracksUnauthorized Error
+
+func (*ListTracksUnauthorized) listTracksRes() {}
 
 // Ref: #/components/schemas/Manufacturer
 type Manufacturer struct {
@@ -954,6 +1444,98 @@ func (o OptDrivetrain) Or(d Drivetrain) Drivetrain {
 	return d
 }
 
+// NewOptEventRouteGeojson returns new OptEventRouteGeojson with value set to v.
+func NewOptEventRouteGeojson(v EventRouteGeojson) OptEventRouteGeojson {
+	return OptEventRouteGeojson{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEventRouteGeojson is optional EventRouteGeojson.
+type OptEventRouteGeojson struct {
+	Value EventRouteGeojson
+	Set   bool
+}
+
+// IsSet returns true if OptEventRouteGeojson was set.
+func (o OptEventRouteGeojson) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEventRouteGeojson) Reset() {
+	var v EventRouteGeojson
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEventRouteGeojson) SetTo(v EventRouteGeojson) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEventRouteGeojson) Get() (v EventRouteGeojson, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEventRouteGeojson) Or(d EventRouteGeojson) EventRouteGeojson {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptEventType returns new OptEventType with value set to v.
+func NewOptEventType(v EventType) OptEventType {
+	return OptEventType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEventType is optional EventType.
+type OptEventType struct {
+	Value EventType
+	Set   bool
+}
+
+// IsSet returns true if OptEventType was set.
+func (o OptEventType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEventType) Reset() {
+	var v EventType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEventType) SetTo(v EventType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEventType) Get() (v EventType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEventType) Or(d EventType) EventType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptFloat64 returns new OptFloat64 with value set to v.
 func NewOptFloat64(v float64) OptFloat64 {
 	return OptFloat64{
@@ -1092,6 +1674,98 @@ func (o OptInt64) Or(d int64) int64 {
 	return d
 }
 
+// NewOptPRStuntType returns new OptPRStuntType with value set to v.
+func NewOptPRStuntType(v PRStuntType) OptPRStuntType {
+	return OptPRStuntType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPRStuntType is optional PRStuntType.
+type OptPRStuntType struct {
+	Value PRStuntType
+	Set   bool
+}
+
+// IsSet returns true if OptPRStuntType was set.
+func (o OptPRStuntType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPRStuntType) Reset() {
+	var v PRStuntType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPRStuntType) SetTo(v PRStuntType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPRStuntType) Get() (v PRStuntType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPRStuntType) Or(d PRStuntType) PRStuntType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRegion returns new OptRegion with value set to v.
+func NewOptRegion(v Region) OptRegion {
+	return OptRegion{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRegion is optional Region.
+type OptRegion struct {
+	Value Region
+	Set   bool
+}
+
+// IsSet returns true if OptRegion was set.
+func (o OptRegion) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRegion) Reset() {
+	var v Region
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRegion) SetTo(v Region) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRegion) Get() (v Region, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRegion) Or(d Region) Region {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -1132,6 +1806,52 @@ func (o OptString) Get() (v string, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTrackType returns new OptTrackType with value set to v.
+func NewOptTrackType(v TrackType) OptTrackType {
+	return OptTrackType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTrackType is optional TrackType.
+type OptTrackType struct {
+	Value TrackType
+	Set   bool
+}
+
+// IsSet returns true if OptTrackType was set.
+func (o OptTrackType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTrackType) Reset() {
+	var v TrackType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTrackType) SetTo(v TrackType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTrackType) Get() (v TrackType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTrackType) Or(d TrackType) TrackType {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1183,6 +1903,209 @@ func (o OptURI) Or(d url.URL) url.URL {
 	}
 	return d
 }
+
+// PR Stunt (speed trap, speed zone, drift zone, danger sign).
+// Ref: #/components/schemas/PRStunt
+type PRStunt struct {
+	ID     string      `json:"id"`
+	Game   Game        `json:"game"`
+	Type   PRStuntType `json:"type"`
+	Name   string      `json:"name"`
+	Region OptRegion   `json:"region"`
+	Lat    OptFloat64  `json:"lat"`
+	Lng    OptFloat64  `json:"lng"`
+	// Score cible (3 étoiles) si connu.
+	TargetScore OptInt `json:"targetScore"`
+}
+
+// GetID returns the value of ID.
+func (s *PRStunt) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *PRStunt) GetGame() Game {
+	return s.Game
+}
+
+// GetType returns the value of Type.
+func (s *PRStunt) GetType() PRStuntType {
+	return s.Type
+}
+
+// GetName returns the value of Name.
+func (s *PRStunt) GetName() string {
+	return s.Name
+}
+
+// GetRegion returns the value of Region.
+func (s *PRStunt) GetRegion() OptRegion {
+	return s.Region
+}
+
+// GetLat returns the value of Lat.
+func (s *PRStunt) GetLat() OptFloat64 {
+	return s.Lat
+}
+
+// GetLng returns the value of Lng.
+func (s *PRStunt) GetLng() OptFloat64 {
+	return s.Lng
+}
+
+// GetTargetScore returns the value of TargetScore.
+func (s *PRStunt) GetTargetScore() OptInt {
+	return s.TargetScore
+}
+
+// SetID sets the value of ID.
+func (s *PRStunt) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *PRStunt) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetType sets the value of Type.
+func (s *PRStunt) SetType(val PRStuntType) {
+	s.Type = val
+}
+
+// SetName sets the value of Name.
+func (s *PRStunt) SetName(val string) {
+	s.Name = val
+}
+
+// SetRegion sets the value of Region.
+func (s *PRStunt) SetRegion(val OptRegion) {
+	s.Region = val
+}
+
+// SetLat sets the value of Lat.
+func (s *PRStunt) SetLat(val OptFloat64) {
+	s.Lat = val
+}
+
+// SetLng sets the value of Lng.
+func (s *PRStunt) SetLng(val OptFloat64) {
+	s.Lng = val
+}
+
+// SetTargetScore sets the value of TargetScore.
+func (s *PRStunt) SetTargetScore(val OptInt) {
+	s.TargetScore = val
+}
+
+// Ref: #/components/schemas/PRStuntList
+type PRStuntList struct {
+	Items    []PRStunt `json:"items"`
+	Total    int64     `json:"total"`
+	Page     int       `json:"page"`
+	PageSize int       `json:"pageSize"`
+}
+
+// GetItems returns the value of Items.
+func (s *PRStuntList) GetItems() []PRStunt {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *PRStuntList) GetTotal() int64 {
+	return s.Total
+}
+
+// GetPage returns the value of Page.
+func (s *PRStuntList) GetPage() int {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *PRStuntList) GetPageSize() int {
+	return s.PageSize
+}
+
+// SetItems sets the value of Items.
+func (s *PRStuntList) SetItems(val []PRStunt) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *PRStuntList) SetTotal(val int64) {
+	s.Total = val
+}
+
+// SetPage sets the value of Page.
+func (s *PRStuntList) SetPage(val int) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *PRStuntList) SetPageSize(val int) {
+	s.PageSize = val
+}
+
+func (*PRStuntList) listPrStuntsRes() {}
+
+// Type de PR Stunt (épreuve de bord de route).
+// Ref: #/components/schemas/PRStuntType
+type PRStuntType string
+
+const (
+	PRStuntTypeSpeedTrap  PRStuntType = "speed_trap"
+	PRStuntTypeSpeedZone  PRStuntType = "speed_zone"
+	PRStuntTypeDriftZone  PRStuntType = "drift_zone"
+	PRStuntTypeDangerSign PRStuntType = "danger_sign"
+)
+
+// AllValues returns all PRStuntType values.
+func (PRStuntType) AllValues() []PRStuntType {
+	return []PRStuntType{
+		PRStuntTypeSpeedTrap,
+		PRStuntTypeSpeedZone,
+		PRStuntTypeDriftZone,
+		PRStuntTypeDangerSign,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PRStuntType) MarshalText() ([]byte, error) {
+	switch s {
+	case PRStuntTypeSpeedTrap:
+		return []byte(s), nil
+	case PRStuntTypeSpeedZone:
+		return []byte(s), nil
+	case PRStuntTypeDriftZone:
+		return []byte(s), nil
+	case PRStuntTypeDangerSign:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PRStuntType) UnmarshalText(data []byte) error {
+	switch PRStuntType(data) {
+	case PRStuntTypeSpeedTrap:
+		*s = PRStuntTypeSpeedTrap
+		return nil
+	case PRStuntTypeSpeedZone:
+		*s = PRStuntTypeSpeedZone
+		return nil
+	case PRStuntTypeDriftZone:
+		*s = PRStuntTypeDriftZone
+		return nil
+	case PRStuntTypeDangerSign:
+		*s = PRStuntTypeDangerSign
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type Region string
 
 // Ref: #/components/schemas/Reward
 type Reward struct {
@@ -1359,3 +2282,282 @@ func (s *Series) SetChallenges(val []Challenge) {
 
 func (*Series) getCurrentPlaylistRes() {}
 func (*Series) getSeriesRes()          {}
+
+// Tracé indexé (fonde les leaderboards et la carte).
+// Ref: #/components/schemas/Track
+type Track struct {
+	ID     string    `json:"id"`
+	Game   Game      `json:"game"`
+	Name   string    `json:"name"`
+	Type   TrackType `json:"type"`
+	Region OptRegion `json:"region"`
+	// Longueur en mètres.
+	LengthM OptInt `json:"lengthM"`
+	// Répartition des surfaces (texte libre).
+	SurfaceMix OptString  `json:"surfaceMix"`
+	StartLat   OptFloat64 `json:"startLat"`
+	StartLng   OptFloat64 `json:"startLng"`
+	// Source propre de la donnée.
+	Source       OptString   `json:"source"`
+	LastVerified OptDateTime `json:"lastVerified"`
+	CreatedAt    OptDateTime `json:"createdAt"`
+	UpdatedAt    OptDateTime `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *Track) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *Track) GetGame() Game {
+	return s.Game
+}
+
+// GetName returns the value of Name.
+func (s *Track) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *Track) GetType() TrackType {
+	return s.Type
+}
+
+// GetRegion returns the value of Region.
+func (s *Track) GetRegion() OptRegion {
+	return s.Region
+}
+
+// GetLengthM returns the value of LengthM.
+func (s *Track) GetLengthM() OptInt {
+	return s.LengthM
+}
+
+// GetSurfaceMix returns the value of SurfaceMix.
+func (s *Track) GetSurfaceMix() OptString {
+	return s.SurfaceMix
+}
+
+// GetStartLat returns the value of StartLat.
+func (s *Track) GetStartLat() OptFloat64 {
+	return s.StartLat
+}
+
+// GetStartLng returns the value of StartLng.
+func (s *Track) GetStartLng() OptFloat64 {
+	return s.StartLng
+}
+
+// GetSource returns the value of Source.
+func (s *Track) GetSource() OptString {
+	return s.Source
+}
+
+// GetLastVerified returns the value of LastVerified.
+func (s *Track) GetLastVerified() OptDateTime {
+	return s.LastVerified
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Track) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *Track) GetUpdatedAt() OptDateTime {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *Track) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *Track) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetName sets the value of Name.
+func (s *Track) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *Track) SetType(val TrackType) {
+	s.Type = val
+}
+
+// SetRegion sets the value of Region.
+func (s *Track) SetRegion(val OptRegion) {
+	s.Region = val
+}
+
+// SetLengthM sets the value of LengthM.
+func (s *Track) SetLengthM(val OptInt) {
+	s.LengthM = val
+}
+
+// SetSurfaceMix sets the value of SurfaceMix.
+func (s *Track) SetSurfaceMix(val OptString) {
+	s.SurfaceMix = val
+}
+
+// SetStartLat sets the value of StartLat.
+func (s *Track) SetStartLat(val OptFloat64) {
+	s.StartLat = val
+}
+
+// SetStartLng sets the value of StartLng.
+func (s *Track) SetStartLng(val OptFloat64) {
+	s.StartLng = val
+}
+
+// SetSource sets the value of Source.
+func (s *Track) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetLastVerified sets the value of LastVerified.
+func (s *Track) SetLastVerified(val OptDateTime) {
+	s.LastVerified = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Track) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *Track) SetUpdatedAt(val OptDateTime) {
+	s.UpdatedAt = val
+}
+
+// Ref: #/components/schemas/TrackList
+type TrackList struct {
+	Items    []Track `json:"items"`
+	Total    int64   `json:"total"`
+	Page     int     `json:"page"`
+	PageSize int     `json:"pageSize"`
+}
+
+// GetItems returns the value of Items.
+func (s *TrackList) GetItems() []Track {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *TrackList) GetTotal() int64 {
+	return s.Total
+}
+
+// GetPage returns the value of Page.
+func (s *TrackList) GetPage() int {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *TrackList) GetPageSize() int {
+	return s.PageSize
+}
+
+// SetItems sets the value of Items.
+func (s *TrackList) SetItems(val []Track) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *TrackList) SetTotal(val int64) {
+	s.Total = val
+}
+
+// SetPage sets the value of Page.
+func (s *TrackList) SetPage(val int) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *TrackList) SetPageSize(val int) {
+	s.PageSize = val
+}
+
+func (*TrackList) listTracksRes() {}
+
+// Catégorie de tracé.
+// Ref: #/components/schemas/TrackType
+type TrackType string
+
+const (
+	TrackTypeCircuit     TrackType = "circuit"
+	TrackTypeRoad        TrackType = "road"
+	TrackTypeDirt        TrackType = "dirt"
+	TrackTypeCross       TrackType = "cross"
+	TrackTypeStreet      TrackType = "street"
+	TrackTypeTouge       TrackType = "touge"
+	TrackTypeHorizonRush TrackType = "horizon_rush"
+)
+
+// AllValues returns all TrackType values.
+func (TrackType) AllValues() []TrackType {
+	return []TrackType{
+		TrackTypeCircuit,
+		TrackTypeRoad,
+		TrackTypeDirt,
+		TrackTypeCross,
+		TrackTypeStreet,
+		TrackTypeTouge,
+		TrackTypeHorizonRush,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TrackType) MarshalText() ([]byte, error) {
+	switch s {
+	case TrackTypeCircuit:
+		return []byte(s), nil
+	case TrackTypeRoad:
+		return []byte(s), nil
+	case TrackTypeDirt:
+		return []byte(s), nil
+	case TrackTypeCross:
+		return []byte(s), nil
+	case TrackTypeStreet:
+		return []byte(s), nil
+	case TrackTypeTouge:
+		return []byte(s), nil
+	case TrackTypeHorizonRush:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TrackType) UnmarshalText(data []byte) error {
+	switch TrackType(data) {
+	case TrackTypeCircuit:
+		*s = TrackTypeCircuit
+		return nil
+	case TrackTypeRoad:
+		*s = TrackTypeRoad
+		return nil
+	case TrackTypeDirt:
+		*s = TrackTypeDirt
+		return nil
+	case TrackTypeCross:
+		*s = TrackTypeCross
+		return nil
+	case TrackTypeStreet:
+		*s = TrackTypeStreet
+		return nil
+	case TrackTypeTouge:
+		*s = TrackTypeTouge
+		return nil
+	case TrackTypeHorizonRush:
+		*s = TrackTypeHorizonRush
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
