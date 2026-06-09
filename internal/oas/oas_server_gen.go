@@ -9,6 +9,7 @@ import (
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
 	CarsHandler
+	ManufacturersHandler
 	PlaylistHandler
 }
 
@@ -30,6 +31,18 @@ type CarsHandler interface {
 	ListCars(ctx context.Context, params ListCarsParams) (ListCarsRes, error)
 }
 
+// ManufacturersHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Manufacturers
+type ManufacturersHandler interface {
+	// ListManufacturers implements listManufacturers operation.
+	//
+	// Liste les constructeurs.
+	//
+	// GET /v1/manufacturers
+	ListManufacturers(ctx context.Context, params ListManufacturersParams) (ListManufacturersRes, error)
+}
+
 // PlaylistHandler handles operations described by OpenAPI v3 specification.
 //
 // x-ogen-operation-group: Playlist
@@ -38,8 +51,20 @@ type PlaylistHandler interface {
 	//
 	// Festival Playlist courante d'un jeu.
 	//
-	// GET /v1/playlist
+	// GET /v1/playlist/current
 	GetCurrentPlaylist(ctx context.Context, params GetCurrentPlaylistParams) (GetCurrentPlaylistRes, error)
+	// GetSeries implements getSeries operation.
+	//
+	// Récupère une série par identifiant.
+	//
+	// GET /v1/playlist/series/{id}
+	GetSeries(ctx context.Context, params GetSeriesParams) (GetSeriesRes, error)
+	// ListSeries implements listSeries operation.
+	//
+	// Liste les séries de Festival Playlist.
+	//
+	// GET /v1/playlist/series
+	ListSeries(ctx context.Context, params ListSeriesParams) (ListSeriesRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

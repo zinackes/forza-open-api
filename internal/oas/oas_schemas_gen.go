@@ -496,6 +496,7 @@ func (s *Challenge) SetExpiresAt(val OptDateTime) {
 	s.ExpiresAt = val
 }
 
+// Transmission.
 // Ref: #/components/schemas/Drivetrain
 type Drivetrain string
 
@@ -545,6 +546,66 @@ func (s *Drivetrain) UnmarshalText(data []byte) error {
 	}
 }
 
+// Erreur au format RFC 9457 (application/problem+json).
+// Ref: #/components/schemas/Error
+type Error struct {
+	Type     OptURI    `json:"type"`
+	Title    OptString `json:"title"`
+	Status   OptInt    `json:"status"`
+	Detail   OptString `json:"detail"`
+	Instance OptURI    `json:"instance"`
+}
+
+// GetType returns the value of Type.
+func (s *Error) GetType() OptURI {
+	return s.Type
+}
+
+// GetTitle returns the value of Title.
+func (s *Error) GetTitle() OptString {
+	return s.Title
+}
+
+// GetStatus returns the value of Status.
+func (s *Error) GetStatus() OptInt {
+	return s.Status
+}
+
+// GetDetail returns the value of Detail.
+func (s *Error) GetDetail() OptString {
+	return s.Detail
+}
+
+// GetInstance returns the value of Instance.
+func (s *Error) GetInstance() OptURI {
+	return s.Instance
+}
+
+// SetType sets the value of Type.
+func (s *Error) SetType(val OptURI) {
+	s.Type = val
+}
+
+// SetTitle sets the value of Title.
+func (s *Error) SetTitle(val OptString) {
+	s.Title = val
+}
+
+// SetStatus sets the value of Status.
+func (s *Error) SetStatus(val OptInt) {
+	s.Status = val
+}
+
+// SetDetail sets the value of Detail.
+func (s *Error) SetDetail(val OptString) {
+	s.Detail = val
+}
+
+// SetInstance sets the value of Instance.
+func (s *Error) SetInstance(val OptURI) {
+	s.Instance = val
+}
+
 // Identifiant du jeu.
 // Ref: #/components/schemas/Game
 type Game string
@@ -588,45 +649,126 @@ func (s *Game) UnmarshalText(data []byte) error {
 	}
 }
 
-type GetCarNotFound Problem
+type GetCarNotFound Error
 
 func (*GetCarNotFound) getCarRes() {}
 
-type GetCarTooManyRequests Problem
+type GetCarTooManyRequests Error
 
 func (*GetCarTooManyRequests) getCarRes() {}
 
-type GetCarUnauthorized Problem
+type GetCarUnauthorized Error
 
 func (*GetCarUnauthorized) getCarRes() {}
 
-type GetCurrentPlaylistBadRequest Problem
+type GetCurrentPlaylistBadRequest Error
 
 func (*GetCurrentPlaylistBadRequest) getCurrentPlaylistRes() {}
 
-type GetCurrentPlaylistNotFound Problem
+type GetCurrentPlaylistNotFound Error
 
 func (*GetCurrentPlaylistNotFound) getCurrentPlaylistRes() {}
 
-type GetCurrentPlaylistTooManyRequests Problem
+type GetCurrentPlaylistTooManyRequests Error
 
 func (*GetCurrentPlaylistTooManyRequests) getCurrentPlaylistRes() {}
 
-type GetCurrentPlaylistUnauthorized Problem
+type GetCurrentPlaylistUnauthorized Error
 
 func (*GetCurrentPlaylistUnauthorized) getCurrentPlaylistRes() {}
 
-type ListCarsBadRequest Problem
+type GetSeriesNotFound Error
+
+func (*GetSeriesNotFound) getSeriesRes() {}
+
+type GetSeriesTooManyRequests Error
+
+func (*GetSeriesTooManyRequests) getSeriesRes() {}
+
+type GetSeriesUnauthorized Error
+
+func (*GetSeriesUnauthorized) getSeriesRes() {}
+
+type ListCarsBadRequest Error
 
 func (*ListCarsBadRequest) listCarsRes() {}
 
-type ListCarsTooManyRequests Problem
+type ListCarsTooManyRequests Error
 
 func (*ListCarsTooManyRequests) listCarsRes() {}
 
-type ListCarsUnauthorized Problem
+type ListCarsUnauthorized Error
 
 func (*ListCarsUnauthorized) listCarsRes() {}
+
+type ListManufacturersBadRequest Error
+
+func (*ListManufacturersBadRequest) listManufacturersRes() {}
+
+type ListManufacturersOKApplicationJSON []Manufacturer
+
+func (*ListManufacturersOKApplicationJSON) listManufacturersRes() {}
+
+type ListManufacturersTooManyRequests Error
+
+func (*ListManufacturersTooManyRequests) listManufacturersRes() {}
+
+type ListManufacturersUnauthorized Error
+
+func (*ListManufacturersUnauthorized) listManufacturersRes() {}
+
+type ListSeriesBadRequest Error
+
+func (*ListSeriesBadRequest) listSeriesRes() {}
+
+type ListSeriesOKApplicationJSON []Series
+
+func (*ListSeriesOKApplicationJSON) listSeriesRes() {}
+
+type ListSeriesTooManyRequests Error
+
+func (*ListSeriesTooManyRequests) listSeriesRes() {}
+
+type ListSeriesUnauthorized Error
+
+func (*ListSeriesUnauthorized) listSeriesRes() {}
+
+// Ref: #/components/schemas/Manufacturer
+type Manufacturer struct {
+	Game    Game      `json:"game"`
+	Name    string    `json:"name"`
+	Country OptString `json:"country"`
+}
+
+// GetGame returns the value of Game.
+func (s *Manufacturer) GetGame() Game {
+	return s.Game
+}
+
+// GetName returns the value of Name.
+func (s *Manufacturer) GetName() string {
+	return s.Name
+}
+
+// GetCountry returns the value of Country.
+func (s *Manufacturer) GetCountry() OptString {
+	return s.Country
+}
+
+// SetGame sets the value of Game.
+func (s *Manufacturer) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetName sets the value of Name.
+func (s *Manufacturer) SetName(val string) {
+	s.Name = val
+}
+
+// SetCountry sets the value of Country.
+func (s *Manufacturer) SetCountry(val OptString) {
+	s.Country = val
+}
 
 // NewOptCarClass returns new OptCarClass with value set to v.
 func NewOptCarClass(v CarClass) OptCarClass {
@@ -1042,66 +1184,6 @@ func (o OptURI) Or(d url.URL) url.URL {
 	return d
 }
 
-// Erreur au format RFC 9457 (application/problem+json).
-// Ref: #/components/schemas/Problem
-type Problem struct {
-	Type     OptURI    `json:"type"`
-	Title    OptString `json:"title"`
-	Status   OptInt    `json:"status"`
-	Detail   OptString `json:"detail"`
-	Instance OptURI    `json:"instance"`
-}
-
-// GetType returns the value of Type.
-func (s *Problem) GetType() OptURI {
-	return s.Type
-}
-
-// GetTitle returns the value of Title.
-func (s *Problem) GetTitle() OptString {
-	return s.Title
-}
-
-// GetStatus returns the value of Status.
-func (s *Problem) GetStatus() OptInt {
-	return s.Status
-}
-
-// GetDetail returns the value of Detail.
-func (s *Problem) GetDetail() OptString {
-	return s.Detail
-}
-
-// GetInstance returns the value of Instance.
-func (s *Problem) GetInstance() OptURI {
-	return s.Instance
-}
-
-// SetType sets the value of Type.
-func (s *Problem) SetType(val OptURI) {
-	s.Type = val
-}
-
-// SetTitle sets the value of Title.
-func (s *Problem) SetTitle(val OptString) {
-	s.Title = val
-}
-
-// SetStatus sets the value of Status.
-func (s *Problem) SetStatus(val OptInt) {
-	s.Status = val
-}
-
-// SetDetail sets the value of Detail.
-func (s *Problem) SetDetail(val OptString) {
-	s.Detail = val
-}
-
-// SetInstance sets the value of Instance.
-func (s *Problem) SetInstance(val OptURI) {
-	s.Instance = val
-}
-
 // Ref: #/components/schemas/Reward
 type Reward struct {
 	ID        string `json:"id"`
@@ -1276,3 +1358,4 @@ func (s *Series) SetChallenges(val []Challenge) {
 }
 
 func (*Series) getCurrentPlaylistRes() {}
+func (*Series) getSeriesRes()          {}

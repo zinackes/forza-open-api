@@ -26,8 +26,17 @@ func (UnimplementedHandler) GetCar(ctx context.Context, params GetCarParams) (r 
 //
 // Festival Playlist courante d'un jeu.
 //
-// GET /v1/playlist
+// GET /v1/playlist/current
 func (UnimplementedHandler) GetCurrentPlaylist(ctx context.Context, params GetCurrentPlaylistParams) (r GetCurrentPlaylistRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetSeries implements getSeries operation.
+//
+// Récupère une série par identifiant.
+//
+// GET /v1/playlist/series/{id}
+func (UnimplementedHandler) GetSeries(ctx context.Context, params GetSeriesParams) (r GetSeriesRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -37,5 +46,23 @@ func (UnimplementedHandler) GetCurrentPlaylist(ctx context.Context, params GetCu
 //
 // GET /v1/cars
 func (UnimplementedHandler) ListCars(ctx context.Context, params ListCarsParams) (r ListCarsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListManufacturers implements listManufacturers operation.
+//
+// Liste les constructeurs.
+//
+// GET /v1/manufacturers
+func (UnimplementedHandler) ListManufacturers(ctx context.Context, params ListManufacturersParams) (r ListManufacturersRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListSeries implements listSeries operation.
+//
+// Liste les séries de Festival Playlist.
+//
+// GET /v1/playlist/series
+func (UnimplementedHandler) ListSeries(ctx context.Context, params ListSeriesParams) (r ListSeriesRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

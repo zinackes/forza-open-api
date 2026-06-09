@@ -1,0 +1,94 @@
+name: CI
+
+# Sur les PR (toute branche -> main) et sur push vers main (post-merge), pour
+# qu'une PR ne déclenche qu'un seul run par job. Les jobs réutilisent les tasks
+# du Taskfile (parité locale/CI) ; le cache des modules Go via actions/setup-go.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  vet:
+    name: vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+      - run: task vet
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+      - run: task test
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+      - run: task build
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+      # L'action installe golangci-lint (pinné + cache) sans le lancer ;
+      # `task lint` exécute la même commande qu'en local.
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12.2
+          install-only: true
+      - run: task lint
+
+  spec-drift:
+    name: spec-drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+      # Le code généré doit toujours matcher le contrat : on régénère puis on
+      # échoue si l'arbre de travail a bougé.
+      - run: task generate
+      - name: Verify generated code matches the contract
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Generated code is out of sync with api/openapi.yaml. Run 'task generate' and commit the result."
+            git status --porcelain
+            git --no-pager diff
+            exit 1
+          fi

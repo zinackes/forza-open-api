@@ -8,5 +8,8 @@ type OperationName = string
 const (
 	GetCarOperation             OperationName = "GetCar"
 	GetCurrentPlaylistOperation OperationName = "GetCurrentPlaylist"
+	GetSeriesOperation          OperationName = "GetSeries"
 	ListCarsOperation           OperationName = "ListCars"
+	ListManufacturersOperation  OperationName = "ListManufacturers"
+	ListSeriesOperation         OperationName = "ListSeries"
 )

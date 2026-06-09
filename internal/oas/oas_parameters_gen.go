@@ -146,6 +146,72 @@ func decodeGetCurrentPlaylistParams(args [0]string, argsEscaped bool, r *http.Re
 	return params, nil
 }
 
+// GetSeriesParams is parameters of getSeries operation.
+type GetSeriesParams struct {
+	// Identifiant stable de la série.
+	ID string
+}
+
+func unpackGetSeriesParams(packed middleware.Parameters) (params GetSeriesParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetSeriesParams(args [1]string, argsEscaped bool, r *http.Request) (params GetSeriesParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ListCarsParams is parameters of listCars operation.
 type ListCarsParams struct {
 	// Jeu cible (obligatoire sur les ressources multi-jeux).
@@ -157,7 +223,8 @@ type ListCarsParams struct {
 	// Performance Index minimum (inclus).
 	PiMin OptInt `json:",omitempty,omitzero"`
 	// Performance Index maximum (inclus).
-	PiMax      OptInt        `json:",omitempty,omitzero"`
+	PiMax OptInt `json:",omitempty,omitzero"`
+	// Filtre par transmission.
 	Drivetrain OptDrivetrain `json:",omitempty,omitzero"`
 	// Recherche plein texte sur name/model.
 	Q OptString `json:",omitempty,omitzero"`
@@ -760,6 +827,138 @@ func decodeListCarsParams(args [0]string, argsEscaped bool, r *http.Request) (pa
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListManufacturersParams is parameters of listManufacturers operation.
+type ListManufacturersParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+}
+
+func unpackListManufacturersParams(packed middleware.Parameters) (params ListManufacturersParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	return params
+}
+
+func decodeListManufacturersParams(args [0]string, argsEscaped bool, r *http.Request) (params ListManufacturersParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListSeriesParams is parameters of listSeries operation.
+type ListSeriesParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+}
+
+func unpackListSeriesParams(packed middleware.Parameters) (params ListSeriesParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	return params
+}
+
+func decodeListSeriesParams(args [0]string, argsEscaped bool, r *http.Request) (params ListSeriesParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
 			In:   "query",
 			Err:  err,
 		}

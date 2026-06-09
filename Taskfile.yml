@@ -30,10 +30,20 @@ tasks:
     cmds:
       - go test ./...
 
-  up:
-    desc: Lève Postgres + Valkey (docker compose)
+  vet:
+    desc: go vet sur tout le module
     cmds:
-      - docker compose up -d
+      - go vet ./...
+
+  lint:
+    desc: Analyse statique (golangci-lint)
+    cmds:
+      - golangci-lint run
+
+  up:
+    desc: Lève Postgres + Valkey + API et attend qu'ils soient sains (/healthz 200)
+    cmds:
+      - docker compose up -d --build --wait
 
   down:
     desc: Arrête et nettoie les services

@@ -9,6 +9,18 @@ type GetCurrentPlaylistRes interface {
 	getCurrentPlaylistRes()
 }
 
+type GetSeriesRes interface {
+	getSeriesRes()
+}
+
 type ListCarsRes interface {
 	listCarsRes()
+}
+
+type ListManufacturersRes interface {
+	listManufacturersRes()
+}
+
+type ListSeriesRes interface {
+	listSeriesRes()
 }

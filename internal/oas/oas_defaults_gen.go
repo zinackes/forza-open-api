@@ -8,7 +8,7 @@ import (
 )
 
 // setDefaults set default value of fields.
-func (s *Problem) setDefaults() {
+func (s *Error) setDefaults() {
 	{
 		val, _ := json.DecodeURI(jx.DecodeStr("\"about:blank\""))
 		s.Type.SetTo(val)

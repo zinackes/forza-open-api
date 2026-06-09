@@ -11,9 +11,17 @@ info:
     name: MIT
     identifier: MIT
 
+servers:
+  - url: https://api.forza-open-api.org
+    description: Production (placeholder — domaine à confirmer).
+  - url: http://localhost:8080
+    description: Développement local.
+
 tags:
   - name: Cars
     description: Catalogue des voitures.
+  - name: Manufacturers
+    description: Constructeurs automobiles.
   - name: Playlist
     description: Festival Playlist (séries saisonnières, récompenses, défis).
 
@@ -49,6 +57,7 @@ paths:
           schema: { type: integer, minimum: 100, maximum: 999 }
         - name: drivetrain
           in: query
+          description: Filtre par transmission.
           schema: { $ref: '#/components/schemas/Drivetrain' }
         - name: q
           in: query
@@ -88,7 +97,27 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
-  /v1/playlist:
+  /v1/manufacturers:
+    get:
+      operationId: listManufacturers
+      summary: Liste les constructeurs.
+      tags: [Manufacturers]
+      x-ogen-operation-group: Manufacturers
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Liste des constructeurs pour le jeu.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Manufacturer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/playlist/current:
     get:
       operationId: getCurrentPlaylist
       summary: Festival Playlist courante d'un jeu.
@@ -103,6 +132,48 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Series' }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/playlist/series:
+    get:
+      operationId: listSeries
+      summary: Liste les séries de Festival Playlist.
+      tags: [Playlist]
+      x-ogen-operation-group: Playlist
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Les séries connues pour le jeu (récentes d'abord).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Series' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/playlist/series/{id}:
+    get:
+      operationId: getSeries
+      summary: Récupère une série par identifiant.
+      tags: [Playlist]
+      x-ogen-operation-group: Playlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la série.
+          schema: { type: string }
+      responses:
+        '200':
+          description: La série demandée avec ses récompenses et défis.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Series' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -137,22 +208,22 @@ components:
       description: Requête invalide.
       content:
         application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
+          schema: { $ref: '#/components/schemas/Error' }
     Unauthorized:
       description: Clé API absente ou invalide.
       content:
         application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
+          schema: { $ref: '#/components/schemas/Error' }
     NotFound:
       description: Ressource introuvable.
       content:
         application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
+          schema: { $ref: '#/components/schemas/Error' }
     TooManyRequests:
       description: Quota de rate-limit dépassé.
       content:
         application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
+          schema: { $ref: '#/components/schemas/Error' }
 
   schemas:
     Game:
@@ -167,6 +238,7 @@ components:
 
     Drivetrain:
       type: string
+      description: Transmission.
       enum: [FWD, RWD, AWD]
 
     CarStats:
@@ -212,6 +284,14 @@ components:
         page: { type: integer }
         pageSize: { type: integer }
 
+    Manufacturer:
+      type: object
+      required: [game, name]
+      properties:
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        country: { type: string }
+
     Reward:
       type: object
       required: [id, atPercent, type, item]
@@ -252,7 +332,7 @@ components:
           type: array
           items: { $ref: '#/components/schemas/Challenge' }
 
-    Problem:
+    Error:
       type: object
       description: Erreur au format RFC 9457 (application/problem+json).
       properties:
