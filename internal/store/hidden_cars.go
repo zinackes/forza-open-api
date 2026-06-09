@@ -45,17 +45,26 @@ type TreasureCar struct {
 	LastVerified     *time.Time
 }
 
-// ListBarnFinds renvoie une page de Barn Finds filtrés + le total (count fenêtré).
-// Ordre par niveau de stamp requis (progression Discover Japan), puis id.
+// ListBarnFinds renvoie une page de Barn Finds filtrés + le total (COUNT séparé :
+// total exact même hors borne). Ordre par niveau de stamp requis (progression
+// Discover Japan), puis id. fromWhere est partagé COUNT/SELECT.
 func (s *Store) ListBarnFinds(ctx context.Context, f HiddenCarFilter) ([]BarnFind, int64, error) {
+	const fromWhere = `
+FROM barn_finds
+WHERE game = $1
+  AND ($2::text IS NULL OR region = $2)`
+
+	var total int64
+	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
+		f.Game, f.Region).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count barn_finds: %w", err)
+	}
+
 	const q = `
 SELECT id, car_id, game, region,
        search_zone_center_lat::float8, search_zone_center_lng::float8,
        search_zone_radius_m, prerequisite_stamp_level, restoration_time_h,
-       source, last_verified, count(*) OVER() AS total
-FROM barn_finds
-WHERE game = $1
-  AND ($2::text IS NULL OR region = $2)
+       source, last_verified` + fromWhere + `
 ORDER BY prerequisite_stamp_level NULLS LAST, id
 LIMIT $3 OFFSET $4`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Region, f.Limit, f.Offset)
@@ -65,13 +74,12 @@ LIMIT $3 OFFSET $4`
 	defer rows.Close()
 
 	out := make([]BarnFind, 0, f.Limit)
-	var total int64
 	for rows.Next() {
 		var b BarnFind
 		if err := rows.Scan(&b.ID, &b.CarID, &b.Game, &b.Region,
 			&b.SearchZoneCenterLat, &b.SearchZoneCenterLng, &b.SearchZoneRadiusM,
 			&b.PrerequisiteStampLevel, &b.RestorationTimeH, &b.Source,
-			&b.LastVerified, &total); err != nil {
+			&b.LastVerified); err != nil {
 			return nil, 0, fmt.Errorf("scan barn_find: %w", err)
 		}
 		out = append(out, b)
@@ -82,15 +90,24 @@ LIMIT $3 OFFSET $4`
 	return out, total, nil
 }
 
-// ListTreasureCars renvoie une page de Treasure Cars filtrées + le total.
+// ListTreasureCars renvoie une page de Treasure Cars filtrées + le total (COUNT
+// séparé : total exact même hors borne). fromWhere est partagé COUNT/SELECT.
 func (s *Store) ListTreasureCars(ctx context.Context, f HiddenCarFilter) ([]TreasureCar, int64, error) {
+	const fromWhere = `
+FROM treasure_cars
+WHERE game = $1
+  AND ($2::text IS NULL OR region = $2)`
+
+	var total int64
+	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
+		f.Game, f.Region).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count treasure_cars: %w", err)
+	}
+
 	const q = `
 SELECT id, car_id, game, region, postcard_clue_text,
        location_lat::float8, location_lng::float8,
-       source, last_verified, count(*) OVER() AS total
-FROM treasure_cars
-WHERE game = $1
-  AND ($2::text IS NULL OR region = $2)
+       source, last_verified` + fromWhere + `
 ORDER BY region NULLS LAST, id
 LIMIT $3 OFFSET $4`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Region, f.Limit, f.Offset)
@@ -100,12 +117,11 @@ LIMIT $3 OFFSET $4`
 	defer rows.Close()
 
 	out := make([]TreasureCar, 0, f.Limit)
-	var total int64
 	for rows.Next() {
 		var t TreasureCar
 		if err := rows.Scan(&t.ID, &t.CarID, &t.Game, &t.Region,
 			&t.PostcardClueText, &t.LocationLat, &t.LocationLng,
-			&t.Source, &t.LastVerified, &total); err != nil {
+			&t.Source, &t.LastVerified); err != nil {
 			return nil, 0, fmt.Errorf("scan treasure_car: %w", err)
 		}
 		out = append(out, t)

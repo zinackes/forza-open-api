@@ -63,16 +63,25 @@ type Event struct {
 	LengthM             *int
 }
 
-// ListTracks renvoie une page de tracés filtrés + le total (count fenêtré).
+// ListTracks renvoie une page de tracés filtrés + le total (COUNT séparé : total
+// exact même quand la page dépasse les données). fromWhere est partagé COUNT/SELECT.
 func (s *Store) ListTracks(ctx context.Context, f GeoFilter) ([]Track, int64, error) {
-	const q = `
-SELECT id, game, name, type, region, length_m, surface_mix,
-       start_lat::float8, start_lng::float8, source, last_verified,
-       created_at, updated_at, count(*) OVER() AS total
+	const fromWhere = `
 FROM tracks
 WHERE game = $1
   AND ($2::text IS NULL OR type = $2)
-  AND ($3::text IS NULL OR region = $3)
+  AND ($3::text IS NULL OR region = $3)`
+
+	var total int64
+	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
+		f.Game, f.Type, f.Region).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count tracks: %w", err)
+	}
+
+	const q = `
+SELECT id, game, name, type, region, length_m, surface_mix,
+       start_lat::float8, start_lng::float8, source, last_verified,
+       created_at, updated_at` + fromWhere + `
 ORDER BY name
 LIMIT $4 OFFSET $5`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Type, f.Region, f.Limit, f.Offset)
@@ -82,12 +91,11 @@ LIMIT $4 OFFSET $5`
 	defer rows.Close()
 
 	out := make([]Track, 0, f.Limit)
-	var total int64
 	for rows.Next() {
 		var t Track
 		if err := rows.Scan(&t.ID, &t.Game, &t.Name, &t.Type, &t.Region,
 			&t.LengthM, &t.SurfaceMix, &t.StartLat, &t.StartLng, &t.Source,
-			&t.LastVerified, &t.CreatedAt, &t.UpdatedAt, &total); err != nil {
+			&t.LastVerified, &t.CreatedAt, &t.UpdatedAt); err != nil {
 			return nil, 0, fmt.Errorf("scan track: %w", err)
 		}
 		out = append(out, t)
@@ -98,15 +106,23 @@ LIMIT $4 OFFSET $5`
 	return out, total, nil
 }
 
-// ListPRStunts renvoie une page de PR stunts filtrés + le total.
+// ListPRStunts renvoie une page de PR stunts filtrés + le total (COUNT séparé :
+// total exact même hors borne). fromWhere est partagé COUNT/SELECT.
 func (s *Store) ListPRStunts(ctx context.Context, f GeoFilter) ([]PRStunt, int64, error) {
-	const q = `
-SELECT id, game, type, name, region, lat::float8, lng::float8, target_score,
-       count(*) OVER() AS total
+	const fromWhere = `
 FROM pr_stunts
 WHERE game = $1
   AND ($2::text IS NULL OR type = $2)
-  AND ($3::text IS NULL OR region = $3)
+  AND ($3::text IS NULL OR region = $3)`
+
+	var total int64
+	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
+		f.Game, f.Type, f.Region).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count pr_stunts: %w", err)
+	}
+
+	const q = `
+SELECT id, game, type, name, region, lat::float8, lng::float8, target_score` + fromWhere + `
 ORDER BY name
 LIMIT $4 OFFSET $5`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Type, f.Region, f.Limit, f.Offset)
@@ -116,11 +132,10 @@ LIMIT $4 OFFSET $5`
 	defer rows.Close()
 
 	out := make([]PRStunt, 0, f.Limit)
-	var total int64
 	for rows.Next() {
 		var p PRStunt
 		if err := rows.Scan(&p.ID, &p.Game, &p.Type, &p.Name, &p.Region,
-			&p.Lat, &p.Lng, &p.TargetScore, &total); err != nil {
+			&p.Lat, &p.Lng, &p.TargetScore); err != nil {
 			return nil, 0, fmt.Errorf("scan pr_stunt: %w", err)
 		}
 		out = append(out, p)
@@ -131,16 +146,25 @@ LIMIT $4 OFFSET $5`
 	return out, total, nil
 }
 
-// ListEvents renvoie une page d'événements filtrés + le total.
+// ListEvents renvoie une page d'événements filtrés + le total (COUNT séparé :
+// total exact même hors borne). fromWhere est partagé COUNT/SELECT.
 func (s *Store) ListEvents(ctx context.Context, f GeoFilter) ([]Event, int64, error) {
-	const q = `
-SELECT id, game, name, type, region,
-       start_lat::float8, start_lng::float8, end_lat::float8, end_lng::float8,
-       route_geojson, car_class_restriction, length_m, count(*) OVER() AS total
+	const fromWhere = `
 FROM events
 WHERE game = $1
   AND ($2::text IS NULL OR type = $2)
-  AND ($3::text IS NULL OR region = $3)
+  AND ($3::text IS NULL OR region = $3)`
+
+	var total int64
+	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
+		f.Game, f.Type, f.Region).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count events: %w", err)
+	}
+
+	const q = `
+SELECT id, game, name, type, region,
+       start_lat::float8, start_lng::float8, end_lat::float8, end_lng::float8,
+       route_geojson, car_class_restriction, length_m` + fromWhere + `
 ORDER BY name
 LIMIT $4 OFFSET $5`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Type, f.Region, f.Limit, f.Offset)
@@ -150,12 +174,11 @@ LIMIT $4 OFFSET $5`
 	defer rows.Close()
 
 	out := make([]Event, 0, f.Limit)
-	var total int64
 	for rows.Next() {
 		var e Event
 		if err := rows.Scan(&e.ID, &e.Game, &e.Name, &e.Type, &e.Region,
 			&e.StartLat, &e.StartLng, &e.EndLat, &e.EndLng,
-			&e.RouteGeojson, &e.CarClassRestriction, &e.LengthM, &total); err != nil {
+			&e.RouteGeojson, &e.CarClassRestriction, &e.LengthM); err != nil {
 			return nil, 0, fmt.Errorf("scan event: %w", err)
 		}
 		out = append(out, e)
