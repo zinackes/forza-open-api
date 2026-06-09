@@ -40,6 +40,10 @@ tags:
     description: Catalogue des pièces d'upgrade et upgrades disponibles par voiture.
   - name: Mastery
     description: Arbres Car Mastery (grille de perks par voiture).
+  - name: Journal
+    description: Collection Journal FH6 (Wristbands Horizon Festival + Stamps Discover Japan ; remplace les Accolades de FH5).
+  - name: Reference
+    description: Énumérations et compteurs agrégés (facettes) pour construire les filtres côté client.
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -75,6 +79,10 @@ paths:
           in: query
           description: Filtre par transmission.
           schema: { $ref: '#/components/schemas/Drivetrain' }
+        - name: category
+          in: query
+          description: Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+          schema: { type: string }
         - name: q
           in: query
           description: Recherche plein texte sur name/model.
@@ -93,6 +101,59 @@ paths:
               schema: { $ref: '#/components/schemas/CarList' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/cars/random:
+    get:
+      operationId: getRandomCar
+      summary: Renvoie une voiture aléatoire satisfaisant les filtres.
+      description: >
+        Tire une seule voiture au hasard parmi celles qui satisfont les filtres
+        (mêmes filtres optionnels que /v1/cars). Pensé pour les bots Discord
+        ("bagnole random du jour"), défis communautaires et easter-eggs sur la
+        landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
+        re-tire. 404 si aucune voiture ne correspond.
+      tags: [Cars]
+      x-ogen-operation-group: Cars
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: make
+          in: query
+          description: Filtre par constructeur (ex. "Ford").
+          schema: { type: string }
+        - name: class
+          in: query
+          description: Filtre par classe PI.
+          schema: { $ref: '#/components/schemas/CarClass' }
+        - name: pi_min
+          in: query
+          description: Performance Index minimum (inclus).
+          schema: { type: integer, minimum: 100, maximum: 999 }
+        - name: pi_max
+          in: query
+          description: Performance Index maximum (inclus).
+          schema: { type: integer, minimum: 100, maximum: 999 }
+        - name: drivetrain
+          in: query
+          description: Filtre par transmission.
+          schema: { $ref: '#/components/schemas/Drivetrain' }
+        - name: category
+          in: query
+          description: Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Une voiture tirée au hasard parmi les correspondances.
+          headers:
+            Cache-Control:
+              description: Toujours no-store (tirage aléatoire, jamais mis en cache).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Car' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /v1/cars/{id}:
@@ -195,6 +256,35 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Manufacturer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/reference:
+    get:
+      operationId: getReference
+      summary: Énumérations et compteurs (facettes) pour les filtres clients.
+      description: >
+        Facettes agrégées pour construire les filtres d'un client en un seul
+        appel : classes PI (incluant R en FH6), transmissions, types de
+        carrosserie, pays des constructeurs et catégories (divisions in-game)
+        — comptées pour le `game` demandé. La liste `games` est globale (volumes
+        par jeu, indépendante du paramètre game) pour amorcer un sélecteur de
+        jeu. Réponse fortement cacheable, invalidée par les jobs d'ingestion.
+      tags: [Reference]
+      x-ogen-operation-group: Reference
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Facettes de référence pour le jeu.
+          headers:
+            Cache-Control:
+              description: Politique de cache (réponse fortement cacheable, purgée à l'ingestion).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reference' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -436,6 +526,37 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
+  /v1/journal:
+    get:
+      operationId: listJournalTiers
+      summary: Liste les paliers du Collection Journal (wristbands + stamps).
+      description: >
+        Paliers de progression du Collection Journal FH6 : 7 Wristbands
+        (track horizon_festival, Yellow → Gold ; Gold débloque Legend Island +
+        The Goliath) et 7 Stamps (track discover_japan, Visitor → Master
+        Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que
+        via les rewardCarId de ces paliers. Remplace les Accolades de FH5.
+        Ensemble borné (≤ 14 par jeu) → pas de pagination.
+      tags: [Journal]
+      x-ogen-operation-group: Journal
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: track
+          in: query
+          description: Filtre par piste de progression.
+          schema: { $ref: '#/components/schemas/JournalTrack' }
+      responses:
+        '200':
+          description: Les paliers du Collection Journal du jeu (par piste, puis niveau croissant).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/JournalTier' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -491,8 +612,10 @@ components:
 
     CarClass:
       type: string
-      description: Classe Performance Index.
-      enum: [D, C, B, A, S1, S2, X]
+      description: >
+        Classe Performance Index. R (voitures track-focused) introduite en FH6 ;
+        absente de FH5.
+      enum: [D, C, B, A, S1, S2, X, R]
 
     Drivetrain:
       type: string
@@ -525,6 +648,7 @@ components:
         drivetrain: { $ref: '#/components/schemas/Drivetrain' }
         stats: { $ref: '#/components/schemas/CarStats' }
         bodyType: { type: string }
+        category: { type: string, description: Catégorie / division in-game (ex. "Modern Supercars"). Absente si non sourcée. }
         rarity: { type: string }
         valueCr: { type: integer, format: int64 }
         obtainMethod: { type: string }
@@ -889,6 +1013,110 @@ components:
             réf. /v1/cars). Absent sinon.
         source: { type: string, description: Source propre de la donnée. }
         lastVerified: { type: string, format: date-time }
+
+    JournalTrack:
+      type: string
+      description: Piste de progression du Collection Journal.
+      enum: [horizon_festival, discover_japan]
+
+    JournalTierColor:
+      type: string
+      description: >
+        Couleur du wristband (track horizon_festival : Yellow → Gold sur 7
+        niveaux). Absente pour les stamps Discover Japan.
+      enum: [yellow, green, blue, pink, orange, purple, gold]
+
+    JournalTier:
+      type: object
+      description: >
+        Palier du Collection Journal FH6 : un niveau (1-7) d'une piste
+        (horizon_festival = wristbands colorés Yellow → Gold ; discover_japan =
+        stamps Visitor → Master Explorer). Atteint à pointsRequired points de
+        collection. Peut débloquer une voiture (rewardCarId) et/ou du contenu
+        (unlocksDescription : Legend Island + The Goliath, poussée des Barn
+        Finds…). Remplace les Accolades de FH5. Champs non sourcés → omis.
+      required: [id, game, track, level, name]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        track: { $ref: '#/components/schemas/JournalTrack' }
+        level:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: Niveau du palier dans la piste (1-7).
+        color: { $ref: '#/components/schemas/JournalTierColor' }
+        name:
+          type: string
+          description: Nom du palier (couleur du wristband ou rang de stamp, ex. "Gold", "Master Explorer").
+        pointsRequired:
+          type: integer
+          description: Points de collection requis pour atteindre le palier.
+        rewardCarId:
+          type: string
+          description: Voiture débloquée par ce palier (réf. /v1/cars). Absent si le palier ne donne pas de voiture.
+        unlocksDescription:
+          type: string
+          description: >
+            Contenu débloqué par le palier (ex. "Legend Island + The Goliath",
+            poussée des Barn Finds). Absent si non sourcé.
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    RefCount:
+      type: object
+      description: >
+        Valeur d'une facette (code) et son nombre d'occurrences pour le jeu
+        demandé. Pour les facettes énumérées (classes, drivetrains), tous les
+        codes valides sont renvoyés, count compris à 0. Pour les facettes libres
+        (bodyTypes, countries, categories), seules les valeurs présentes le sont.
+      required: [code, count]
+      properties:
+        code: { type: string }
+        count: { type: integer, format: int64 }
+
+    GameCount:
+      type: object
+      description: Jeu disponible et ses volumes (voitures, séries de playlist).
+      required: [code, countCars, countSeries]
+      properties:
+        code: { $ref: '#/components/schemas/Game' }
+        countCars: { type: integer, format: int64 }
+        countSeries: { type: integer, format: int64 }
+
+    Reference:
+      type: object
+      description: >
+        Facettes de référence pour amorcer les filtres d'un client. Les compteurs
+        classes/drivetrains/bodyTypes/countries/categories sont scopés au `game`
+        demandé ; games est global.
+      required: [game, classes, drivetrains, bodyTypes, countries, categories, games]
+      properties:
+        game: { $ref: '#/components/schemas/Game' }
+        classes:
+          type: array
+          description: Classes PI et leurs compteurs (ordre PI, R en dernier ; count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        drivetrains:
+          type: array
+          description: Transmissions et leurs compteurs (count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        bodyTypes:
+          type: array
+          description: Types de carrosserie présents (plus fréquents d'abord).
+          items: { $ref: '#/components/schemas/RefCount' }
+        countries:
+          type: array
+          description: Pays des constructeurs présents (plus fréquents d'abord).
+          items: { $ref: '#/components/schemas/RefCount' }
+        categories:
+          type: array
+          description: Catégories / divisions in-game présentes (plus fréquentes d'abord).
+          items: { $ref: '#/components/schemas/RefCount' }
+        games:
+          type: array
+          description: Jeux disponibles et leurs volumes (global, indépendant du paramètre game).
+          items: { $ref: '#/components/schemas/GameCount' }
 
     Error:
       type: object

@@ -5,6 +5,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"net/url"
 
 	"github.com/zinackes/forza-open-api/internal/oas"
@@ -21,6 +22,7 @@ func (h *Handler) ListCars(ctx context.Context, params oas.ListCarsParams) (oas.
 		PIMin:      optIntFilter(params.PiMin),
 		PIMax:      optIntFilter(params.PiMax),
 		Drivetrain: optFilter(params.Drivetrain.Set, string(params.Drivetrain.Value)),
+		Category:   optFilter(params.Category.Set, params.Category.Value),
 		Q:          optFilter(params.Q.Set, params.Q.Value),
 		Dlc:        optFilter(params.Dlc.Set, params.Dlc.Value),
 		Limit:      size,
@@ -32,26 +34,65 @@ func (h *Handler) ListCars(ctx context.Context, params oas.ListCarsParams) (oas.
 
 	items := make([]oas.Car, 0, len(rows))
 	for _, c := range rows {
-		items = append(items, oas.Car{
-			ID:           c.ID,
-			Game:         oas.Game(c.Game),
-			Name:         c.Name,
-			Make:         c.Make,
-			Model:        optString(c.Model),
-			Year:         optInt(c.Year),
-			Class:        oas.CarClass(c.Class),
-			Pi:           c.PI,
-			Drivetrain:   oas.Drivetrain(c.Drivetrain),
-			Stats:        optCarStats(c.Stats),
-			BodyType:     optString(c.BodyType),
-			Rarity:       optString(c.Rarity),
-			ValueCr:      optInt64(c.ValueCr),
-			ObtainMethod: optString(c.ObtainMethod),
-			ImageUrl:     optURI(c.ImageURL),
-			CreatedAt:    oas.NewOptDateTime(c.CreatedAt),
-		})
+		items = append(items, mapCar(c))
 	}
 	return &oas.CarList{Items: items, Total: total, Page: page, PageSize: size}, nil
+}
+
+// randomCarCacheControl : un tirage aléatoire ne doit jamais être mis en cache
+// (edge Cloudflare ou navigateur), sinon tous les clients verraient la même
+// voiture « random ». Chaque appel re-tire → no-store.
+const randomCarCacheControl = "no-store"
+
+// GetRandomCar implémente GET /v1/cars/random : une voiture au hasard parmi les
+// correspondances, 404 si aucune. Réponse jamais cachée (no-store).
+func (h *Handler) GetRandomCar(ctx context.Context, params oas.GetRandomCarParams) (oas.GetRandomCarRes, error) {
+	c, err := h.store.RandomCar(ctx, store.CarFilter{
+		Game:       string(params.Game),
+		Make:       optFilter(params.Make.Set, params.Make.Value),
+		Class:      optFilter(params.Class.Set, string(params.Class.Value)),
+		PIMin:      optIntFilter(params.PiMin),
+		PIMax:      optIntFilter(params.PiMax),
+		Drivetrain: optFilter(params.Drivetrain.Set, string(params.Drivetrain.Value)),
+		Category:   optFilter(params.Category.Set, params.Category.Value),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if c == nil {
+		return &oas.GetRandomCarNotFound{
+			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
+			Status: oas.NewOptInt(http.StatusNotFound),
+			Detail: oas.NewOptString("no car matches the given filters"),
+		}, nil
+	}
+	return &oas.CarHeaders{
+		CacheControl: oas.NewOptString(randomCarCacheControl),
+		Response:     mapCar(*c),
+	}, nil
+}
+
+// mapCar projette la vue DB d'une voiture sur le modèle du contrat.
+func mapCar(c store.Car) oas.Car {
+	return oas.Car{
+		ID:           c.ID,
+		Game:         oas.Game(c.Game),
+		Name:         c.Name,
+		Make:         c.Make,
+		Model:        optString(c.Model),
+		Year:         optInt(c.Year),
+		Class:        oas.CarClass(c.Class),
+		Pi:           c.PI,
+		Drivetrain:   oas.Drivetrain(c.Drivetrain),
+		Stats:        optCarStats(c.Stats),
+		BodyType:     optString(c.BodyType),
+		Category:     optString(c.Category),
+		Rarity:       optString(c.Rarity),
+		ValueCr:      optInt64(c.ValueCr),
+		ObtainMethod: optString(c.ObtainMethod),
+		ImageUrl:     optURI(c.ImageURL),
+		CreatedAt:    oas.NewOptDateTime(c.CreatedAt),
+	}
 }
 
 // optIntFilter convertit un paramètre de filtre OptInt en *int (nil si absent).

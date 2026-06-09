@@ -13,6 +13,14 @@ type GetCurrentPlaylistRes interface {
 	getCurrentPlaylistRes()
 }
 
+type GetRandomCarRes interface {
+	getRandomCarRes()
+}
+
+type GetReferenceRes interface {
+	getReferenceRes()
+}
+
 type GetSeriesRes interface {
 	getSeriesRes()
 }
@@ -35,6 +43,10 @@ type ListDlcPacksRes interface {
 
 type ListEventsRes interface {
 	listEventsRes()
+}
+
+type ListJournalTiersRes interface {
+	listJournalTiersRes()
 }
 
 type ListManufacturersRes interface {

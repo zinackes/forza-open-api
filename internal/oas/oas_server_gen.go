@@ -12,10 +12,12 @@ type Handler interface {
 	CarsHandler
 	DLCHandler
 	EventsHandler
+	JournalHandler
 	ManufacturersHandler
 	MasteryHandler
 	PRStuntsHandler
 	PlaylistHandler
+	ReferenceHandler
 	TracksHandler
 	TreasureCarsHandler
 	UpgradesHandler
@@ -43,6 +45,15 @@ type CarsHandler interface {
 	//
 	// GET /v1/cars/{id}
 	GetCar(ctx context.Context, params GetCarParams) (GetCarRes, error)
+	// GetRandomCar implements getRandomCar operation.
+	//
+	// Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
+	// que /v1/cars). Pensé pour les bots Discord ("bagnole random du jour"), défis communautaires et
+	// easter-eggs sur la landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
+	// re-tire. 404 si aucune voiture ne correspond.
+	//
+	// GET /v1/cars/random
+	GetRandomCar(ctx context.Context, params GetRandomCarParams) (GetRandomCarRes, error)
 	// ListCars implements listCars operation.
 	//
 	// Liste les voitures du catalogue.
@@ -73,6 +84,22 @@ type EventsHandler interface {
 	//
 	// GET /v1/events
 	ListEvents(ctx context.Context, params ListEventsParams) (ListEventsRes, error)
+}
+
+// JournalHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Journal
+type JournalHandler interface {
+	// ListJournalTiers implements listJournalTiers operation.
+	//
+	// Paliers de progression du Collection Journal FH6 : 7 Wristbands (track horizon_festival, Yellow
+	// → Gold ; Gold débloque Legend Island + The Goliath) et 7 Stamps (track discover_japan, Visitor
+	// → Master Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que via les
+	// rewardCarId de ces paliers. Remplace les Accolades de FH5. Ensemble borné (≤ 14 par jeu) →
+	// pas de pagination.
+	//
+	// GET /v1/journal
+	ListJournalTiers(ctx context.Context, params ListJournalTiersParams) (ListJournalTiersRes, error)
 }
 
 // ManufacturersHandler handles operations described by OpenAPI v3 specification.
@@ -136,6 +163,22 @@ type PlaylistHandler interface {
 	//
 	// GET /v1/playlist/series
 	ListSeries(ctx context.Context, params ListSeriesParams) (ListSeriesRes, error)
+}
+
+// ReferenceHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Reference
+type ReferenceHandler interface {
+	// GetReference implements getReference operation.
+	//
+	// Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI
+	// (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories
+	// (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes
+	// par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement
+	// cacheable, invalidée par les jobs d'ingestion.
+	//
+	// GET /v1/reference
+	GetReference(ctx context.Context, params GetReferenceParams) (GetReferenceRes, error)
 }
 
 // TracksHandler handles operations described by OpenAPI v3 specification.

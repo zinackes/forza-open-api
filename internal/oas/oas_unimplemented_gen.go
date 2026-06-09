@@ -43,6 +43,31 @@ func (UnimplementedHandler) GetCurrentPlaylist(ctx context.Context, params GetCu
 	return r, ht.ErrNotImplemented
 }
 
+// GetRandomCar implements getRandomCar operation.
+//
+// Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
+// que /v1/cars). Pensé pour les bots Discord ("bagnole random du jour"), défis communautaires et
+// easter-eggs sur la landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
+// re-tire. 404 si aucune voiture ne correspond.
+//
+// GET /v1/cars/random
+func (UnimplementedHandler) GetRandomCar(ctx context.Context, params GetRandomCarParams) (r GetRandomCarRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetReference implements getReference operation.
+//
+// Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI
+// (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories
+// (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes
+// par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement
+// cacheable, invalidée par les jobs d'ingestion.
+//
+// GET /v1/reference
+func (UnimplementedHandler) GetReference(ctx context.Context, params GetReferenceParams) (r GetReferenceRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetSeries implements getSeries operation.
 //
 // Récupère une série par identifiant.
@@ -96,6 +121,19 @@ func (UnimplementedHandler) ListDlcPacks(ctx context.Context, params ListDlcPack
 //
 // GET /v1/events
 func (UnimplementedHandler) ListEvents(ctx context.Context, params ListEventsParams) (r ListEventsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListJournalTiers implements listJournalTiers operation.
+//
+// Paliers de progression du Collection Journal FH6 : 7 Wristbands (track horizon_festival, Yellow
+// → Gold ; Gold débloque Legend Island + The Goliath) et 7 Stamps (track discover_japan, Visitor
+// → Master Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que via les
+// rewardCarId de ces paliers. Remplace les Accolades de FH5. Ensemble borné (≤ 14 par jeu) →
+// pas de pagination.
+//
+// GET /v1/journal
+func (UnimplementedHandler) ListJournalTiers(ctx context.Context, params ListJournalTiersParams) (r ListJournalTiersRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

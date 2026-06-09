@@ -224,17 +224,19 @@ func (*BarnFindList) listBarnFindsRes() {}
 
 // Ref: #/components/schemas/Car
 type Car struct {
-	ID           string      `json:"id"`
-	Game         Game        `json:"game"`
-	Name         string      `json:"name"`
-	Make         string      `json:"make"`
-	Model        OptString   `json:"model"`
-	Year         OptInt      `json:"year"`
-	Class        CarClass    `json:"class"`
-	Pi           int         `json:"pi"`
-	Drivetrain   Drivetrain  `json:"drivetrain"`
-	Stats        OptCarStats `json:"stats"`
-	BodyType     OptString   `json:"bodyType"`
+	ID         string      `json:"id"`
+	Game       Game        `json:"game"`
+	Name       string      `json:"name"`
+	Make       string      `json:"make"`
+	Model      OptString   `json:"model"`
+	Year       OptInt      `json:"year"`
+	Class      CarClass    `json:"class"`
+	Pi         int         `json:"pi"`
+	Drivetrain Drivetrain  `json:"drivetrain"`
+	Stats      OptCarStats `json:"stats"`
+	BodyType   OptString   `json:"bodyType"`
+	// Catégorie / division in-game (ex. "Modern Supercars"). Absente si non sourcée.
+	Category     OptString   `json:"category"`
 	Rarity       OptString   `json:"rarity"`
 	ValueCr      OptInt64    `json:"valueCr"`
 	ObtainMethod OptString   `json:"obtainMethod"`
@@ -295,6 +297,11 @@ func (s *Car) GetStats() OptCarStats {
 // GetBodyType returns the value of BodyType.
 func (s *Car) GetBodyType() OptString {
 	return s.BodyType
+}
+
+// GetCategory returns the value of Category.
+func (s *Car) GetCategory() OptString {
+	return s.Category
 }
 
 // GetRarity returns the value of Rarity.
@@ -377,6 +384,11 @@ func (s *Car) SetBodyType(val OptString) {
 	s.BodyType = val
 }
 
+// SetCategory sets the value of Category.
+func (s *Car) SetCategory(val OptString) {
+	s.Category = val
+}
+
 // SetRarity sets the value of Rarity.
 func (s *Car) SetRarity(val OptString) {
 	s.Rarity = val
@@ -404,7 +416,7 @@ func (s *Car) SetCreatedAt(val OptDateTime) {
 
 func (*Car) getCarRes() {}
 
-// Classe Performance Index.
+// Classe Performance Index. R (voitures track-focused) introduite en FH6 ; absente de FH5.
 // Ref: #/components/schemas/CarClass
 type CarClass string
 
@@ -416,6 +428,7 @@ const (
 	CarClassS1 CarClass = "S1"
 	CarClassS2 CarClass = "S2"
 	CarClassX  CarClass = "X"
+	CarClassR  CarClass = "R"
 )
 
 // AllValues returns all CarClass values.
@@ -428,6 +441,7 @@ func (CarClass) AllValues() []CarClass {
 		CarClassS1,
 		CarClassS2,
 		CarClassX,
+		CarClassR,
 	}
 }
 
@@ -447,6 +461,8 @@ func (s CarClass) MarshalText() ([]byte, error) {
 	case CarClassS2:
 		return []byte(s), nil
 	case CarClassX:
+		return []byte(s), nil
+	case CarClassR:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -477,10 +493,41 @@ func (s *CarClass) UnmarshalText(data []byte) error {
 	case CarClassX:
 		*s = CarClassX
 		return nil
+	case CarClassR:
+		*s = CarClassR
+		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// CarHeaders wraps Car with response headers.
+type CarHeaders struct {
+	CacheControl OptString
+	Response     Car
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *CarHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *CarHeaders) GetResponse() Car {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *CarHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *CarHeaders) SetResponse(val Car) {
+	s.Response = val
+}
+
+func (*CarHeaders) getRandomCarRes() {}
 
 // Ref: #/components/schemas/CarList
 type CarList struct {
@@ -1526,6 +1573,44 @@ func (s *Game) UnmarshalText(data []byte) error {
 	}
 }
 
+// Jeu disponible et ses volumes (voitures, séries de playlist).
+// Ref: #/components/schemas/GameCount
+type GameCount struct {
+	Code        Game  `json:"code"`
+	CountCars   int64 `json:"countCars"`
+	CountSeries int64 `json:"countSeries"`
+}
+
+// GetCode returns the value of Code.
+func (s *GameCount) GetCode() Game {
+	return s.Code
+}
+
+// GetCountCars returns the value of CountCars.
+func (s *GameCount) GetCountCars() int64 {
+	return s.CountCars
+}
+
+// GetCountSeries returns the value of CountSeries.
+func (s *GameCount) GetCountSeries() int64 {
+	return s.CountSeries
+}
+
+// SetCode sets the value of Code.
+func (s *GameCount) SetCode(val Game) {
+	s.Code = val
+}
+
+// SetCountCars sets the value of CountCars.
+func (s *GameCount) SetCountCars(val int64) {
+	s.CountCars = val
+}
+
+// SetCountSeries sets the value of CountSeries.
+func (s *GameCount) SetCountSeries(val int64) {
+	s.CountSeries = val
+}
+
 type GetCarMasteryOKApplicationJSON []CarMasteryPerk
 
 func (*GetCarMasteryOKApplicationJSON) getCarMasteryRes() {}
@@ -1566,6 +1651,34 @@ type GetCurrentPlaylistUnauthorized Error
 
 func (*GetCurrentPlaylistUnauthorized) getCurrentPlaylistRes() {}
 
+type GetRandomCarBadRequest Error
+
+func (*GetRandomCarBadRequest) getRandomCarRes() {}
+
+type GetRandomCarNotFound Error
+
+func (*GetRandomCarNotFound) getRandomCarRes() {}
+
+type GetRandomCarTooManyRequests Error
+
+func (*GetRandomCarTooManyRequests) getRandomCarRes() {}
+
+type GetRandomCarUnauthorized Error
+
+func (*GetRandomCarUnauthorized) getRandomCarRes() {}
+
+type GetReferenceBadRequest Error
+
+func (*GetReferenceBadRequest) getReferenceRes() {}
+
+type GetReferenceTooManyRequests Error
+
+func (*GetReferenceTooManyRequests) getReferenceRes() {}
+
+type GetReferenceUnauthorized Error
+
+func (*GetReferenceUnauthorized) getReferenceRes() {}
+
 type GetSeriesNotFound Error
 
 func (*GetSeriesNotFound) getSeriesRes() {}
@@ -1577,6 +1690,265 @@ func (*GetSeriesTooManyRequests) getSeriesRes() {}
 type GetSeriesUnauthorized Error
 
 func (*GetSeriesUnauthorized) getSeriesRes() {}
+
+// Palier du Collection Journal FH6 : un niveau (1-7) d'une piste (horizon_festival = wristbands
+// colorés Yellow → Gold ; discover_japan = stamps Visitor → Master Explorer). Atteint à
+// pointsRequired points de collection. Peut débloquer une voiture (rewardCarId) et/ou du contenu
+// (unlocksDescription : Legend Island + The Goliath, poussée des Barn Finds…). Remplace les
+// Accolades de FH5. Champs non sourcés → omis.
+// Ref: #/components/schemas/JournalTier
+type JournalTier struct {
+	ID    string       `json:"id"`
+	Game  Game         `json:"game"`
+	Track JournalTrack `json:"track"`
+	// Niveau du palier dans la piste (1-7).
+	Level int                 `json:"level"`
+	Color OptJournalTierColor `json:"color"`
+	// Nom du palier (couleur du wristband ou rang de stamp, ex. "Gold", "Master Explorer").
+	Name string `json:"name"`
+	// Points de collection requis pour atteindre le palier.
+	PointsRequired OptInt `json:"pointsRequired"`
+	// Voiture débloquée par ce palier (réf. /v1/cars). Absent si le palier ne donne pas de voiture.
+	RewardCarId OptString `json:"rewardCarId"`
+	// Contenu débloqué par le palier (ex. "Legend Island + The Goliath", poussée des Barn Finds).
+	// Absent si non sourcé.
+	UnlocksDescription OptString `json:"unlocksDescription"`
+	// Source propre de la donnée.
+	Source       OptString   `json:"source"`
+	LastVerified OptDateTime `json:"lastVerified"`
+}
+
+// GetID returns the value of ID.
+func (s *JournalTier) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *JournalTier) GetGame() Game {
+	return s.Game
+}
+
+// GetTrack returns the value of Track.
+func (s *JournalTier) GetTrack() JournalTrack {
+	return s.Track
+}
+
+// GetLevel returns the value of Level.
+func (s *JournalTier) GetLevel() int {
+	return s.Level
+}
+
+// GetColor returns the value of Color.
+func (s *JournalTier) GetColor() OptJournalTierColor {
+	return s.Color
+}
+
+// GetName returns the value of Name.
+func (s *JournalTier) GetName() string {
+	return s.Name
+}
+
+// GetPointsRequired returns the value of PointsRequired.
+func (s *JournalTier) GetPointsRequired() OptInt {
+	return s.PointsRequired
+}
+
+// GetRewardCarId returns the value of RewardCarId.
+func (s *JournalTier) GetRewardCarId() OptString {
+	return s.RewardCarId
+}
+
+// GetUnlocksDescription returns the value of UnlocksDescription.
+func (s *JournalTier) GetUnlocksDescription() OptString {
+	return s.UnlocksDescription
+}
+
+// GetSource returns the value of Source.
+func (s *JournalTier) GetSource() OptString {
+	return s.Source
+}
+
+// GetLastVerified returns the value of LastVerified.
+func (s *JournalTier) GetLastVerified() OptDateTime {
+	return s.LastVerified
+}
+
+// SetID sets the value of ID.
+func (s *JournalTier) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *JournalTier) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetTrack sets the value of Track.
+func (s *JournalTier) SetTrack(val JournalTrack) {
+	s.Track = val
+}
+
+// SetLevel sets the value of Level.
+func (s *JournalTier) SetLevel(val int) {
+	s.Level = val
+}
+
+// SetColor sets the value of Color.
+func (s *JournalTier) SetColor(val OptJournalTierColor) {
+	s.Color = val
+}
+
+// SetName sets the value of Name.
+func (s *JournalTier) SetName(val string) {
+	s.Name = val
+}
+
+// SetPointsRequired sets the value of PointsRequired.
+func (s *JournalTier) SetPointsRequired(val OptInt) {
+	s.PointsRequired = val
+}
+
+// SetRewardCarId sets the value of RewardCarId.
+func (s *JournalTier) SetRewardCarId(val OptString) {
+	s.RewardCarId = val
+}
+
+// SetUnlocksDescription sets the value of UnlocksDescription.
+func (s *JournalTier) SetUnlocksDescription(val OptString) {
+	s.UnlocksDescription = val
+}
+
+// SetSource sets the value of Source.
+func (s *JournalTier) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetLastVerified sets the value of LastVerified.
+func (s *JournalTier) SetLastVerified(val OptDateTime) {
+	s.LastVerified = val
+}
+
+// Couleur du wristband (track horizon_festival : Yellow → Gold sur 7 niveaux). Absente pour les
+// stamps Discover Japan.
+// Ref: #/components/schemas/JournalTierColor
+type JournalTierColor string
+
+const (
+	JournalTierColorYellow JournalTierColor = "yellow"
+	JournalTierColorGreen  JournalTierColor = "green"
+	JournalTierColorBlue   JournalTierColor = "blue"
+	JournalTierColorPink   JournalTierColor = "pink"
+	JournalTierColorOrange JournalTierColor = "orange"
+	JournalTierColorPurple JournalTierColor = "purple"
+	JournalTierColorGold   JournalTierColor = "gold"
+)
+
+// AllValues returns all JournalTierColor values.
+func (JournalTierColor) AllValues() []JournalTierColor {
+	return []JournalTierColor{
+		JournalTierColorYellow,
+		JournalTierColorGreen,
+		JournalTierColorBlue,
+		JournalTierColorPink,
+		JournalTierColorOrange,
+		JournalTierColorPurple,
+		JournalTierColorGold,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s JournalTierColor) MarshalText() ([]byte, error) {
+	switch s {
+	case JournalTierColorYellow:
+		return []byte(s), nil
+	case JournalTierColorGreen:
+		return []byte(s), nil
+	case JournalTierColorBlue:
+		return []byte(s), nil
+	case JournalTierColorPink:
+		return []byte(s), nil
+	case JournalTierColorOrange:
+		return []byte(s), nil
+	case JournalTierColorPurple:
+		return []byte(s), nil
+	case JournalTierColorGold:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *JournalTierColor) UnmarshalText(data []byte) error {
+	switch JournalTierColor(data) {
+	case JournalTierColorYellow:
+		*s = JournalTierColorYellow
+		return nil
+	case JournalTierColorGreen:
+		*s = JournalTierColorGreen
+		return nil
+	case JournalTierColorBlue:
+		*s = JournalTierColorBlue
+		return nil
+	case JournalTierColorPink:
+		*s = JournalTierColorPink
+		return nil
+	case JournalTierColorOrange:
+		*s = JournalTierColorOrange
+		return nil
+	case JournalTierColorPurple:
+		*s = JournalTierColorPurple
+		return nil
+	case JournalTierColorGold:
+		*s = JournalTierColorGold
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Piste de progression du Collection Journal.
+// Ref: #/components/schemas/JournalTrack
+type JournalTrack string
+
+const (
+	JournalTrackHorizonFestival JournalTrack = "horizon_festival"
+	JournalTrackDiscoverJapan   JournalTrack = "discover_japan"
+)
+
+// AllValues returns all JournalTrack values.
+func (JournalTrack) AllValues() []JournalTrack {
+	return []JournalTrack{
+		JournalTrackHorizonFestival,
+		JournalTrackDiscoverJapan,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s JournalTrack) MarshalText() ([]byte, error) {
+	switch s {
+	case JournalTrackHorizonFestival:
+		return []byte(s), nil
+	case JournalTrackDiscoverJapan:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *JournalTrack) UnmarshalText(data []byte) error {
+	switch JournalTrack(data) {
+	case JournalTrackHorizonFestival:
+		*s = JournalTrackHorizonFestival
+		return nil
+	case JournalTrackDiscoverJapan:
+		*s = JournalTrackDiscoverJapan
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 type ListBarnFindsBadRequest Error
 
@@ -1641,6 +2013,22 @@ func (*ListEventsTooManyRequests) listEventsRes() {}
 type ListEventsUnauthorized Error
 
 func (*ListEventsUnauthorized) listEventsRes() {}
+
+type ListJournalTiersBadRequest Error
+
+func (*ListJournalTiersBadRequest) listJournalTiersRes() {}
+
+type ListJournalTiersOKApplicationJSON []JournalTier
+
+func (*ListJournalTiersOKApplicationJSON) listJournalTiersRes() {}
+
+type ListJournalTiersTooManyRequests Error
+
+func (*ListJournalTiersTooManyRequests) listJournalTiersRes() {}
+
+type ListJournalTiersUnauthorized Error
+
+func (*ListJournalTiersUnauthorized) listJournalTiersRes() {}
 
 type ListManufacturersBadRequest Error
 
@@ -2173,6 +2561,98 @@ func (o OptInt64) Or(d int64) int64 {
 	return d
 }
 
+// NewOptJournalTierColor returns new OptJournalTierColor with value set to v.
+func NewOptJournalTierColor(v JournalTierColor) OptJournalTierColor {
+	return OptJournalTierColor{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptJournalTierColor is optional JournalTierColor.
+type OptJournalTierColor struct {
+	Value JournalTierColor
+	Set   bool
+}
+
+// IsSet returns true if OptJournalTierColor was set.
+func (o OptJournalTierColor) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptJournalTierColor) Reset() {
+	var v JournalTierColor
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptJournalTierColor) SetTo(v JournalTierColor) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptJournalTierColor) Get() (v JournalTierColor, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptJournalTierColor) Or(d JournalTierColor) JournalTierColor {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptJournalTrack returns new OptJournalTrack with value set to v.
+func NewOptJournalTrack(v JournalTrack) OptJournalTrack {
+	return OptJournalTrack{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptJournalTrack is optional JournalTrack.
+type OptJournalTrack struct {
+	Value JournalTrack
+	Set   bool
+}
+
+// IsSet returns true if OptJournalTrack was set.
+func (o OptJournalTrack) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptJournalTrack) Reset() {
+	var v JournalTrack
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptJournalTrack) SetTo(v JournalTrack) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptJournalTrack) Get() (v JournalTrack, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptJournalTrack) Or(d JournalTrack) JournalTrack {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptPRStuntType returns new OptPRStuntType with value set to v.
 func NewOptPRStuntType(v PRStuntType) OptPRStuntType {
 	return OptPRStuntType{
@@ -2649,6 +3129,153 @@ func (s *PRStuntType) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// Valeur d'une facette (code) et son nombre d'occurrences pour le jeu demandé. Pour les facettes
+// énumérées (classes, drivetrains), tous les codes valides sont renvoyés, count compris à 0.
+// Pour les facettes libres (bodyTypes, countries, categories), seules les valeurs présentes le sont.
+// Ref: #/components/schemas/RefCount
+type RefCount struct {
+	Code  string `json:"code"`
+	Count int64  `json:"count"`
+}
+
+// GetCode returns the value of Code.
+func (s *RefCount) GetCode() string {
+	return s.Code
+}
+
+// GetCount returns the value of Count.
+func (s *RefCount) GetCount() int64 {
+	return s.Count
+}
+
+// SetCode sets the value of Code.
+func (s *RefCount) SetCode(val string) {
+	s.Code = val
+}
+
+// SetCount sets the value of Count.
+func (s *RefCount) SetCount(val int64) {
+	s.Count = val
+}
+
+// Facettes de référence pour amorcer les filtres d'un client. Les compteurs
+// classes/drivetrains/bodyTypes/countries/categories sont scopés au `game` demandé ; games est
+// global.
+// Ref: #/components/schemas/Reference
+type Reference struct {
+	Game Game `json:"game"`
+	// Classes PI et leurs compteurs (ordre PI, R en dernier ; count 0 inclus).
+	Classes []RefCount `json:"classes"`
+	// Transmissions et leurs compteurs (count 0 inclus).
+	Drivetrains []RefCount `json:"drivetrains"`
+	// Types de carrosserie présents (plus fréquents d'abord).
+	BodyTypes []RefCount `json:"bodyTypes"`
+	// Pays des constructeurs présents (plus fréquents d'abord).
+	Countries []RefCount `json:"countries"`
+	// Catégories / divisions in-game présentes (plus fréquentes d'abord).
+	Categories []RefCount `json:"categories"`
+	// Jeux disponibles et leurs volumes (global, indépendant du paramètre game).
+	Games []GameCount `json:"games"`
+}
+
+// GetGame returns the value of Game.
+func (s *Reference) GetGame() Game {
+	return s.Game
+}
+
+// GetClasses returns the value of Classes.
+func (s *Reference) GetClasses() []RefCount {
+	return s.Classes
+}
+
+// GetDrivetrains returns the value of Drivetrains.
+func (s *Reference) GetDrivetrains() []RefCount {
+	return s.Drivetrains
+}
+
+// GetBodyTypes returns the value of BodyTypes.
+func (s *Reference) GetBodyTypes() []RefCount {
+	return s.BodyTypes
+}
+
+// GetCountries returns the value of Countries.
+func (s *Reference) GetCountries() []RefCount {
+	return s.Countries
+}
+
+// GetCategories returns the value of Categories.
+func (s *Reference) GetCategories() []RefCount {
+	return s.Categories
+}
+
+// GetGames returns the value of Games.
+func (s *Reference) GetGames() []GameCount {
+	return s.Games
+}
+
+// SetGame sets the value of Game.
+func (s *Reference) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetClasses sets the value of Classes.
+func (s *Reference) SetClasses(val []RefCount) {
+	s.Classes = val
+}
+
+// SetDrivetrains sets the value of Drivetrains.
+func (s *Reference) SetDrivetrains(val []RefCount) {
+	s.Drivetrains = val
+}
+
+// SetBodyTypes sets the value of BodyTypes.
+func (s *Reference) SetBodyTypes(val []RefCount) {
+	s.BodyTypes = val
+}
+
+// SetCountries sets the value of Countries.
+func (s *Reference) SetCountries(val []RefCount) {
+	s.Countries = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *Reference) SetCategories(val []RefCount) {
+	s.Categories = val
+}
+
+// SetGames sets the value of Games.
+func (s *Reference) SetGames(val []GameCount) {
+	s.Games = val
+}
+
+// ReferenceHeaders wraps Reference with response headers.
+type ReferenceHeaders struct {
+	CacheControl OptString
+	Response     Reference
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *ReferenceHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *ReferenceHeaders) GetResponse() Reference {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *ReferenceHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ReferenceHeaders) SetResponse(val Reference) {
+	s.Response = val
+}
+
+func (*ReferenceHeaders) getReferenceRes() {}
 
 type Region string
 

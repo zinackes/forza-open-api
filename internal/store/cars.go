@@ -4,8 +4,11 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 // CarFilter porte les filtres de GET /v1/cars. Pointeur nil = pas de filtre.
@@ -16,6 +19,7 @@ type CarFilter struct {
 	PIMin      *int
 	PIMax      *int
 	Drivetrain *string
+	Category   *string // division in-game, correspondance exacte
 	Q          *string
 	Dlc        *string // identifiant d'un dlc_packs : restreint aux voitures du pack
 	Limit      int
@@ -36,6 +40,7 @@ type Car struct {
 	Drivetrain   string
 	Stats        []byte // JSONB brut
 	BodyType     *string
+	Category     *string
 	Rarity       *string
 	ValueCr      *int64
 	ObtainMethod *string
@@ -48,7 +53,7 @@ type Car struct {
 func (s *Store) ListCars(ctx context.Context, f CarFilter) ([]Car, int64, error) {
 	const q = `
 SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
-       c.drivetrain, c.stats, c.body_type, c.rarity, c.value_cr,
+       c.drivetrain, c.stats, c.body_type, c.category, c.rarity, c.value_cr,
        c.obtain_method, c.image_url, c.created_at, count(*) OVER() AS total
 FROM cars c
 WHERE c.game = $1
@@ -57,13 +62,14 @@ WHERE c.game = $1
   AND ($4::int  IS NULL OR c.pi >= $4)
   AND ($5::int  IS NULL OR c.pi <= $5)
   AND ($6::text IS NULL OR c.drivetrain = $6)
-  AND ($7::text IS NULL OR c.name ILIKE '%' || $7 || '%' OR c.model ILIKE '%' || $7 || '%')
-  AND ($8::text IS NULL OR EXISTS (
-        SELECT 1 FROM car_dlc cd WHERE cd.car_id = c.id AND cd.dlc_id = $8))
+  AND ($7::text IS NULL OR c.category = $7)
+  AND ($8::text IS NULL OR c.name ILIKE '%' || $8 || '%' OR c.model ILIKE '%' || $8 || '%')
+  AND ($9::text IS NULL OR EXISTS (
+        SELECT 1 FROM car_dlc cd WHERE cd.car_id = c.id AND cd.dlc_id = $9))
 ORDER BY c.name
-LIMIT $9 OFFSET $10`
+LIMIT $10 OFFSET $11`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
-		f.Drivetrain, f.Q, f.Dlc, f.Limit, f.Offset)
+		f.Drivetrain, f.Category, f.Q, f.Dlc, f.Limit, f.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("query cars: %w", err)
 	}
@@ -74,7 +80,7 @@ LIMIT $9 OFFSET $10`
 	for rows.Next() {
 		var c Car
 		if err := rows.Scan(&c.ID, &c.Game, &c.Name, &c.Make, &c.Model, &c.Year,
-			&c.Class, &c.PI, &c.Drivetrain, &c.Stats, &c.BodyType, &c.Rarity,
+			&c.Class, &c.PI, &c.Drivetrain, &c.Stats, &c.BodyType, &c.Category, &c.Rarity,
 			&c.ValueCr, &c.ObtainMethod, &c.ImageURL, &c.CreatedAt, &total); err != nil {
 			return nil, 0, fmt.Errorf("scan car: %w", err)
 		}
@@ -84,4 +90,37 @@ LIMIT $9 OFFSET $10`
 		return nil, 0, fmt.Errorf("iterate cars: %w", err)
 	}
 	return out, total, nil
+}
+
+// RandomCar tire une voiture au hasard parmi celles satisfaisant les filtres
+// (mêmes filtres que ListCars, hors q/dlc/pagination). Renvoie (nil, nil) si
+// aucune voiture ne correspond — le handler en fait un 404. ORDER BY random()
+// suffit au volume du catalogue (quelques milliers de voitures par jeu).
+func (s *Store) RandomCar(ctx context.Context, f CarFilter) (*Car, error) {
+	const q = `
+SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
+       c.drivetrain, c.stats, c.body_type, c.category, c.rarity, c.value_cr,
+       c.obtain_method, c.image_url, c.created_at
+FROM cars c
+WHERE c.game = $1
+  AND ($2::text IS NULL OR c.make = $2)
+  AND ($3::text IS NULL OR c.class = $3)
+  AND ($4::int  IS NULL OR c.pi >= $4)
+  AND ($5::int  IS NULL OR c.pi <= $5)
+  AND ($6::text IS NULL OR c.drivetrain = $6)
+  AND ($7::text IS NULL OR c.category = $7)
+ORDER BY random()
+LIMIT 1`
+	var c Car
+	err := s.DB.QueryRow(ctx, q, f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
+		f.Drivetrain, f.Category).Scan(&c.ID, &c.Game, &c.Name, &c.Make, &c.Model,
+		&c.Year, &c.Class, &c.PI, &c.Drivetrain, &c.Stats, &c.BodyType, &c.Category,
+		&c.Rarity, &c.ValueCr, &c.ObtainMethod, &c.ImageURL, &c.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query random car: %w", err)
+	}
+	return &c, nil
 }
