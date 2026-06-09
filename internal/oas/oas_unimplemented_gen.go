@@ -22,6 +22,18 @@ func (UnimplementedHandler) GetCar(ctx context.Context, params GetCarParams) (r 
 	return r, ht.ErrNotImplemented
 }
 
+// GetCarMastery implements getCarMastery operation.
+//
+// Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une case (row, col) de la
+// grille 4×4, coûte des Skill Points (spCost), peut dépendre d'une autre (prereqPerkId) et
+// certaines débloquent une voiture cachée (effectType car_unlock → unlockedCarId). Le jeu est
+// déterminé par la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+//
+// GET /v1/cars/{id}/mastery
+func (UnimplementedHandler) GetCarMastery(ctx context.Context, params GetCarMasteryParams) (r GetCarMasteryRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetCurrentPlaylist implements getCurrentPlaylist operation.
 //
 // Festival Playlist courante d'un jeu.

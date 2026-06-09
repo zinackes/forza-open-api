@@ -222,6 +222,33 @@ CREATE TABLE IF NOT EXISTS car_upgrades (
 -- voitures qui montent une pièce donnée.
 CREATE INDEX IF NOT EXISTS car_upgrades_part_idx ON car_upgrades (part_id);
 
+-- Car Mastery FH6 : grille de perks 4×4 par voiture ---------------------------
+-- Sources propres (dataset forzagarage.com qui indexe déjà les ~622 arbres, wiki
+-- Fandom). Sourcing progressif. Une perk = une case (row, col) de la grille,
+-- débloquée contre des Skill Points (sp_cost). effect_type est LIBRE (valeurs
+-- courantes : credits, xp_boost, wheelspin, super_wheelspin, skill_score,
+-- car_unlock, …). prereq_perk_id chaîne les perks ; unlocked_car_id pointe la
+-- voiture débloquée par une perk car_unlock (hidden cars FH6 : Corvette Stingray
+-- 427 via Stingray Coupe, Honda Civic RS via Civic Type R, Ferrari F50 GT via
+-- F50, Ford Supervan 4 via Supervan 3, …). Pas de game : dérivé via car_id.
+CREATE TABLE IF NOT EXISTS car_mastery_perks (
+    id                 TEXT PRIMARY KEY,
+    car_id             TEXT NOT NULL REFERENCES cars (id) ON DELETE CASCADE,
+    row                INT  CHECK (row BETWEEN 1 AND 4),
+    col                INT  CHECK (col BETWEEN 1 AND 4),
+    name               TEXT,
+    sp_cost            INT,
+    effect_description TEXT,
+    effect_type        TEXT,
+    effect_value       INT,
+    prereq_perk_id     TEXT REFERENCES car_mastery_perks (id) ON DELETE SET NULL,
+    unlocked_car_id    TEXT REFERENCES cars (id)              ON DELETE SET NULL,
+    source             TEXT,
+    last_verified      TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS car_mastery_perks_car_idx          ON car_mastery_perks (car_id);
+CREATE INDEX IF NOT EXISTS car_mastery_perks_unlocked_car_idx ON car_mastery_perks (unlocked_car_id);
+
 -- Clés API (jamais la clé en clair : seul le hash sha256 est stocké) -----------
 CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,

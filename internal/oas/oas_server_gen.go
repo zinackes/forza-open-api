@@ -13,6 +13,7 @@ type Handler interface {
 	DLCHandler
 	EventsHandler
 	ManufacturersHandler
+	MasteryHandler
 	PRStuntsHandler
 	PlaylistHandler
 	TracksHandler
@@ -84,6 +85,21 @@ type ManufacturersHandler interface {
 	//
 	// GET /v1/manufacturers
 	ListManufacturers(ctx context.Context, params ListManufacturersParams) (ListManufacturersRes, error)
+}
+
+// MasteryHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Mastery
+type MasteryHandler interface {
+	// GetCarMastery implements getCarMastery operation.
+	//
+	// Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une case (row, col) de la
+	// grille 4×4, coûte des Skill Points (spCost), peut dépendre d'une autre (prereqPerkId) et
+	// certaines débloquent une voiture cachée (effectType car_unlock → unlockedCarId). Le jeu est
+	// déterminé par la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+	//
+	// GET /v1/cars/{id}/mastery
+	GetCarMastery(ctx context.Context, params GetCarMasteryParams) (GetCarMasteryRes, error)
 }
 
 // PRStuntsHandler handles operations described by OpenAPI v3 specification.

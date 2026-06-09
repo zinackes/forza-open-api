@@ -33,6 +33,7 @@ type Invoker interface {
 	DLCInvoker
 	EventsInvoker
 	ManufacturersInvoker
+	MasteryInvoker
 	PRStuntsInvoker
 	PlaylistInvoker
 	TracksInvoker
@@ -104,6 +105,21 @@ type ManufacturersInvoker interface {
 	//
 	// GET /v1/manufacturers
 	ListManufacturers(ctx context.Context, params ListManufacturersParams) (ListManufacturersRes, error)
+}
+
+// MasteryInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Mastery
+type MasteryInvoker interface {
+	// GetCarMastery invokes getCarMastery operation.
+	//
+	// Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une case (row, col) de la
+	// grille 4×4, coûte des Skill Points (spCost), peut dépendre d'une autre (prereqPerkId) et
+	// certaines débloquent une voiture cachée (effectType car_unlock → unlockedCarId). Le jeu est
+	// déterminé par la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+	//
+	// GET /v1/cars/{id}/mastery
+	GetCarMastery(ctx context.Context, params GetCarMasteryParams) (GetCarMasteryRes, error)
 }
 
 // PRStuntsInvoker invokes operations described by OpenAPI v3 specification.
@@ -346,6 +362,136 @@ func (c *Client) sendGetCar(ctx context.Context, params GetCarParams) (res GetCa
 
 	stage = "DecodeResponse"
 	result, err := decodeGetCarResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetCarMastery invokes getCarMastery operation.
+//
+// Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une case (row, col) de la
+// grille 4×4, coûte des Skill Points (spCost), peut dépendre d'une autre (prereqPerkId) et
+// certaines débloquent une voiture cachée (effectType car_unlock → unlockedCarId). Le jeu est
+// déterminé par la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+//
+// GET /v1/cars/{id}/mastery
+func (c *Client) GetCarMastery(ctx context.Context, params GetCarMasteryParams) (GetCarMasteryRes, error) {
+	res, err := c.sendGetCarMastery(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetCarMastery(ctx context.Context, params GetCarMasteryParams) (res GetCarMasteryRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getCarMastery"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/cars/{id}/mastery"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetCarMasteryOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/v1/cars/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/mastery"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetCarMasteryOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetCarMasteryResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

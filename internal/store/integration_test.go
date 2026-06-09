@@ -353,3 +353,81 @@ func TestListCarUpgrades(t *testing.T) {
 		t.Fatalf("voiture inconnue: total=%d len=%d, want 0/0", total, len(none))
 	}
 }
+
+// TestListCarMasteryPerks vérifie la grille Car Mastery : ordre (row, col),
+// mapping des champs nullable, prérequis (prereq_perk_id), et le cas car_unlock
+// (effect_type car_unlock → unlocked_car_id pointe une hidden car). Exemple
+// documenté FH6 : la Corvette Stingray Coupe débloque la Stingray 427.
+func TestListCarMasteryPerks(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
+		('corvette-stingray-coupe','fh6','Corvette Stingray Coupe','Chevrolet','A',800,'RWD'),
+		('corvette-stingray-427','fh6','Corvette Stingray 427','Chevrolet','S1',850,'RWD'),
+		('other-car','fh6','Other Car','Make','D',500,'FWD')`)
+	// csc-p2 (row 2) inséré avant csc-p1 (row 1) : l'ordre attendu vient du tri SQL.
+	mustExec(t, st, `INSERT INTO car_mastery_perks
+		(id, car_id, row, col, name, sp_cost, effect_description, effect_type,
+		 effect_value, prereq_perk_id, unlocked_car_id, source, last_verified) VALUES
+		('csc-p2','corvette-stingray-coupe',2,1,'Unlock Stingray 427',5,'Débloque la Stingray 427','car_unlock',NULL,'csc-p1','corvette-stingray-427','forzagarage',NULL),
+		('csc-p1','corvette-stingray-coupe',1,1,'Bonus crédits',2,NULL,'credits',5000,NULL,NULL,'forzagarage','2026-01-01T00:00:00Z'),
+		('oc-p1','other-car',1,1,'XP Boost',3,NULL,'xp_boost',10,NULL,NULL,'fandom',NULL)`)
+
+	perks, err := st.ListCarMasteryPerks(ctx, "corvette-stingray-coupe")
+	if err != nil {
+		t.Fatalf("ListCarMasteryPerks: %v", err)
+	}
+	if len(perks) != 2 {
+		t.Fatalf("coupe: len=%d, want 2 (autres voitures exclues)", len(perks))
+	}
+	// ORDER BY row : csc-p1 (row 1) avant csc-p2 (row 2).
+	if perks[0].ID != "csc-p1" || perks[1].ID != "csc-p2" {
+		t.Errorf("ordre = [%s, %s], want [csc-p1, csc-p2]", perks[0].ID, perks[1].ID)
+	}
+	// csc-p1 : credits, effet présent, pas de prérequis ni de car_unlock.
+	if perks[0].EffectType == nil || *perks[0].EffectType != "credits" {
+		t.Errorf("csc-p1 effect_type = %v, want credits", perks[0].EffectType)
+	}
+	if perks[0].EffectValue == nil || *perks[0].EffectValue != 5000 {
+		t.Errorf("csc-p1 effect_value = %v, want 5000", perks[0].EffectValue)
+	}
+	if perks[0].PrereqPerkID != nil || perks[0].UnlockedCarID != nil || perks[0].EffectDescription != nil {
+		t.Errorf("csc-p1 prereq/unlocked/desc non nil: %v/%v/%v",
+			perks[0].PrereqPerkID, perks[0].UnlockedCarID, perks[0].EffectDescription)
+	}
+	// csc-p2 : car_unlock → unlocked_car_id pointe la hidden car ; prérequis csc-p1.
+	if perks[1].EffectType == nil || *perks[1].EffectType != "car_unlock" {
+		t.Errorf("csc-p2 effect_type = %v, want car_unlock", perks[1].EffectType)
+	}
+	if perks[1].UnlockedCarID == nil || *perks[1].UnlockedCarID != "corvette-stingray-427" {
+		t.Errorf("csc-p2 unlocked_car_id = %v, want corvette-stingray-427", perks[1].UnlockedCarID)
+	}
+	if perks[1].PrereqPerkID == nil || *perks[1].PrereqPerkID != "csc-p1" {
+		t.Errorf("csc-p2 prereq_perk_id = %v, want csc-p1", perks[1].PrereqPerkID)
+	}
+	if perks[1].EffectValue != nil {
+		t.Errorf("csc-p2 effect_value = %v, want nil", perks[1].EffectValue)
+	}
+	if perks[1].Row == nil || *perks[1].Row != 2 || perks[1].Col == nil || *perks[1].Col != 1 {
+		t.Errorf("csc-p2 grille = (%v,%v), want (2,1)", perks[1].Row, perks[1].Col)
+	}
+
+	// Isolation : other-car n'a que sa propre perk.
+	oc, err := st.ListCarMasteryPerks(ctx, "other-car")
+	if err != nil {
+		t.Fatalf("ListCarMasteryPerks other-car: %v", err)
+	}
+	if len(oc) != 1 || oc[0].ID != "oc-p1" {
+		t.Fatalf("other-car: len=%d id=%v, want 1/oc-p1", len(oc), oc)
+	}
+
+	// Voiture inconnue → liste vide (pas d'erreur).
+	none, err := st.ListCarMasteryPerks(ctx, "ghost")
+	if err != nil {
+		t.Fatalf("ListCarMasteryPerks inconnue: %v", err)
+	}
+	if len(none) != 0 {
+		t.Fatalf("voiture inconnue: len=%d, want 0", len(none))
+	}
+}

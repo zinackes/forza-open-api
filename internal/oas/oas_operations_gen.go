@@ -7,6 +7,7 @@ type OperationName = string
 
 const (
 	GetCarOperation             OperationName = "GetCar"
+	GetCarMasteryOperation      OperationName = "GetCarMastery"
 	GetCurrentPlaylistOperation OperationName = "GetCurrentPlaylist"
 	GetSeriesOperation          OperationName = "GetSeries"
 	ListBarnFindsOperation      OperationName = "ListBarnFinds"

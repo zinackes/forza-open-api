@@ -532,6 +532,166 @@ func (s *CarList) SetPageSize(val int) {
 
 func (*CarList) listCarsRes() {}
 
+// Perk de l'arbre Car Mastery FH6 : une case (row, col) de la grille 4×4 de la voiture, débloquée
+// contre des Skill Points. Champs non sourcés → NULL (sourcing progressif : dataset forzagarage.
+// com + wiki Fandom).
+// Ref: #/components/schemas/CarMasteryPerk
+type CarMasteryPerk struct {
+	ID string `json:"id"`
+	// Voiture propriétaire de l'arbre (réf. /v1/cars).
+	CarId string `json:"carId"`
+	// Ligne dans la grille (1-4).
+	Row OptInt `json:"row"`
+	// Colonne dans la grille (1-4).
+	Col  OptInt    `json:"col"`
+	Name OptString `json:"name"`
+	// Coût en Skill Points.
+	SpCost            OptInt    `json:"spCost"`
+	EffectDescription OptString `json:"effectDescription"`
+	// Type d'effet (valeur libre). Courants : credits, xp_boost, wheelspin, super_wheelspin, skill_score,
+	//  car_unlock.
+	EffectType OptString `json:"effectType"`
+	// Valeur de l'effet (montant de crédits ou pourcentage de boost selon le type).
+	EffectValue OptInt `json:"effectValue"`
+	// Perk prérequise dans la grille. Absent si point d'entrée.
+	PrereqPerkId OptString `json:"prereqPerkId"`
+	// Voiture cachée débloquée par cette perk (effectType car_unlock ; réf. /v1/cars). Absent sinon.
+	UnlockedCarId OptString `json:"unlockedCarId"`
+	// Source propre de la donnée.
+	Source       OptString   `json:"source"`
+	LastVerified OptDateTime `json:"lastVerified"`
+}
+
+// GetID returns the value of ID.
+func (s *CarMasteryPerk) GetID() string {
+	return s.ID
+}
+
+// GetCarId returns the value of CarId.
+func (s *CarMasteryPerk) GetCarId() string {
+	return s.CarId
+}
+
+// GetRow returns the value of Row.
+func (s *CarMasteryPerk) GetRow() OptInt {
+	return s.Row
+}
+
+// GetCol returns the value of Col.
+func (s *CarMasteryPerk) GetCol() OptInt {
+	return s.Col
+}
+
+// GetName returns the value of Name.
+func (s *CarMasteryPerk) GetName() OptString {
+	return s.Name
+}
+
+// GetSpCost returns the value of SpCost.
+func (s *CarMasteryPerk) GetSpCost() OptInt {
+	return s.SpCost
+}
+
+// GetEffectDescription returns the value of EffectDescription.
+func (s *CarMasteryPerk) GetEffectDescription() OptString {
+	return s.EffectDescription
+}
+
+// GetEffectType returns the value of EffectType.
+func (s *CarMasteryPerk) GetEffectType() OptString {
+	return s.EffectType
+}
+
+// GetEffectValue returns the value of EffectValue.
+func (s *CarMasteryPerk) GetEffectValue() OptInt {
+	return s.EffectValue
+}
+
+// GetPrereqPerkId returns the value of PrereqPerkId.
+func (s *CarMasteryPerk) GetPrereqPerkId() OptString {
+	return s.PrereqPerkId
+}
+
+// GetUnlockedCarId returns the value of UnlockedCarId.
+func (s *CarMasteryPerk) GetUnlockedCarId() OptString {
+	return s.UnlockedCarId
+}
+
+// GetSource returns the value of Source.
+func (s *CarMasteryPerk) GetSource() OptString {
+	return s.Source
+}
+
+// GetLastVerified returns the value of LastVerified.
+func (s *CarMasteryPerk) GetLastVerified() OptDateTime {
+	return s.LastVerified
+}
+
+// SetID sets the value of ID.
+func (s *CarMasteryPerk) SetID(val string) {
+	s.ID = val
+}
+
+// SetCarId sets the value of CarId.
+func (s *CarMasteryPerk) SetCarId(val string) {
+	s.CarId = val
+}
+
+// SetRow sets the value of Row.
+func (s *CarMasteryPerk) SetRow(val OptInt) {
+	s.Row = val
+}
+
+// SetCol sets the value of Col.
+func (s *CarMasteryPerk) SetCol(val OptInt) {
+	s.Col = val
+}
+
+// SetName sets the value of Name.
+func (s *CarMasteryPerk) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetSpCost sets the value of SpCost.
+func (s *CarMasteryPerk) SetSpCost(val OptInt) {
+	s.SpCost = val
+}
+
+// SetEffectDescription sets the value of EffectDescription.
+func (s *CarMasteryPerk) SetEffectDescription(val OptString) {
+	s.EffectDescription = val
+}
+
+// SetEffectType sets the value of EffectType.
+func (s *CarMasteryPerk) SetEffectType(val OptString) {
+	s.EffectType = val
+}
+
+// SetEffectValue sets the value of EffectValue.
+func (s *CarMasteryPerk) SetEffectValue(val OptInt) {
+	s.EffectValue = val
+}
+
+// SetPrereqPerkId sets the value of PrereqPerkId.
+func (s *CarMasteryPerk) SetPrereqPerkId(val OptString) {
+	s.PrereqPerkId = val
+}
+
+// SetUnlockedCarId sets the value of UnlockedCarId.
+func (s *CarMasteryPerk) SetUnlockedCarId(val OptString) {
+	s.UnlockedCarId = val
+}
+
+// SetSource sets the value of Source.
+func (s *CarMasteryPerk) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetLastVerified sets the value of LastVerified.
+func (s *CarMasteryPerk) SetLastVerified(val OptDateTime) {
+	s.LastVerified = val
+}
+
 // Statistiques de performance (échelle du jeu).
 // Ref: #/components/schemas/CarStats
 type CarStats struct {
@@ -1365,6 +1525,18 @@ func (s *Game) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+type GetCarMasteryOKApplicationJSON []CarMasteryPerk
+
+func (*GetCarMasteryOKApplicationJSON) getCarMasteryRes() {}
+
+type GetCarMasteryTooManyRequests Error
+
+func (*GetCarMasteryTooManyRequests) getCarMasteryRes() {}
+
+type GetCarMasteryUnauthorized Error
+
+func (*GetCarMasteryUnauthorized) getCarMasteryRes() {}
 
 type GetCarNotFound Error
 

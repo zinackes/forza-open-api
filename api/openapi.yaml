@@ -38,6 +38,8 @@ tags:
     description: Treasure Cars (voitures liées aux postcards, conduisibles après la cutscene de lavage).
   - name: Upgrades
     description: Catalogue des pièces d'upgrade et upgrades disponibles par voiture.
+  - name: Mastery
+    description: Arbres Car Mastery (grille de perks par voiture).
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -145,6 +147,35 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/CarUpgradeList' }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/cars/{id}/mastery:
+    get:
+      operationId: getCarMastery
+      summary: Arbre Car Mastery d'une voiture (grille de perks 4×4).
+      description: >
+        Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une
+        case (row, col) de la grille 4×4, coûte des Skill Points (spCost), peut
+        dépendre d'une autre (prereqPerkId) et certaines débloquent une voiture
+        cachée (effectType car_unlock → unlockedCarId). Le jeu est déterminé par
+        la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+      tags: [Mastery]
+      x-ogen-operation-group: Mastery
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la voiture.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Les perks de l'arbre Car Mastery de la voiture.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CarMasteryPerk' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
@@ -826,6 +857,38 @@ components:
         total: { type: integer, format: int64 }
         page: { type: integer }
         pageSize: { type: integer }
+
+    CarMasteryPerk:
+      type: object
+      description: >
+        Perk de l'arbre Car Mastery FH6 : une case (row, col) de la grille 4×4 de
+        la voiture, débloquée contre des Skill Points. Champs non sourcés → NULL
+        (sourcing progressif : dataset forzagarage.com + wiki Fandom).
+      required: [id, carId]
+      properties:
+        id: { type: string }
+        carId: { type: string, description: Voiture propriétaire de l'arbre (réf. /v1/cars). }
+        row: { type: integer, minimum: 1, maximum: 4, description: Ligne dans la grille (1-4). }
+        col: { type: integer, minimum: 1, maximum: 4, description: Colonne dans la grille (1-4). }
+        name: { type: string }
+        spCost: { type: integer, description: Coût en Skill Points. }
+        effectDescription: { type: string }
+        effectType:
+          type: string
+          description: >
+            Type d'effet (valeur libre). Courants : credits, xp_boost, wheelspin,
+            super_wheelspin, skill_score, car_unlock.
+        effectValue:
+          type: integer
+          description: Valeur de l'effet (montant de crédits ou pourcentage de boost selon le type).
+        prereqPerkId: { type: string, description: Perk prérequise dans la grille. Absent si point d'entrée. }
+        unlockedCarId:
+          type: string
+          description: >
+            Voiture cachée débloquée par cette perk (effectType car_unlock ;
+            réf. /v1/cars). Absent sinon.
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
 
     Error:
       type: object
