@@ -1348,6 +1348,12 @@ func (s *CarStats) encodeFields(e *jx.Encoder) {
 			s.Braking.Encode(e)
 		}
 	}
+	{
+		if s.Offroad.Set {
+			e.FieldStart("offroad")
+			s.Offroad.Encode(e)
+		}
+	}
 	for k, elem := range s.AdditionalProps {
 		e.FieldStart(k)
 
@@ -1355,12 +1361,13 @@ func (s *CarStats) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfCarStats = [5]string{
+var jsonFieldsNameOfCarStats = [6]string{
 	0: "speed",
 	1: "handling",
 	2: "acceleration",
 	3: "launch",
 	4: "braking",
+	5: "offroad",
 }
 
 // Decode decodes CarStats from json.
@@ -1421,6 +1428,16 @@ func (s *CarStats) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"braking\"")
+			}
+		case "offroad":
+			if err := func() error {
+				s.Offroad.Reset()
+				if err := s.Offroad.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"offroad\"")
 			}
 		default:
 			var elem float64

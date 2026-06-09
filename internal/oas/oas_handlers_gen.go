@@ -603,9 +603,9 @@ func (s *Server) handleGetCurrentPlaylistRequest(args [0]string, argsEscaped boo
 // handleGetRandomCarRequest handles getRandomCar operation.
 //
 // Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
-// que /v1/cars). Pensé pour les bots Discord ("bagnole random du jour"), défis communautaires et
-// easter-eggs sur la landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
-// re-tire. 404 si aucune voiture ne correspond.
+// que /v1/cars, hors q/dlc et pagination). Pensé pour les bots Discord ("bagnole random du jour"),
+// défis communautaires et easter-eggs sur la landing. Réponse non cacheable (Cache-Control:
+// no-store) : chaque appel re-tire. 404 si aucune voiture ne correspond.
 //
 // GET /v1/cars/random
 func (s *Server) handleGetRandomCarRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

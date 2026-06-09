@@ -164,6 +164,8 @@ func optCarStats(raw []byte) oas.OptCarStats {
 			cs.Launch = oas.NewOptFloat64(v)
 		case "braking":
 			cs.Braking = oas.NewOptFloat64(v)
+		case "offroad":
+			cs.Offroad = oas.NewOptFloat64(v)
 		default:
 			cs.AdditionalProps[k] = v
 		}

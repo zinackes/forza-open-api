@@ -109,7 +109,8 @@ paths:
       summary: Renvoie une voiture aléatoire satisfaisant les filtres.
       description: >
         Tire une seule voiture au hasard parmi celles qui satisfont les filtres
-        (mêmes filtres optionnels que /v1/cars). Pensé pour les bots Discord
+        (mêmes filtres optionnels que /v1/cars, hors q/dlc et pagination).
+        Pensé pour les bots Discord
         ("bagnole random du jour"), défis communautaires et easter-eggs sur la
         landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
         re-tire. 404 si aucune voiture ne correspond.
@@ -631,6 +632,7 @@ components:
         acceleration: { type: number }
         launch: { type: number }
         braking: { type: number }
+        offroad: { type: number }
       additionalProperties: { type: number }
 
     Car:

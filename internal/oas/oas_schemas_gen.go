@@ -747,6 +747,7 @@ type CarStats struct {
 	Acceleration    OptFloat64 `json:"acceleration"`
 	Launch          OptFloat64 `json:"launch"`
 	Braking         OptFloat64 `json:"braking"`
+	Offroad         OptFloat64 `json:"offroad"`
 	AdditionalProps CarStatsAdditional
 }
 
@@ -773,6 +774,11 @@ func (s *CarStats) GetLaunch() OptFloat64 {
 // GetBraking returns the value of Braking.
 func (s *CarStats) GetBraking() OptFloat64 {
 	return s.Braking
+}
+
+// GetOffroad returns the value of Offroad.
+func (s *CarStats) GetOffroad() OptFloat64 {
+	return s.Offroad
 }
 
 // GetAdditionalProps returns the value of AdditionalProps.
@@ -803,6 +809,11 @@ func (s *CarStats) SetLaunch(val OptFloat64) {
 // SetBraking sets the value of Braking.
 func (s *CarStats) SetBraking(val OptFloat64) {
 	s.Braking = val
+}
+
+// SetOffroad sets the value of Offroad.
+func (s *CarStats) SetOffroad(val OptFloat64) {
+	s.Offroad = val
 }
 
 // SetAdditionalProps sets the value of AdditionalProps.
