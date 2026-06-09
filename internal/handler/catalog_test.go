@@ -32,10 +32,11 @@ import (
 
 var update = flag.Bool("update", false, "met à jour les fichiers .golden")
 
-// timestampRE neutralise les champs volatils createdAt/updatedAt avant la
-// comparaison golden : l'instant exact (et son fuseau de sérialisation) ne fait
-// pas partie du contrat qu'on fige ici. On les remplace par un marqueur stable.
-var timestampRE = regexp.MustCompile(`"(createdAt|updatedAt)":"[^"]*"`)
+// timestampRE neutralise les champs timestamp avant la comparaison golden :
+// l'instant exact — et surtout son fuseau de sérialisation, qui dépend de la
+// machine (pgx scanne les timestamptz en time.Local) — ne fait pas partie du
+// contrat qu'on fige ici. On les remplace par un marqueur stable.
+var timestampRE = regexp.MustCompile(`"(createdAt|updatedAt|releasedAt|lastVerified|occurredAt)":"[^"]*"`)
 
 // newSeededCatalogServer lève un Postgres jetable, applique db/init.sql, sème un
 // catalogue fixe, et renvoie le serveur ogen branché dessus (Redis nil : les

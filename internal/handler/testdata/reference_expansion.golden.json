@@ -1,0 +1,166 @@
+{
+  "game": "fh6",
+  "classes": [
+    {
+      "code": "D",
+      "count": 1
+    },
+    {
+      "code": "C",
+      "count": 0
+    },
+    {
+      "code": "B",
+      "count": 0
+    },
+    {
+      "code": "A",
+      "count": 1
+    },
+    {
+      "code": "S1",
+      "count": 1
+    },
+    {
+      "code": "S2",
+      "count": 0
+    },
+    {
+      "code": "X",
+      "count": 0
+    },
+    {
+      "code": "R",
+      "count": 0
+    }
+  ],
+  "drivetrains": [
+    {
+      "code": "FWD",
+      "count": 1
+    },
+    {
+      "code": "RWD",
+      "count": 1
+    },
+    {
+      "code": "AWD",
+      "count": 1
+    }
+  ],
+  "bodyTypes": [],
+  "countries": [
+    {
+      "code": "Italy",
+      "count": 1
+    },
+    {
+      "code": "Japan",
+      "count": 1
+    }
+  ],
+  "categories": [],
+  "regions": [
+    {
+      "code": "Tokyo",
+      "count": 1
+    }
+  ],
+  "trackTypes": [
+    {
+      "code": "circuit",
+      "count": 0
+    },
+    {
+      "code": "road",
+      "count": 0
+    },
+    {
+      "code": "dirt",
+      "count": 0
+    },
+    {
+      "code": "cross",
+      "count": 0
+    },
+    {
+      "code": "street",
+      "count": 1
+    },
+    {
+      "code": "touge",
+      "count": 0
+    },
+    {
+      "code": "horizon_rush",
+      "count": 0
+    }
+  ],
+  "eventTypes": [
+    {
+      "code": "circuit",
+      "count": 0
+    },
+    {
+      "code": "road",
+      "count": 0
+    },
+    {
+      "code": "dirt",
+      "count": 0
+    },
+    {
+      "code": "cross",
+      "count": 0
+    },
+    {
+      "code": "street",
+      "count": 0
+    },
+    {
+      "code": "touge_battle",
+      "count": 0
+    },
+    {
+      "code": "horizon_rush",
+      "count": 0
+    },
+    {
+      "code": "drag_meet",
+      "count": 0
+    },
+    {
+      "code": "time_attack",
+      "count": 0
+    },
+    {
+      "code": "showcase",
+      "count": 0
+    }
+  ],
+  "prStuntTypes": [
+    {
+      "code": "speed_trap",
+      "count": 0
+    },
+    {
+      "code": "speed_zone",
+      "count": 0
+    },
+    {
+      "code": "drift_zone",
+      "count": 0
+    },
+    {
+      "code": "danger_sign",
+      "count": 0
+    }
+  ],
+  "games": [
+    {
+      "code": "fh6",
+      "countCars": 3,
+      "countSeries": 0
+    }
+  ]
+}
