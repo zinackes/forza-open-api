@@ -17,10 +17,22 @@ type ListCarsRes interface {
 	listCarsRes()
 }
 
+type ListEventsRes interface {
+	listEventsRes()
+}
+
 type ListManufacturersRes interface {
 	listManufacturersRes()
 }
 
+type ListPrStuntsRes interface {
+	listPrStuntsRes()
+}
+
 type ListSeriesRes interface {
 	listSeriesRes()
+}
+
+type ListTracksRes interface {
+	listTracksRes()
 }

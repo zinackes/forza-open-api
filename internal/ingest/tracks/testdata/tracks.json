@@ -1,0 +1,28 @@
+{
+  "game": "fh6",
+  "source": "fixture://forza-open-api/test (données illustratives — PAS un backfill réel)",
+  "tracks": [
+    {
+      "id": "fixture-track-circuit-1",
+      "name": "Fixture Coastal Circuit",
+      "type": "circuit",
+      "region": "Fixtureland",
+      "length_m": 4200,
+      "surface_mix": "asphalt",
+      "start_lat": 0.10,
+      "start_lng": 0.20
+    },
+    {
+      "id": "fixture-track-dirt-1",
+      "name": "Fixture Forest Trail",
+      "type": "dirt",
+      "region": "Fixtureland",
+      "length_m": 6100
+    },
+    {
+      "id": "fixture-track-bad-type",
+      "name": "Fixture Unknown Type",
+      "type": "rallycross_invalid"
+    }
+  ]
+}
