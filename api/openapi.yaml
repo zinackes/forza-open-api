@@ -291,6 +291,7 @@ components:
         game: { $ref: '#/components/schemas/Game' }
         name: { type: string }
         country: { type: string }
+        logoUrl: { type: string }
 
     Reward:
       type: object
