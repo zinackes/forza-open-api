@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/zinackes/forza-open-api/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"github.com/zinackes/forza-open-api/internal/config"
 )
 
 // redisLogger route les logs internes de go-redis vers slog (Debug) au lieu de
