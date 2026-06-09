@@ -30,6 +30,16 @@ tasks:
     cmds:
       - go test ./...
 
+  vet:
+    desc: go vet sur tout le module
+    cmds:
+      - go vet ./...
+
+  lint:
+    desc: Analyse statique (golangci-lint)
+    cmds:
+      - golangci-lint run
+
   up:
     desc: Lève Postgres + Valkey + API et attend qu'ils soient sains (/healthz 200)
     cmds:

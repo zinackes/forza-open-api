@@ -1,0 +1,13 @@
+# golangci-lint v2. Linters standards (errcheck, govet, ineffassign,
+# staticcheck, unused). Le code ogen sous internal/oas/ est généré : exclu.
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: standard
+  exclusions:
+    generated: lax
+    paths:
+      - internal/oas
