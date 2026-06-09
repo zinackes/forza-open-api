@@ -212,6 +212,72 @@ func decodeGetCurrentPlaylistParams(args [0]string, argsEscaped bool, r *http.Re
 	return params, nil
 }
 
+// GetReferenceParams is parameters of getReference operation.
+type GetReferenceParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+}
+
+func unpackGetReferenceParams(packed middleware.Parameters) (params GetReferenceParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	return params
+}
+
+func decodeGetReferenceParams(args [0]string, argsEscaped bool, r *http.Request) (params GetReferenceParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetSeriesParams is parameters of getSeries operation.
 type GetSeriesParams struct {
 	// Identifiant stable de la série.
@@ -879,6 +945,8 @@ type ListCarsParams struct {
 	PiMax OptInt `json:",omitempty,omitzero"`
 	// Filtre par transmission.
 	Drivetrain OptDrivetrain `json:",omitempty,omitzero"`
+	// Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+	Category OptString `json:",omitempty,omitzero"`
 	// Recherche plein texte sur name/model.
 	Q OptString `json:",omitempty,omitzero"`
 	// Filtre par pack DLC (identifiant d'un dlc_packs) ; liste les voitures du pack.
@@ -940,6 +1008,15 @@ func unpackListCarsParams(packed middleware.Parameters) (params ListCarsParams) 
 		}
 		if v, ok := packed[key]; ok {
 			params.Drivetrain = v.(OptDrivetrain)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "category",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Category = v.(OptString)
 		}
 	}
 	{
@@ -1308,6 +1385,47 @@ func decodeListCarsParams(args [0]string, argsEscaped bool, r *http.Request) (pa
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "drivetrain",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: category.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCategoryVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCategoryVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Category.SetTo(paramsDotCategoryVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "category",
 			In:   "query",
 			Err:  err,
 		}

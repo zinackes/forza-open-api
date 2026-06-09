@@ -37,6 +37,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	GetCarOperation:             []string{},
 	GetCarMasteryOperation:      []string{},
 	GetCurrentPlaylistOperation: []string{},
+	GetReferenceOperation:       []string{},
 	GetSeriesOperation:          []string{},
 	ListBarnFindsOperation:      []string{},
 	ListCarUpgradesOperation:    []string{},

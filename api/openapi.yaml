@@ -42,6 +42,8 @@ tags:
     description: Arbres Car Mastery (grille de perks par voiture).
   - name: Journal
     description: Collection Journal FH6 (Wristbands Horizon Festival + Stamps Discover Japan ; remplace les Accolades de FH5).
+  - name: Reference
+    description: Énumérations et compteurs agrégés (facettes) pour construire les filtres côté client.
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -77,6 +79,10 @@ paths:
           in: query
           description: Filtre par transmission.
           schema: { $ref: '#/components/schemas/Drivetrain' }
+        - name: category
+          in: query
+          description: Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+          schema: { type: string }
         - name: q
           in: query
           description: Recherche plein texte sur name/model.
@@ -197,6 +203,35 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Manufacturer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/reference:
+    get:
+      operationId: getReference
+      summary: Énumérations et compteurs (facettes) pour les filtres clients.
+      description: >
+        Facettes agrégées pour construire les filtres d'un client en un seul
+        appel : classes PI (incluant R en FH6), transmissions, types de
+        carrosserie, pays des constructeurs et catégories (divisions in-game)
+        — comptées pour le `game` demandé. La liste `games` est globale (volumes
+        par jeu, indépendante du paramètre game) pour amorcer un sélecteur de
+        jeu. Réponse fortement cacheable, invalidée par les jobs d'ingestion.
+      tags: [Reference]
+      x-ogen-operation-group: Reference
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Facettes de référence pour le jeu.
+          headers:
+            Cache-Control:
+              description: Politique de cache (réponse fortement cacheable, purgée à l'ingestion).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reference' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -524,8 +559,10 @@ components:
 
     CarClass:
       type: string
-      description: Classe Performance Index.
-      enum: [D, C, B, A, S1, S2, X]
+      description: >
+        Classe Performance Index. R (voitures track-focused) introduite en FH6 ;
+        absente de FH5.
+      enum: [D, C, B, A, S1, S2, X, R]
 
     Drivetrain:
       type: string
@@ -558,6 +595,7 @@ components:
         drivetrain: { $ref: '#/components/schemas/Drivetrain' }
         stats: { $ref: '#/components/schemas/CarStats' }
         bodyType: { type: string }
+        category: { type: string, description: Catégorie / division in-game (ex. "Modern Supercars"). Absente si non sourcée. }
         rarity: { type: string }
         valueCr: { type: integer, format: int64 }
         obtainMethod: { type: string }
@@ -971,6 +1009,61 @@ components:
             poussée des Barn Finds). Absent si non sourcé.
         source: { type: string, description: Source propre de la donnée. }
         lastVerified: { type: string, format: date-time }
+
+    RefCount:
+      type: object
+      description: >
+        Valeur d'une facette (code) et son nombre d'occurrences pour le jeu
+        demandé. Pour les facettes énumérées (classes, drivetrains), tous les
+        codes valides sont renvoyés, count compris à 0. Pour les facettes libres
+        (bodyTypes, countries, categories), seules les valeurs présentes le sont.
+      required: [code, count]
+      properties:
+        code: { type: string }
+        count: { type: integer, format: int64 }
+
+    GameCount:
+      type: object
+      description: Jeu disponible et ses volumes (voitures, séries de playlist).
+      required: [code, countCars, countSeries]
+      properties:
+        code: { $ref: '#/components/schemas/Game' }
+        countCars: { type: integer, format: int64 }
+        countSeries: { type: integer, format: int64 }
+
+    Reference:
+      type: object
+      description: >
+        Facettes de référence pour amorcer les filtres d'un client. Les compteurs
+        classes/drivetrains/bodyTypes/countries/categories sont scopés au `game`
+        demandé ; games est global.
+      required: [game, classes, drivetrains, bodyTypes, countries, categories, games]
+      properties:
+        game: { $ref: '#/components/schemas/Game' }
+        classes:
+          type: array
+          description: Classes PI et leurs compteurs (ordre PI, R en dernier ; count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        drivetrains:
+          type: array
+          description: Transmissions et leurs compteurs (count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        bodyTypes:
+          type: array
+          description: Types de carrosserie présents (plus fréquents d'abord).
+          items: { $ref: '#/components/schemas/RefCount' }
+        countries:
+          type: array
+          description: Pays des constructeurs présents (plus fréquents d'abord).
+          items: { $ref: '#/components/schemas/RefCount' }
+        categories:
+          type: array
+          description: Catégories / divisions in-game présentes (plus fréquentes d'abord).
+          items: { $ref: '#/components/schemas/RefCount' }
+        games:
+          type: array
+          description: Jeux disponibles et leurs volumes (global, indépendant du paramètre game).
+          items: { $ref: '#/components/schemas/GameCount' }
 
     Error:
       type: object

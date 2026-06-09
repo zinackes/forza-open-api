@@ -133,6 +133,35 @@ func TestJournalEndpointValidation(t *testing.T) {
 	}
 }
 
+// TestReferenceEndpointValidation vérifie que /v1/reference applique la validation
+// du contrat AVANT le handler : game est requis (multi-jeux), sa valeur est bornée
+// par l'enum Game. Avec un store nil, un 400 prouve qu'on n'a jamais touché la DB.
+func TestReferenceEndpointValidation(t *testing.T) {
+	cases := []struct {
+		name   string
+		target string
+		want   int
+	}{
+		{"reference sans game", "/v1/reference", http.StatusBadRequest},
+		{"reference game invalide", "/v1/reference?game=fh99", http.StatusBadRequest},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, tc.target, nil)
+
+			newServer(t).ServeHTTP(rec, req)
+
+			if rec.Code != tc.want {
+				t.Fatalf("status = %d, want %d\nbody: %s", rec.Code, tc.want, rec.Body.String())
+			}
+			if ct := rec.Header().Get("Content-Type"); ct != "application/problem+json" {
+				t.Errorf("Content-Type = %q, want application/problem+json", ct)
+			}
+		})
+	}
+}
+
 // TestUpgradeEndpointsValidation vérifie que la validation du contrat s'applique
 // AVANT le handler. /v1/upgrade-parts exige game (multi-jeux) ; une catégorie hors
 // enum est rejetée en 400 sur les deux routes. /v1/cars/{id}/upgrades ne prend pas

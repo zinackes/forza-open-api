@@ -11,21 +11,24 @@ CREATE TABLE IF NOT EXISTS cars (
     make          TEXT NOT NULL,
     model         TEXT,
     year          INT,
-    class         TEXT CHECK (class IN ('D','C','B','A','S1','S2','X')),
+    class         TEXT CHECK (class IN ('D','C','B','A','S1','S2','X','R')),
     pi            INT  CHECK (pi BETWEEN 100 AND 999),
     drivetrain    TEXT CHECK (drivetrain IN ('FWD','RWD','AWD')),
     stats         JSONB,
     body_type     TEXT,
+    category      TEXT,
     rarity        TEXT,
     value_cr      BIGINT,
     obtain_method TEXT,
     image_url     TEXT,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS cars_game_idx       ON cars (game);
-CREATE INDEX IF NOT EXISTS cars_game_class_idx ON cars (game, class);
-CREATE INDEX IF NOT EXISTS cars_game_pi_idx    ON cars (game, pi);
-CREATE INDEX IF NOT EXISTS cars_game_make_idx  ON cars (game, make);
+CREATE INDEX IF NOT EXISTS cars_game_idx          ON cars (game);
+CREATE INDEX IF NOT EXISTS cars_game_class_idx    ON cars (game, class);
+CREATE INDEX IF NOT EXISTS cars_game_pi_idx       ON cars (game, pi);
+CREATE INDEX IF NOT EXISTS cars_game_make_idx     ON cars (game, make);
+-- Facette categories de GET /v1/reference (GROUP BY category scopé au jeu).
+CREATE INDEX IF NOT EXISTS cars_game_category_idx ON cars (game, category);
 
 -- Constructeurs ---------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS manufacturers (

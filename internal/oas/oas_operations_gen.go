@@ -9,6 +9,7 @@ const (
 	GetCarOperation             OperationName = "GetCar"
 	GetCarMasteryOperation      OperationName = "GetCarMastery"
 	GetCurrentPlaylistOperation OperationName = "GetCurrentPlaylist"
+	GetReferenceOperation       OperationName = "GetReference"
 	GetSeriesOperation          OperationName = "GetSeries"
 	ListBarnFindsOperation      OperationName = "ListBarnFinds"
 	ListCarUpgradesOperation    OperationName = "ListCarUpgrades"

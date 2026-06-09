@@ -13,6 +13,10 @@ type GetCurrentPlaylistRes interface {
 	getCurrentPlaylistRes()
 }
 
+type GetReferenceRes interface {
+	getReferenceRes()
+}
+
 type GetSeriesRes interface {
 	getSeriesRes()
 }

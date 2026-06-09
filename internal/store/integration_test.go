@@ -8,6 +8,7 @@ package store_test
 import (
 	"context"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -96,6 +97,49 @@ func TestListCarsFilterByDlc(t *testing.T) {
 	}
 	if total != 2 || len(all) != 2 {
 		t.Fatalf("sans filtre: total=%d len=%d, want 2/2", total, len(all))
+	}
+}
+
+// TestListCarsFilterByCategory vérifie le filtre par catégorie / division in-game
+// (correspondance exacte) et le mapping du champ (NULL → nil).
+func TestListCarsFilterByCategory(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain, category) VALUES
+		('cat-1','fh6','296 GTB','Ferrari','A',780,'RWD','Modern Supercars'),
+		('cat-2','fh6','GT','Ford','A',760,'AWD','Modern Supercars'),
+		('cat-3','fh6','Civic Type R','Honda','S1',850,'RWD','Retro Hot Hatch'),
+		('cat-4','fh6','City Car','Make','D',500,'FWD',NULL)`)
+
+	cat := "Modern Supercars"
+	cars, total, err := st.ListCars(ctx, store.CarFilter{Game: "fh6", Category: &cat, Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCars category: %v", err)
+	}
+	if total != 2 || len(cars) != 2 {
+		t.Fatalf("filtre category: total=%d len=%d, want 2/2", total, len(cars))
+	}
+	// ORDER BY name : '296 GTB' avant 'GT'. Mapping : category présente.
+	if cars[0].ID != "cat-1" || cars[1].ID != "cat-2" {
+		t.Errorf("ordre = [%s, %s], want [cat-1, cat-2]", cars[0].ID, cars[1].ID)
+	}
+	if cars[0].Category == nil || *cars[0].Category != "Modern Supercars" {
+		t.Errorf("cat-1 category = %v, want Modern Supercars", cars[0].Category)
+	}
+
+	// Sans filtre : les 4 voitures ; cat-4 a category NULL → nil.
+	all, total, err := st.ListCars(ctx, store.CarFilter{Game: "fh6", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCars sans filtre: %v", err)
+	}
+	if total != 4 {
+		t.Fatalf("sans filtre: total=%d, want 4", total)
+	}
+	for _, c := range all {
+		if c.ID == "cat-4" && c.Category != nil {
+			t.Errorf("cat-4 category = %v, want nil", c.Category)
+		}
 	}
 }
 
@@ -429,6 +473,111 @@ func TestListCarMasteryPerks(t *testing.T) {
 	}
 	if len(none) != 0 {
 		t.Fatalf("voiture inconnue: len=%d, want 0", len(none))
+	}
+}
+
+// TestGetReference vérifie l'agrégation des facettes : classes/drivetrains en
+// liste canonique complète (count 0 inclus, R en dernier), facettes libres triées
+// par count décroissant puis code, isolation par jeu, et la liste games globale.
+func TestGetReference(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	// 5 voitures fh6 (dont une R, track-focused) + 1 fh5 (isolée du scope fh6).
+	// c5 : category NULL → exclue des categories. c6 fh5 : exclue des facettes fh6.
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain, body_type, category) VALUES
+		('c1','fh6','A','Ferrari','A',780,'RWD','coupe','Modern Supercars'),
+		('c2','fh6','B','Ford','A',760,'AWD','coupe','Modern Supercars'),
+		('c3','fh6','C','Honda','S1',850,'RWD','hatchback','Retro Hot Hatch'),
+		('c4','fh6','D','Toyota','R',900,'AWD','race car','Track Toys'),
+		('c5','fh6','E','Ford','D',500,'FWD','hatchback',NULL),
+		('c6','fh5','F','Nissan','B',650,'RWD','sedan','Classics')`)
+	mustExec(t, st, `INSERT INTO manufacturers (game, name, country) VALUES
+		('fh6','Ford','USA'),
+		('fh6','Ferrari','Italy'),
+		('fh6','Honda','Japan'),
+		('fh6','Toyota','Japan'),
+		('fh6','Mystery',NULL),
+		('fh5','Nissan','Japan')`)
+	mustExec(t, st, `INSERT INTO series (id, game) VALUES
+		('s1','fh6'),('s2','fh6'),('s3','fh5')`)
+
+	ref, err := st.GetReference(ctx, "fh6")
+	if err != nil {
+		t.Fatalf("GetReference: %v", err)
+	}
+
+	// classes : liste canonique complète (8 entrées), ordre PI puis R, count 0 inclus.
+	wantClasses := []store.RefCount{
+		{Code: "D", Count: 1}, {Code: "C", Count: 0}, {Code: "B", Count: 0},
+		{Code: "A", Count: 2}, {Code: "S1", Count: 1}, {Code: "S2", Count: 0},
+		{Code: "X", Count: 0}, {Code: "R", Count: 1},
+	}
+	if !reflect.DeepEqual(ref.Classes, wantClasses) {
+		t.Errorf("classes = %v\nwant %v", ref.Classes, wantClasses)
+	}
+
+	// drivetrains : liste canonique (3 entrées), count 0 inclus.
+	wantDrivetrains := []store.RefCount{
+		{Code: "FWD", Count: 1}, {Code: "RWD", Count: 2}, {Code: "AWD", Count: 2},
+	}
+	if !reflect.DeepEqual(ref.Drivetrains, wantDrivetrains) {
+		t.Errorf("drivetrains = %v\nwant %v", ref.Drivetrains, wantDrivetrains)
+	}
+
+	// bodyTypes : présents, count desc puis code asc (coupe/hatchback à égalité → coupe d'abord).
+	wantBodyTypes := []store.RefCount{
+		{Code: "coupe", Count: 2}, {Code: "hatchback", Count: 2}, {Code: "race car", Count: 1},
+	}
+	if !reflect.DeepEqual(ref.BodyTypes, wantBodyTypes) {
+		t.Errorf("bodyTypes = %v\nwant %v", ref.BodyTypes, wantBodyTypes)
+	}
+
+	// categories : présentes (c5 NULL exclue), count desc puis code asc.
+	wantCategories := []store.RefCount{
+		{Code: "Modern Supercars", Count: 2}, {Code: "Retro Hot Hatch", Count: 1}, {Code: "Track Toys", Count: 1},
+	}
+	if !reflect.DeepEqual(ref.Categories, wantCategories) {
+		t.Errorf("categories = %v\nwant %v", ref.Categories, wantCategories)
+	}
+
+	// countries : pays des constructeurs fh6 (Mystery NULL exclu), count desc puis code asc.
+	wantCountries := []store.RefCount{
+		{Code: "Japan", Count: 2}, {Code: "Italy", Count: 1}, {Code: "USA", Count: 1},
+	}
+	if !reflect.DeepEqual(ref.Countries, wantCountries) {
+		t.Errorf("countries = %v\nwant %v", ref.Countries, wantCountries)
+	}
+
+	// games : global (hors filtre game), ordonné par jeu. Volumes cars/series.
+	wantGames := []store.GameCount{
+		{Code: "fh5", CountCars: 1, CountSeries: 1},
+		{Code: "fh6", CountCars: 5, CountSeries: 2},
+	}
+	if !reflect.DeepEqual(ref.Games, wantGames) {
+		t.Errorf("games = %v\nwant %v", ref.Games, wantGames)
+	}
+
+	// Jeu inconnu : classes/drivetrains canoniques tout à 0, facettes libres vides,
+	// mais games reste global (non filtré).
+	ghost, err := st.GetReference(ctx, "ghost")
+	if err != nil {
+		t.Fatalf("GetReference ghost: %v", err)
+	}
+	if len(ghost.Classes) != 8 || len(ghost.Drivetrains) != 3 {
+		t.Errorf("ghost canoniques: classes=%d drivetrains=%d, want 8/3", len(ghost.Classes), len(ghost.Drivetrains))
+	}
+	for _, c := range ghost.Classes {
+		if c.Count != 0 {
+			t.Errorf("ghost class %s count = %d, want 0", c.Code, c.Count)
+		}
+	}
+	if len(ghost.BodyTypes) != 0 || len(ghost.Categories) != 0 || len(ghost.Countries) != 0 {
+		t.Errorf("ghost facettes libres non vides: body=%d cat=%d country=%d",
+			len(ghost.BodyTypes), len(ghost.Categories), len(ghost.Countries))
+	}
+	if len(ghost.Games) != 2 {
+		t.Errorf("ghost games = %d, want 2 (global)", len(ghost.Games))
 	}
 }
 

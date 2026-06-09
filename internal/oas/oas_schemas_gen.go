@@ -224,17 +224,19 @@ func (*BarnFindList) listBarnFindsRes() {}
 
 // Ref: #/components/schemas/Car
 type Car struct {
-	ID           string      `json:"id"`
-	Game         Game        `json:"game"`
-	Name         string      `json:"name"`
-	Make         string      `json:"make"`
-	Model        OptString   `json:"model"`
-	Year         OptInt      `json:"year"`
-	Class        CarClass    `json:"class"`
-	Pi           int         `json:"pi"`
-	Drivetrain   Drivetrain  `json:"drivetrain"`
-	Stats        OptCarStats `json:"stats"`
-	BodyType     OptString   `json:"bodyType"`
+	ID         string      `json:"id"`
+	Game       Game        `json:"game"`
+	Name       string      `json:"name"`
+	Make       string      `json:"make"`
+	Model      OptString   `json:"model"`
+	Year       OptInt      `json:"year"`
+	Class      CarClass    `json:"class"`
+	Pi         int         `json:"pi"`
+	Drivetrain Drivetrain  `json:"drivetrain"`
+	Stats      OptCarStats `json:"stats"`
+	BodyType   OptString   `json:"bodyType"`
+	// Catégorie / division in-game (ex. "Modern Supercars"). Absente si non sourcée.
+	Category     OptString   `json:"category"`
 	Rarity       OptString   `json:"rarity"`
 	ValueCr      OptInt64    `json:"valueCr"`
 	ObtainMethod OptString   `json:"obtainMethod"`
@@ -295,6 +297,11 @@ func (s *Car) GetStats() OptCarStats {
 // GetBodyType returns the value of BodyType.
 func (s *Car) GetBodyType() OptString {
 	return s.BodyType
+}
+
+// GetCategory returns the value of Category.
+func (s *Car) GetCategory() OptString {
+	return s.Category
 }
 
 // GetRarity returns the value of Rarity.
@@ -377,6 +384,11 @@ func (s *Car) SetBodyType(val OptString) {
 	s.BodyType = val
 }
 
+// SetCategory sets the value of Category.
+func (s *Car) SetCategory(val OptString) {
+	s.Category = val
+}
+
 // SetRarity sets the value of Rarity.
 func (s *Car) SetRarity(val OptString) {
 	s.Rarity = val
@@ -404,7 +416,7 @@ func (s *Car) SetCreatedAt(val OptDateTime) {
 
 func (*Car) getCarRes() {}
 
-// Classe Performance Index.
+// Classe Performance Index. R (voitures track-focused) introduite en FH6 ; absente de FH5.
 // Ref: #/components/schemas/CarClass
 type CarClass string
 
@@ -416,6 +428,7 @@ const (
 	CarClassS1 CarClass = "S1"
 	CarClassS2 CarClass = "S2"
 	CarClassX  CarClass = "X"
+	CarClassR  CarClass = "R"
 )
 
 // AllValues returns all CarClass values.
@@ -428,6 +441,7 @@ func (CarClass) AllValues() []CarClass {
 		CarClassS1,
 		CarClassS2,
 		CarClassX,
+		CarClassR,
 	}
 }
 
@@ -447,6 +461,8 @@ func (s CarClass) MarshalText() ([]byte, error) {
 	case CarClassS2:
 		return []byte(s), nil
 	case CarClassX:
+		return []byte(s), nil
+	case CarClassR:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -476,6 +492,9 @@ func (s *CarClass) UnmarshalText(data []byte) error {
 		return nil
 	case CarClassX:
 		*s = CarClassX
+		return nil
+	case CarClassR:
+		*s = CarClassR
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1526,6 +1545,44 @@ func (s *Game) UnmarshalText(data []byte) error {
 	}
 }
 
+// Jeu disponible et ses volumes (voitures, séries de playlist).
+// Ref: #/components/schemas/GameCount
+type GameCount struct {
+	Code        Game  `json:"code"`
+	CountCars   int64 `json:"countCars"`
+	CountSeries int64 `json:"countSeries"`
+}
+
+// GetCode returns the value of Code.
+func (s *GameCount) GetCode() Game {
+	return s.Code
+}
+
+// GetCountCars returns the value of CountCars.
+func (s *GameCount) GetCountCars() int64 {
+	return s.CountCars
+}
+
+// GetCountSeries returns the value of CountSeries.
+func (s *GameCount) GetCountSeries() int64 {
+	return s.CountSeries
+}
+
+// SetCode sets the value of Code.
+func (s *GameCount) SetCode(val Game) {
+	s.Code = val
+}
+
+// SetCountCars sets the value of CountCars.
+func (s *GameCount) SetCountCars(val int64) {
+	s.CountCars = val
+}
+
+// SetCountSeries sets the value of CountSeries.
+func (s *GameCount) SetCountSeries(val int64) {
+	s.CountSeries = val
+}
+
 type GetCarMasteryOKApplicationJSON []CarMasteryPerk
 
 func (*GetCarMasteryOKApplicationJSON) getCarMasteryRes() {}
@@ -1565,6 +1622,18 @@ func (*GetCurrentPlaylistTooManyRequests) getCurrentPlaylistRes() {}
 type GetCurrentPlaylistUnauthorized Error
 
 func (*GetCurrentPlaylistUnauthorized) getCurrentPlaylistRes() {}
+
+type GetReferenceBadRequest Error
+
+func (*GetReferenceBadRequest) getReferenceRes() {}
+
+type GetReferenceTooManyRequests Error
+
+func (*GetReferenceTooManyRequests) getReferenceRes() {}
+
+type GetReferenceUnauthorized Error
+
+func (*GetReferenceUnauthorized) getReferenceRes() {}
 
 type GetSeriesNotFound Error
 
@@ -3016,6 +3085,153 @@ func (s *PRStuntType) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// Valeur d'une facette (code) et son nombre d'occurrences pour le jeu demandé. Pour les facettes
+// énumérées (classes, drivetrains), tous les codes valides sont renvoyés, count compris à 0.
+// Pour les facettes libres (bodyTypes, countries, categories), seules les valeurs présentes le sont.
+// Ref: #/components/schemas/RefCount
+type RefCount struct {
+	Code  string `json:"code"`
+	Count int64  `json:"count"`
+}
+
+// GetCode returns the value of Code.
+func (s *RefCount) GetCode() string {
+	return s.Code
+}
+
+// GetCount returns the value of Count.
+func (s *RefCount) GetCount() int64 {
+	return s.Count
+}
+
+// SetCode sets the value of Code.
+func (s *RefCount) SetCode(val string) {
+	s.Code = val
+}
+
+// SetCount sets the value of Count.
+func (s *RefCount) SetCount(val int64) {
+	s.Count = val
+}
+
+// Facettes de référence pour amorcer les filtres d'un client. Les compteurs
+// classes/drivetrains/bodyTypes/countries/categories sont scopés au `game` demandé ; games est
+// global.
+// Ref: #/components/schemas/Reference
+type Reference struct {
+	Game Game `json:"game"`
+	// Classes PI et leurs compteurs (ordre PI, R en dernier ; count 0 inclus).
+	Classes []RefCount `json:"classes"`
+	// Transmissions et leurs compteurs (count 0 inclus).
+	Drivetrains []RefCount `json:"drivetrains"`
+	// Types de carrosserie présents (plus fréquents d'abord).
+	BodyTypes []RefCount `json:"bodyTypes"`
+	// Pays des constructeurs présents (plus fréquents d'abord).
+	Countries []RefCount `json:"countries"`
+	// Catégories / divisions in-game présentes (plus fréquentes d'abord).
+	Categories []RefCount `json:"categories"`
+	// Jeux disponibles et leurs volumes (global, indépendant du paramètre game).
+	Games []GameCount `json:"games"`
+}
+
+// GetGame returns the value of Game.
+func (s *Reference) GetGame() Game {
+	return s.Game
+}
+
+// GetClasses returns the value of Classes.
+func (s *Reference) GetClasses() []RefCount {
+	return s.Classes
+}
+
+// GetDrivetrains returns the value of Drivetrains.
+func (s *Reference) GetDrivetrains() []RefCount {
+	return s.Drivetrains
+}
+
+// GetBodyTypes returns the value of BodyTypes.
+func (s *Reference) GetBodyTypes() []RefCount {
+	return s.BodyTypes
+}
+
+// GetCountries returns the value of Countries.
+func (s *Reference) GetCountries() []RefCount {
+	return s.Countries
+}
+
+// GetCategories returns the value of Categories.
+func (s *Reference) GetCategories() []RefCount {
+	return s.Categories
+}
+
+// GetGames returns the value of Games.
+func (s *Reference) GetGames() []GameCount {
+	return s.Games
+}
+
+// SetGame sets the value of Game.
+func (s *Reference) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetClasses sets the value of Classes.
+func (s *Reference) SetClasses(val []RefCount) {
+	s.Classes = val
+}
+
+// SetDrivetrains sets the value of Drivetrains.
+func (s *Reference) SetDrivetrains(val []RefCount) {
+	s.Drivetrains = val
+}
+
+// SetBodyTypes sets the value of BodyTypes.
+func (s *Reference) SetBodyTypes(val []RefCount) {
+	s.BodyTypes = val
+}
+
+// SetCountries sets the value of Countries.
+func (s *Reference) SetCountries(val []RefCount) {
+	s.Countries = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *Reference) SetCategories(val []RefCount) {
+	s.Categories = val
+}
+
+// SetGames sets the value of Games.
+func (s *Reference) SetGames(val []GameCount) {
+	s.Games = val
+}
+
+// ReferenceHeaders wraps Reference with response headers.
+type ReferenceHeaders struct {
+	CacheControl OptString
+	Response     Reference
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *ReferenceHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *ReferenceHeaders) GetResponse() Reference {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *ReferenceHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ReferenceHeaders) SetResponse(val Reference) {
+	s.Response = val
+}
+
+func (*ReferenceHeaders) getReferenceRes() {}
 
 type Region string
 

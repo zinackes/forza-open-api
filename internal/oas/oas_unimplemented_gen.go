@@ -43,6 +43,19 @@ func (UnimplementedHandler) GetCurrentPlaylist(ctx context.Context, params GetCu
 	return r, ht.ErrNotImplemented
 }
 
+// GetReference implements getReference operation.
+//
+// Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI
+// (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories
+// (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes
+// par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement
+// cacheable, invalidée par les jobs d'ingestion.
+//
+// GET /v1/reference
+func (UnimplementedHandler) GetReference(ctx context.Context, params GetReferenceParams) (r GetReferenceRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetSeries implements getSeries operation.
 //
 // Récupère une série par identifiant.

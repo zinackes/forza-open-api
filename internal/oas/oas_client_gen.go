@@ -37,6 +37,7 @@ type Invoker interface {
 	MasteryInvoker
 	PRStuntsInvoker
 	PlaylistInvoker
+	ReferenceInvoker
 	TracksInvoker
 	TreasureCarsInvoker
 	UpgradesInvoker
@@ -173,6 +174,22 @@ type PlaylistInvoker interface {
 	//
 	// GET /v1/playlist/series
 	ListSeries(ctx context.Context, params ListSeriesParams) (ListSeriesRes, error)
+}
+
+// ReferenceInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Reference
+type ReferenceInvoker interface {
+	// GetReference invokes getReference operation.
+	//
+	// Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI
+	// (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories
+	// (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes
+	// par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement
+	// cacheable, invalidée par les jobs d'ingestion.
+	//
+	// GET /v1/reference
+	GetReference(ctx context.Context, params GetReferenceParams) (GetReferenceRes, error)
 }
 
 // TracksInvoker invokes operations described by OpenAPI v3 specification.
@@ -635,6 +652,136 @@ func (c *Client) sendGetCurrentPlaylist(ctx context.Context, params GetCurrentPl
 
 	stage = "DecodeResponse"
 	result, err := decodeGetCurrentPlaylistResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetReference invokes getReference operation.
+//
+// Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI
+// (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories
+// (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes
+// par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement
+// cacheable, invalidée par les jobs d'ingestion.
+//
+// GET /v1/reference
+func (c *Client) GetReference(ctx context.Context, params GetReferenceParams) (GetReferenceRes, error) {
+	res, err := c.sendGetReference(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetReference(ctx context.Context, params GetReferenceParams) (res GetReferenceRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getReference"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/reference"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetReferenceOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/reference"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetReferenceOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetReferenceResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -1278,6 +1425,23 @@ func (c *Client) sendListCars(ctx context.Context, params ListCarsParams) (res L
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
 			if val, ok := params.Drivetrain.Get(); ok {
 				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "category" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Category.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
 			}
 			return nil
 		}); err != nil {

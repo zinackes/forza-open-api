@@ -17,6 +17,7 @@ type Handler interface {
 	MasteryHandler
 	PRStuntsHandler
 	PlaylistHandler
+	ReferenceHandler
 	TracksHandler
 	TreasureCarsHandler
 	UpgradesHandler
@@ -153,6 +154,22 @@ type PlaylistHandler interface {
 	//
 	// GET /v1/playlist/series
 	ListSeries(ctx context.Context, params ListSeriesParams) (ListSeriesRes, error)
+}
+
+// ReferenceHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Reference
+type ReferenceHandler interface {
+	// GetReference implements getReference operation.
+	//
+	// Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI
+	// (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories
+	// (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes
+	// par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement
+	// cacheable, invalidée par les jobs d'ingestion.
+	//
+	// GET /v1/reference
+	GetReference(ctx context.Context, params GetReferenceParams) (GetReferenceRes, error)
 }
 
 // TracksHandler handles operations described by OpenAPI v3 specification.
