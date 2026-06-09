@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/ogen-go/ogen/ogenerrors"
@@ -20,14 +21,21 @@ type problem struct {
 // ogen : validation 400, sécurité 401, non implémenté 501, …) en RFC 9457,
 // conformément à la règle api-contract. ogenerrors.ErrorCode fait le mapping
 // du statut ; on ne fait que rendre le bon Content-Type et le bon corps.
-func ProblemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Request, err error) {
+// Les 500 (erreur interne : DB, bug…) ne doivent jamais exposer err.Error()
+// au client (requêtes SQL, hôtes…) : detail générique, erreur réelle loguée.
+func ProblemErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	code := ogenerrors.ErrorCode(err)
+	detail := err.Error()
+	if code == http.StatusInternalServerError {
+		slog.ErrorContext(ctx, "internal error", "method", r.Method, "path", r.URL.Path, "err", err)
+		detail = "internal error"
+	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(problem{
 		Type:   "about:blank",
 		Title:  http.StatusText(code),
 		Status: code,
-		Detail: err.Error(),
+		Detail: detail,
 	})
 }
