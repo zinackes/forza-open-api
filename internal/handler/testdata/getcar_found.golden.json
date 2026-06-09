@@ -1,0 +1,12 @@
+{
+  "id": "honda-civic",
+  "game": "fh6",
+  "name": "Civic Type R",
+  "make": "Honda",
+  "class": "A",
+  "pi": 780,
+  "drivetrain": "FWD",
+  "bodyType": "hatchback",
+  "category": "Hot Hatch",
+  "createdAt": "<ts>"
+}

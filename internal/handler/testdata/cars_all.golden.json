@@ -1,0 +1,67 @@
+{
+  "items": [
+    {
+      "id": "toyota-ae86",
+      "game": "fh6",
+      "name": "AE86",
+      "make": "Toyota",
+      "class": "B",
+      "pi": 600,
+      "drivetrain": "RWD",
+      "bodyType": "coupe",
+      "createdAt": "<ts>"
+    },
+    {
+      "id": "honda-civic",
+      "game": "fh6",
+      "name": "Civic Type R",
+      "make": "Honda",
+      "class": "A",
+      "pi": 780,
+      "drivetrain": "FWD",
+      "bodyType": "hatchback",
+      "category": "Hot Hatch",
+      "createdAt": "<ts>"
+    },
+    {
+      "id": "mazda-rx7",
+      "game": "fh6",
+      "name": "RX-7",
+      "make": "Mazda",
+      "model": "FD",
+      "year": 1998,
+      "class": "A",
+      "pi": 780,
+      "drivetrain": "RWD",
+      "bodyType": "coupe",
+      "createdAt": "<ts>"
+    },
+    {
+      "id": "audi-r8",
+      "game": "fh6",
+      "name": "R8",
+      "make": "Audi",
+      "class": "S1",
+      "pi": 850,
+      "drivetrain": "AWD",
+      "bodyType": "coupe",
+      "category": "Modern Supercars",
+      "createdAt": "<ts>"
+    },
+    {
+      "id": "ford-gt",
+      "game": "fh6",
+      "name": "GT",
+      "make": "Ford",
+      "class": "S2",
+      "pi": 920,
+      "drivetrain": "RWD",
+      "bodyType": "coupe",
+      "category": "Modern Supercars",
+      "createdAt": "<ts>"
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "pageSize": 50
+}
