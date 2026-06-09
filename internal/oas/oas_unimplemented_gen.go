@@ -22,6 +22,18 @@ func (UnimplementedHandler) GetCar(ctx context.Context, params GetCarParams) (r 
 	return r, ht.ErrNotImplemented
 }
 
+// GetCarMastery implements getCarMastery operation.
+//
+// Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une case (row, col) de la
+// grille 4×4, coûte des Skill Points (spCost), peut dépendre d'une autre (prereqPerkId) et
+// certaines débloquent une voiture cachée (effectType car_unlock → unlockedCarId). Le jeu est
+// déterminé par la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+//
+// GET /v1/cars/{id}/mastery
+func (UnimplementedHandler) GetCarMastery(ctx context.Context, params GetCarMasteryParams) (r GetCarMasteryRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetCurrentPlaylist implements getCurrentPlaylist operation.
 //
 // Festival Playlist courante d'un jeu.
@@ -37,6 +49,26 @@ func (UnimplementedHandler) GetCurrentPlaylist(ctx context.Context, params GetCu
 //
 // GET /v1/playlist/series/{id}
 func (UnimplementedHandler) GetSeries(ctx context.Context, params GetSeriesParams) (r GetSeriesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListBarnFinds implements listBarnFinds operation.
+//
+// Liste les Barn Finds (épaves cachées à trouver puis restaurer).
+//
+// GET /v1/barn-finds
+func (UnimplementedHandler) ListBarnFinds(ctx context.Context, params ListBarnFindsParams) (r ListBarnFindsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListCarUpgrades implements listCarUpgrades operation.
+//
+// Pièces d'upgrade montables sur la voiture, avec leurs contraintes d'installation (prérequis,
+// groupe exclusif). Le jeu est déterminé par la voiture (pas de paramètre game). Voiture inconnue
+// ou sans upgrade sourcé → page vide.
+//
+// GET /v1/cars/{id}/upgrades
+func (UnimplementedHandler) ListCarUpgrades(ctx context.Context, params ListCarUpgradesParams) (r ListCarUpgradesRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -100,5 +132,23 @@ func (UnimplementedHandler) ListSeries(ctx context.Context, params ListSeriesPar
 //
 // GET /v1/tracks
 func (UnimplementedHandler) ListTracks(ctx context.Context, params ListTracksParams) (r ListTracksRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListTreasureCars implements listTreasureCars operation.
+//
+// Liste les Treasure Cars (voitures liées aux postcards).
+//
+// GET /v1/treasure-cars
+func (UnimplementedHandler) ListTreasureCars(ctx context.Context, params ListTreasureCarsParams) (r ListTreasureCarsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListUpgradeParts implements listUpgradeParts operation.
+//
+// Catalogue global des pièces d'upgrade.
+//
+// GET /v1/upgrade-parts
+func (UnimplementedHandler) ListUpgradeParts(ctx context.Context, params ListUpgradePartsParams) (r ListUpgradePartsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

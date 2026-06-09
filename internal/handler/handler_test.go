@@ -70,7 +70,8 @@ func TestMissingGameReturns400(t *testing.T) {
 // TestGeoEndpointsRequireGame vérifie que tracks/pr-stunts/events appliquent la
 // validation du contrat (game requis) AVANT d'appeler le handler : avec un store
 // nil, un 400 prouve que la requête n'a jamais touché la DB. Un type invalide
-// est aussi rejeté en 400 par l'enum du contrat.
+// est aussi rejeté en 400 par l'enum du contrat. Couvre aussi les ressources de
+// voitures cachées (barn-finds, treasure-cars), qui ne portent que game + region.
 func TestGeoEndpointsRequireGame(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -83,6 +84,40 @@ func TestGeoEndpointsRequireGame(t *testing.T) {
 		{"tracks type invalide", "/v1/tracks?game=fh6&type=nope", http.StatusBadRequest},
 		{"pr-stunts type invalide", "/v1/pr-stunts?game=fh6&type=nope", http.StatusBadRequest},
 		{"events type invalide", "/v1/events?game=fh6&type=nope", http.StatusBadRequest},
+		{"barn-finds sans game", "/v1/barn-finds", http.StatusBadRequest},
+		{"treasure-cars sans game", "/v1/treasure-cars", http.StatusBadRequest},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, tc.target, nil)
+
+			newServer(t).ServeHTTP(rec, req)
+
+			if rec.Code != tc.want {
+				t.Fatalf("status = %d, want %d\nbody: %s", rec.Code, tc.want, rec.Body.String())
+			}
+			if ct := rec.Header().Get("Content-Type"); ct != "application/problem+json" {
+				t.Errorf("Content-Type = %q, want application/problem+json", ct)
+			}
+		})
+	}
+}
+
+// TestUpgradeEndpointsValidation vérifie que la validation du contrat s'applique
+// AVANT le handler. /v1/upgrade-parts exige game (multi-jeux) ; une catégorie hors
+// enum est rejetée en 400 sur les deux routes. /v1/cars/{id}/upgrades ne prend pas
+// game (déterminé par la voiture). Avec un store nil, un 400 prouve qu'on n'a
+// jamais touché la DB.
+func TestUpgradeEndpointsValidation(t *testing.T) {
+	cases := []struct {
+		name   string
+		target string
+		want   int
+	}{
+		{"upgrade-parts sans game", "/v1/upgrade-parts", http.StatusBadRequest},
+		{"upgrade-parts catégorie invalide", "/v1/upgrade-parts?game=fh6&category=nope", http.StatusBadRequest},
+		{"car upgrades catégorie invalide", "/v1/cars/car-1/upgrades?category=nope", http.StatusBadRequest},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -1,6 +1,5 @@
 - **Conventional Commits** (feat/fix/chore/docs/refactor/test/ci…).
-- **Ne pousse jamais sur `main`** directement : branche + merge propre dans main.
+- **Ne pousse jamais sur `main`** directement : branche + PR.
 - Commits petits et cohérents ; messages au présent.
-- **Commit à chaque étape terminée** : dès qu'une unité cohérente compile et passe les tests, commit (ne pas accumuler un gros lot en fin de tâche).
 - Plan d'abord pour toute tâche à 3+ étapes ; checkpoint l'avancement dans un `.md` avant un `/clear`.
 - Ne commit jamais de secret ni `.env` (hook block-secrets + .gitignore).

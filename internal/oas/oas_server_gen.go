@@ -8,13 +8,29 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	BarnFindsHandler
 	CarsHandler
 	DLCHandler
 	EventsHandler
 	ManufacturersHandler
+	MasteryHandler
 	PRStuntsHandler
 	PlaylistHandler
 	TracksHandler
+	TreasureCarsHandler
+	UpgradesHandler
+}
+
+// BarnFindsHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: BarnFinds
+type BarnFindsHandler interface {
+	// ListBarnFinds implements listBarnFinds operation.
+	//
+	// Liste les Barn Finds (épaves cachées à trouver puis restaurer).
+	//
+	// GET /v1/barn-finds
+	ListBarnFinds(ctx context.Context, params ListBarnFindsParams) (ListBarnFindsRes, error)
 }
 
 // CarsHandler handles operations described by OpenAPI v3 specification.
@@ -71,6 +87,21 @@ type ManufacturersHandler interface {
 	ListManufacturers(ctx context.Context, params ListManufacturersParams) (ListManufacturersRes, error)
 }
 
+// MasteryHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Mastery
+type MasteryHandler interface {
+	// GetCarMastery implements getCarMastery operation.
+	//
+	// Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une case (row, col) de la
+	// grille 4×4, coûte des Skill Points (spCost), peut dépendre d'une autre (prereqPerkId) et
+	// certaines débloquent une voiture cachée (effectType car_unlock → unlockedCarId). Le jeu est
+	// déterminé par la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+	//
+	// GET /v1/cars/{id}/mastery
+	GetCarMastery(ctx context.Context, params GetCarMasteryParams) (GetCarMasteryRes, error)
+}
+
 // PRStuntsHandler handles operations described by OpenAPI v3 specification.
 //
 // x-ogen-operation-group: PRStunts
@@ -117,6 +148,38 @@ type TracksHandler interface {
 	//
 	// GET /v1/tracks
 	ListTracks(ctx context.Context, params ListTracksParams) (ListTracksRes, error)
+}
+
+// TreasureCarsHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: TreasureCars
+type TreasureCarsHandler interface {
+	// ListTreasureCars implements listTreasureCars operation.
+	//
+	// Liste les Treasure Cars (voitures liées aux postcards).
+	//
+	// GET /v1/treasure-cars
+	ListTreasureCars(ctx context.Context, params ListTreasureCarsParams) (ListTreasureCarsRes, error)
+}
+
+// UpgradesHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Upgrades
+type UpgradesHandler interface {
+	// ListCarUpgrades implements listCarUpgrades operation.
+	//
+	// Pièces d'upgrade montables sur la voiture, avec leurs contraintes d'installation (prérequis,
+	// groupe exclusif). Le jeu est déterminé par la voiture (pas de paramètre game). Voiture inconnue
+	// ou sans upgrade sourcé → page vide.
+	//
+	// GET /v1/cars/{id}/upgrades
+	ListCarUpgrades(ctx context.Context, params ListCarUpgradesParams) (ListCarUpgradesRes, error)
+	// ListUpgradeParts implements listUpgradeParts operation.
+	//
+	// Catalogue global des pièces d'upgrade.
+	//
+	// GET /v1/upgrade-parts
+	ListUpgradeParts(ctx context.Context, params ListUpgradePartsParams) (ListUpgradePartsRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

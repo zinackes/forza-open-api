@@ -122,3 +122,312 @@ func TestListDlcPacks(t *testing.T) {
 		t.Errorf("ordre = [%s, %s], want [fh6-car-pass, fh6-exp-1]", packs[0].ID, packs[1].ID)
 	}
 }
+
+// TestListBarnFinds vérifie le filtre par game/region, l'ordre par stamp et le
+// mapping des champs (coords NULL → nil, stamp/restauration scannés).
+func TestListBarnFinds(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
+		('bf-car-1','fh6','Mazda RX-7','Mazda','A',800,'RWD'),
+		('bf-car-2','fh6','Toyota AE86','Toyota','B',600,'RWD')`)
+	// Stamp 7 inséré avant stamp 1 : l'ordre attendu vient du tri SQL, pas de l'insert.
+	mustExec(t, st, `INSERT INTO barn_finds
+		(id, car_id, game, region, search_zone_center_lat, search_zone_center_lng,
+		 search_zone_radius_m, prerequisite_stamp_level, restoration_time_h, source) VALUES
+		('bf-2','bf-car-2','fh6','Kanto',35.6,139.7,250,7,12,'fandom'),
+		('bf-1','bf-car-1','fh6','Kansai',NULL,NULL,NULL,1,6,'gamesradar'),
+		('bf-fh5','bf-car-1','fh5','Mexico',NULL,NULL,NULL,3,9,'fandom')`)
+
+	finds, total, err := st.ListBarnFinds(ctx, store.HiddenCarFilter{Game: "fh6", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListBarnFinds: %v", err)
+	}
+	if total != 2 || len(finds) != 2 {
+		t.Fatalf("fh6: total=%d len=%d, want 2/2 (fh5 exclu)", total, len(finds))
+	}
+	// ORDER BY prerequisite_stamp_level : bf-1 (stamp 1) avant bf-2 (stamp 7).
+	if finds[0].ID != "bf-1" || finds[1].ID != "bf-2" {
+		t.Errorf("ordre = [%s, %s], want [bf-1, bf-2]", finds[0].ID, finds[1].ID)
+	}
+	// bf-1 : coords NULL → nil, stamp/restauration présents.
+	if finds[0].SearchZoneCenterLat != nil || finds[0].SearchZoneRadiusM != nil {
+		t.Errorf("bf-1 coords/rayon = %v/%v, want nil", finds[0].SearchZoneCenterLat, finds[0].SearchZoneRadiusM)
+	}
+	if finds[0].PrerequisiteStampLevel == nil || *finds[0].PrerequisiteStampLevel != 1 {
+		t.Errorf("bf-1 stamp = %v, want 1", finds[0].PrerequisiteStampLevel)
+	}
+	if finds[0].CarID != "bf-car-1" {
+		t.Errorf("bf-1 car_id = %q, want bf-car-1", finds[0].CarID)
+	}
+	// bf-2 : coords présentes.
+	if finds[1].SearchZoneCenterLat == nil || *finds[1].SearchZoneCenterLat != 35.6 {
+		t.Errorf("bf-2 lat = %v, want 35.6", finds[1].SearchZoneCenterLat)
+	}
+
+	// Filtre region : seul bf-1 est en Kansai.
+	region := "Kansai"
+	kansai, total, err := st.ListBarnFinds(ctx, store.HiddenCarFilter{Game: "fh6", Region: &region, Limit: 50})
+	if err != nil {
+		t.Fatalf("ListBarnFinds region: %v", err)
+	}
+	if total != 1 || len(kansai) != 1 || kansai[0].ID != "bf-1" {
+		t.Fatalf("filtre region: total=%d len=%d id=%v, want 1/1/bf-1", total, len(kansai), kansai)
+	}
+}
+
+// TestListTreasureCars vérifie le filtre par game/region et le mapping (clue,
+// coords nullable).
+func TestListTreasureCars(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
+		('tc-car-1','fh6','Honda NSX','Honda','S1',850,'RWD'),
+		('tc-car-2','fh6','Nissan GT-R','Nissan','S1',880,'AWD')`)
+	mustExec(t, st, `INSERT INTO treasure_cars
+		(id, car_id, game, region, postcard_clue_text, location_lat, location_lng, source) VALUES
+		('tc-1','tc-car-1','fh6','Kanto','Near the great torii gate',35.1,139.2,'mitchcactus'),
+		('tc-2','tc-car-2','fh6','Kansai',NULL,NULL,NULL,'fandom'),
+		('tc-fh5','tc-car-1','fh5','Mexico','By the volcano',NULL,NULL,'fandom')`)
+
+	cars, total, err := st.ListTreasureCars(ctx, store.HiddenCarFilter{Game: "fh6", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListTreasureCars: %v", err)
+	}
+	if total != 2 || len(cars) != 2 {
+		t.Fatalf("fh6: total=%d len=%d, want 2/2 (fh5 exclu)", total, len(cars))
+	}
+	// ORDER BY region : Kansai (tc-2) avant Kanto (tc-1).
+	if cars[0].ID != "tc-2" || cars[1].ID != "tc-1" {
+		t.Errorf("ordre = [%s, %s], want [tc-2, tc-1]", cars[0].ID, cars[1].ID)
+	}
+	// tc-2 : clue + coords NULL → nil.
+	if cars[0].PostcardClueText != nil || cars[0].LocationLat != nil {
+		t.Errorf("tc-2 clue/lat = %v/%v, want nil", cars[0].PostcardClueText, cars[0].LocationLat)
+	}
+	// tc-1 : clue présente.
+	if cars[1].PostcardClueText == nil || *cars[1].PostcardClueText != "Near the great torii gate" {
+		t.Errorf("tc-1 clue = %v, want 'Near the great torii gate'", cars[1].PostcardClueText)
+	}
+
+	// Filtre region.
+	region := "Kanto"
+	kanto, total, err := st.ListTreasureCars(ctx, store.HiddenCarFilter{Game: "fh6", Region: &region, Limit: 50})
+	if err != nil {
+		t.Fatalf("ListTreasureCars region: %v", err)
+	}
+	if total != 1 || len(kanto) != 1 || kanto[0].ID != "tc-1" {
+		t.Fatalf("filtre region: total=%d len=%d id=%v, want 1/1/tc-1", total, len(kanto), kanto)
+	}
+}
+
+// TestListUpgradeParts vérifie le filtre par game/category, l'ordre (category,
+// level NULLS LAST, name) et le mapping des deltas (NULL → nil).
+func TestListUpgradeParts(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	// Catégorie 'engine' < 'tires' à l'ORDER BY ; up-fh5 exclu par le filtre game.
+	mustExec(t, st, `INSERT INTO upgrade_parts
+		(id, game, category, name, level, pi_delta, weight_delta_kg, power_delta_hp, torque_delta_nm, source, last_verified) VALUES
+		('up-eng-1','fh6','engine','Sport Engine Swap',2,40,NULL,80,90,'forzagarage','2026-01-01T00:00:00Z'),
+		('up-tire-1','fh6','tires','Sport Tires',1,NULL,NULL,NULL,NULL,'fandom',NULL),
+		('up-fh5','fh5','aero','Race Wing',3,15,5,NULL,NULL,'fandom',NULL)`)
+
+	parts, total, err := st.ListUpgradeParts(ctx, store.UpgradePartFilter{Game: "fh6", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListUpgradeParts: %v", err)
+	}
+	if total != 2 || len(parts) != 2 {
+		t.Fatalf("fh6: total=%d len=%d, want 2/2 (fh5 exclu)", total, len(parts))
+	}
+	// ORDER BY category : engine (up-eng-1) avant tires (up-tire-1).
+	if parts[0].ID != "up-eng-1" || parts[1].ID != "up-tire-1" {
+		t.Errorf("ordre = [%s, %s], want [up-eng-1, up-tire-1]", parts[0].ID, parts[1].ID)
+	}
+	// up-eng-1 : deltas présents, weight_delta NULL → nil.
+	if parts[0].PIDelta == nil || *parts[0].PIDelta != 40 {
+		t.Errorf("up-eng-1 pi_delta = %v, want 40", parts[0].PIDelta)
+	}
+	if parts[0].PowerDeltaHp == nil || *parts[0].PowerDeltaHp != 80 {
+		t.Errorf("up-eng-1 power_delta_hp = %v, want 80", parts[0].PowerDeltaHp)
+	}
+	if parts[0].WeightDeltaKg != nil {
+		t.Errorf("up-eng-1 weight_delta_kg = %v, want nil", parts[0].WeightDeltaKg)
+	}
+	// up-tire-1 : tous les deltas NULL → nil, source présente.
+	if parts[1].PIDelta != nil || parts[1].PowerDeltaHp != nil || parts[1].LastVerified != nil {
+		t.Errorf("up-tire-1 deltas/last_verified non nil: %v/%v/%v",
+			parts[1].PIDelta, parts[1].PowerDeltaHp, parts[1].LastVerified)
+	}
+
+	// Filtre category : seule la pièce engine.
+	cat := "engine"
+	eng, total, err := st.ListUpgradeParts(ctx, store.UpgradePartFilter{Game: "fh6", Category: &cat, Limit: 50})
+	if err != nil {
+		t.Fatalf("ListUpgradeParts category: %v", err)
+	}
+	if total != 1 || len(eng) != 1 || eng[0].ID != "up-eng-1" {
+		t.Fatalf("filtre category: total=%d len=%d id=%v, want 1/1/up-eng-1", total, len(eng), eng)
+	}
+}
+
+// TestListCarUpgrades vérifie la jointure car_upgrades → upgrade_parts, le filtre
+// par voiture/catégorie, l'ordre, et le mapping des contraintes (requires_part_id,
+// exclusive_group, NULL → nil).
+func TestListCarUpgrades(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
+		('cu-car-1','fh6','Mazda RX-7','Mazda','A',800,'RWD'),
+		('cu-car-2','fh6','Toyota AE86','Toyota','B',600,'RWD')`)
+	mustExec(t, st, `INSERT INTO upgrade_parts (id, game, category, name, level) VALUES
+		('p-eng-1','fh6','engine','Street Engine',1),
+		('p-eng-2','fh6','engine','Sport Engine',2),
+		('p-tire-race','fh6','tires','Race Tires',3)`)
+	// cu-car-1 : Sport Engine (requiert Street Engine) + Race Tires (groupe exclusif).
+	// cu-car-2 : Street Engine seul (sans prérequis ni groupe).
+	mustExec(t, st, `INSERT INTO car_upgrades (car_id, part_id, requires_part_id, exclusive_group) VALUES
+		('cu-car-1','p-eng-2','p-eng-1',NULL),
+		('cu-car-1','p-tire-race',NULL,'tires'),
+		('cu-car-2','p-eng-1',NULL,NULL)`)
+
+	ups, total, err := st.ListCarUpgrades(ctx, store.CarUpgradeFilter{CarID: "cu-car-1", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCarUpgrades: %v", err)
+	}
+	if total != 2 || len(ups) != 2 {
+		t.Fatalf("cu-car-1: total=%d len=%d, want 2/2", total, len(ups))
+	}
+	// ORDER BY category : engine (p-eng-2) avant tires (p-tire-race).
+	if ups[0].Part.ID != "p-eng-2" || ups[1].Part.ID != "p-tire-race" {
+		t.Errorf("ordre = [%s, %s], want [p-eng-2, p-tire-race]", ups[0].Part.ID, ups[1].Part.ID)
+	}
+	// p-eng-2 : prérequis présent, pas de groupe exclusif.
+	if ups[0].RequiresPartID == nil || *ups[0].RequiresPartID != "p-eng-1" {
+		t.Errorf("p-eng-2 requires = %v, want p-eng-1", ups[0].RequiresPartID)
+	}
+	if ups[0].ExclusiveGroup != nil {
+		t.Errorf("p-eng-2 exclusive_group = %v, want nil", ups[0].ExclusiveGroup)
+	}
+	// La jointure remonte bien les champs de la pièce.
+	if ups[0].Part.Category != "engine" || ups[0].Part.Name != "Sport Engine" {
+		t.Errorf("p-eng-2 part = %q/%q, want engine/Sport Engine", ups[0].Part.Category, ups[0].Part.Name)
+	}
+	// p-tire-race : groupe exclusif présent, pas de prérequis.
+	if ups[1].ExclusiveGroup == nil || *ups[1].ExclusiveGroup != "tires" {
+		t.Errorf("p-tire-race exclusive_group = %v, want tires", ups[1].ExclusiveGroup)
+	}
+	if ups[1].RequiresPartID != nil {
+		t.Errorf("p-tire-race requires = %v, want nil", ups[1].RequiresPartID)
+	}
+
+	// Filtre category : seule la pièce tires de cu-car-1.
+	cat := "tires"
+	tires, total, err := st.ListCarUpgrades(ctx, store.CarUpgradeFilter{CarID: "cu-car-1", Category: &cat, Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCarUpgrades category: %v", err)
+	}
+	if total != 1 || len(tires) != 1 || tires[0].Part.ID != "p-tire-race" {
+		t.Fatalf("filtre category: total=%d len=%d, want 1/1/p-tire-race", total, len(tires))
+	}
+
+	// cu-car-2 : une seule pièce, isolée de cu-car-1.
+	car2, total, err := st.ListCarUpgrades(ctx, store.CarUpgradeFilter{CarID: "cu-car-2", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCarUpgrades cu-car-2: %v", err)
+	}
+	if total != 1 || len(car2) != 1 || car2[0].Part.ID != "p-eng-1" {
+		t.Fatalf("cu-car-2: total=%d len=%d, want 1/1/p-eng-1", total, len(car2))
+	}
+
+	// Voiture inconnue → page vide (pas d'erreur).
+	none, total, err := st.ListCarUpgrades(ctx, store.CarUpgradeFilter{CarID: "ghost", Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCarUpgrades inconnue: %v", err)
+	}
+	if total != 0 || len(none) != 0 {
+		t.Fatalf("voiture inconnue: total=%d len=%d, want 0/0", total, len(none))
+	}
+}
+
+// TestListCarMasteryPerks vérifie la grille Car Mastery : ordre (row, col),
+// mapping des champs nullable, prérequis (prereq_perk_id), et le cas car_unlock
+// (effect_type car_unlock → unlocked_car_id pointe une hidden car). Exemple
+// documenté FH6 : la Corvette Stingray Coupe débloque la Stingray 427.
+func TestListCarMasteryPerks(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
+		('corvette-stingray-coupe','fh6','Corvette Stingray Coupe','Chevrolet','A',800,'RWD'),
+		('corvette-stingray-427','fh6','Corvette Stingray 427','Chevrolet','S1',850,'RWD'),
+		('other-car','fh6','Other Car','Make','D',500,'FWD')`)
+	// csc-p2 (row 2) inséré avant csc-p1 (row 1) : l'ordre attendu vient du tri SQL.
+	mustExec(t, st, `INSERT INTO car_mastery_perks
+		(id, car_id, row, col, name, sp_cost, effect_description, effect_type,
+		 effect_value, prereq_perk_id, unlocked_car_id, source, last_verified) VALUES
+		('csc-p2','corvette-stingray-coupe',2,1,'Unlock Stingray 427',5,'Débloque la Stingray 427','car_unlock',NULL,'csc-p1','corvette-stingray-427','forzagarage',NULL),
+		('csc-p1','corvette-stingray-coupe',1,1,'Bonus crédits',2,NULL,'credits',5000,NULL,NULL,'forzagarage','2026-01-01T00:00:00Z'),
+		('oc-p1','other-car',1,1,'XP Boost',3,NULL,'xp_boost',10,NULL,NULL,'fandom',NULL)`)
+
+	perks, err := st.ListCarMasteryPerks(ctx, "corvette-stingray-coupe")
+	if err != nil {
+		t.Fatalf("ListCarMasteryPerks: %v", err)
+	}
+	if len(perks) != 2 {
+		t.Fatalf("coupe: len=%d, want 2 (autres voitures exclues)", len(perks))
+	}
+	// ORDER BY row : csc-p1 (row 1) avant csc-p2 (row 2).
+	if perks[0].ID != "csc-p1" || perks[1].ID != "csc-p2" {
+		t.Errorf("ordre = [%s, %s], want [csc-p1, csc-p2]", perks[0].ID, perks[1].ID)
+	}
+	// csc-p1 : credits, effet présent, pas de prérequis ni de car_unlock.
+	if perks[0].EffectType == nil || *perks[0].EffectType != "credits" {
+		t.Errorf("csc-p1 effect_type = %v, want credits", perks[0].EffectType)
+	}
+	if perks[0].EffectValue == nil || *perks[0].EffectValue != 5000 {
+		t.Errorf("csc-p1 effect_value = %v, want 5000", perks[0].EffectValue)
+	}
+	if perks[0].PrereqPerkID != nil || perks[0].UnlockedCarID != nil || perks[0].EffectDescription != nil {
+		t.Errorf("csc-p1 prereq/unlocked/desc non nil: %v/%v/%v",
+			perks[0].PrereqPerkID, perks[0].UnlockedCarID, perks[0].EffectDescription)
+	}
+	// csc-p2 : car_unlock → unlocked_car_id pointe la hidden car ; prérequis csc-p1.
+	if perks[1].EffectType == nil || *perks[1].EffectType != "car_unlock" {
+		t.Errorf("csc-p2 effect_type = %v, want car_unlock", perks[1].EffectType)
+	}
+	if perks[1].UnlockedCarID == nil || *perks[1].UnlockedCarID != "corvette-stingray-427" {
+		t.Errorf("csc-p2 unlocked_car_id = %v, want corvette-stingray-427", perks[1].UnlockedCarID)
+	}
+	if perks[1].PrereqPerkID == nil || *perks[1].PrereqPerkID != "csc-p1" {
+		t.Errorf("csc-p2 prereq_perk_id = %v, want csc-p1", perks[1].PrereqPerkID)
+	}
+	if perks[1].EffectValue != nil {
+		t.Errorf("csc-p2 effect_value = %v, want nil", perks[1].EffectValue)
+	}
+	if perks[1].Row == nil || *perks[1].Row != 2 || perks[1].Col == nil || *perks[1].Col != 1 {
+		t.Errorf("csc-p2 grille = (%v,%v), want (2,1)", perks[1].Row, perks[1].Col)
+	}
+
+	// Isolation : other-car n'a que sa propre perk.
+	oc, err := st.ListCarMasteryPerks(ctx, "other-car")
+	if err != nil {
+		t.Fatalf("ListCarMasteryPerks other-car: %v", err)
+	}
+	if len(oc) != 1 || oc[0].ID != "oc-p1" {
+		t.Fatalf("other-car: len=%d id=%v, want 1/oc-p1", len(oc), oc)
+	}
+
+	// Voiture inconnue → liste vide (pas d'erreur).
+	none, err := st.ListCarMasteryPerks(ctx, "ghost")
+	if err != nil {
+		t.Fatalf("ListCarMasteryPerks inconnue: %v", err)
+	}
+	if len(none) != 0 {
+		t.Fatalf("voiture inconnue: len=%d, want 0", len(none))
+	}
+}

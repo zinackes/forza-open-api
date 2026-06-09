@@ -7,8 +7,11 @@ type OperationName = string
 
 const (
 	GetCarOperation             OperationName = "GetCar"
+	GetCarMasteryOperation      OperationName = "GetCarMastery"
 	GetCurrentPlaylistOperation OperationName = "GetCurrentPlaylist"
 	GetSeriesOperation          OperationName = "GetSeries"
+	ListBarnFindsOperation      OperationName = "ListBarnFinds"
+	ListCarUpgradesOperation    OperationName = "ListCarUpgrades"
 	ListCarsOperation           OperationName = "ListCars"
 	ListDlcPacksOperation       OperationName = "ListDlcPacks"
 	ListEventsOperation         OperationName = "ListEvents"
@@ -16,4 +19,6 @@ const (
 	ListPrStuntsOperation       OperationName = "ListPrStunts"
 	ListSeriesOperation         OperationName = "ListSeries"
 	ListTracksOperation         OperationName = "ListTracks"
+	ListTreasureCarsOperation   OperationName = "ListTreasureCars"
+	ListUpgradePartsOperation   OperationName = "ListUpgradeParts"
 )

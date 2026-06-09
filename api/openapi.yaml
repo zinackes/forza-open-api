@@ -32,6 +32,14 @@ tags:
     description: Événements / courses (routes fixes, circuits, drag meets…).
   - name: DLC
     description: Packs DLC / extensions (Car Pass, expansions, standalone).
+  - name: BarnFinds
+    description: Barn Finds (épaves cachées débloquées via les stamps Discover Japan, puis restaurées).
+  - name: TreasureCars
+    description: Treasure Cars (voitures liées aux postcards, conduisibles après la cutscene de lavage).
+  - name: Upgrades
+    description: Catalogue des pièces d'upgrade et upgrades disponibles par voiture.
+  - name: Mastery
+    description: Arbres Car Mastery (grille de perks par voiture).
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -107,6 +115,68 @@ paths:
               schema: { $ref: '#/components/schemas/Car' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/cars/{id}/upgrades:
+    get:
+      operationId: listCarUpgrades
+      summary: Liste les upgrades disponibles pour une voiture.
+      description: >
+        Pièces d'upgrade montables sur la voiture, avec leurs contraintes
+        d'installation (prérequis, groupe exclusif). Le jeu est déterminé par la
+        voiture (pas de paramètre game). Voiture inconnue ou sans upgrade
+        sourcé → page vide.
+      tags: [Upgrades]
+      x-ogen-operation-group: Upgrades
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la voiture.
+          schema: { type: string }
+        - name: category
+          in: query
+          description: Filtre par catégorie de pièce.
+          schema: { $ref: '#/components/schemas/UpgradePartCategory' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page d'upgrades disponibles pour la voiture.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarUpgradeList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/cars/{id}/mastery:
+    get:
+      operationId: getCarMastery
+      summary: Arbre Car Mastery d'une voiture (grille de perks 4×4).
+      description: >
+        Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une
+        case (row, col) de la grille 4×4, coûte des Skill Points (spCost), peut
+        dépendre d'une autre (prereqPerkId) et certaines débloquent une voiture
+        cachée (effectType car_unlock → unlockedCarId). Le jeu est déterminé par
+        la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+      tags: [Mastery]
+      x-ogen-operation-group: Mastery
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la voiture.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Les perks de l'arbre Car Mastery de la voiture.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CarMasteryPerk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /v1/manufacturers:
@@ -290,6 +360,78 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/EventList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/barn-finds:
+    get:
+      operationId: listBarnFinds
+      summary: Liste les Barn Finds (épaves cachées à trouver puis restaurer).
+      tags: [BarnFinds]
+      x-ogen-operation-group: BarnFinds
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de Barn Finds.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BarnFindList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/treasure-cars:
+    get:
+      operationId: listTreasureCars
+      summary: Liste les Treasure Cars (voitures liées aux postcards).
+      tags: [TreasureCars]
+      x-ogen-operation-group: TreasureCars
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de Treasure Cars.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreasureCarList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/upgrade-parts:
+    get:
+      operationId: listUpgradeParts
+      summary: Catalogue global des pièces d'upgrade.
+      tags: [Upgrades]
+      x-ogen-operation-group: Upgrades
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: category
+          in: query
+          description: Filtre par catégorie de pièce.
+          schema: { $ref: '#/components/schemas/UpgradePartCategory' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de pièces d'upgrade.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UpgradePartList' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -577,6 +719,176 @@ components:
         total: { type: integer, format: int64 }
         page: { type: integer }
         pageSize: { type: integer }
+
+    BarnFind:
+      type: object
+      description: >
+        Barn Find FH6 : épave cachée à localiser dans une zone de recherche, puis
+        à restaurer. Déblocage progressif via les stamps Discover Japan
+        (prerequisiteStampLevel 1-7 : Visitor, Sightseer, Traveller, Pathfinder,
+        Navigator, Adventurer, Master Explorer). Mécanique distincte des
+        Treasure Cars. Coordonnées NULL si non sourcées (datasets communautaires).
+      required: [id, game, carId]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        carId: { type: string, description: Identifiant de la voiture obtenue (réf. /v1/cars). }
+        region: { $ref: '#/components/schemas/Region' }
+        searchZoneCenterLat: { type: number, format: double, description: Latitude du centre de la zone de recherche. }
+        searchZoneCenterLng: { type: number, format: double, description: Longitude du centre de la zone de recherche. }
+        searchZoneRadiusM: { type: integer, description: Rayon de la zone de recherche (mètres). }
+        prerequisiteStampLevel:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: >
+            Niveau de stamp Discover Japan requis pour débloquer ce Barn Find
+            (1=Visitor, 2=Sightseer, 3=Traveller, 4=Pathfinder, 5=Navigator,
+            6=Adventurer, 7=Master Explorer).
+        restorationTimeH: { type: integer, description: Durée de restauration (heures de jeu). }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    BarnFindList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/BarnFind' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    TreasureCar:
+      type: object
+      description: >
+        Treasure Car FH6 : voiture associée à une postcard, conduisible
+        immédiatement après la cutscene de lavage. Mécanique distincte des
+        Barn Finds (pas de stamp ni de restauration). Coordonnées NULL si non
+        sourcées (l'indice de la postcard suffit à localiser in-game).
+      required: [id, game, carId]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        carId: { type: string, description: Identifiant de la voiture obtenue (réf. /v1/cars). }
+        region: { $ref: '#/components/schemas/Region' }
+        postcardClue: { type: string, description: Texte de l'indice (postcard) menant à la voiture. }
+        locationLat: { type: number, format: double, description: Latitude de l'emplacement si sourcée. }
+        locationLng: { type: number, format: double, description: Longitude de l'emplacement si sourcée. }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    TreasureCarList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/TreasureCar' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    UpgradePartCategory:
+      type: string
+      description: Catégorie de pièce d'upgrade.
+      enum: [engine, drivetrain, aspiration, tires, weight, aero, brakes, transmission, intake, exhaust, cooling, fuel_system]
+
+    UpgradePart:
+      type: object
+      description: >
+        Pièce du catalogue d'upgrade (générique, indépendante d'une voiture).
+        Les deltas sont relatifs au palier inférieur ; NULL si non sourcés
+        (précision > exhaustivité). Sourcing progressif : voitures populaires
+        d'abord, extension par séries ensuite.
+      required: [id, game, category, name]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        category: { $ref: '#/components/schemas/UpgradePartCategory' }
+        name: { type: string }
+        level:
+          type: integer
+          minimum: 1
+          description: Palier de la pièce (1 = premier niveau). Omis si non applicable.
+        piDelta: { type: integer, description: Variation de Performance Index apportée par la pièce. }
+        weightDeltaKg: { type: integer, description: Variation de poids (kg). Négatif = allègement. }
+        powerDeltaHp: { type: integer, description: Variation de puissance (ch). }
+        torqueDeltaNm: { type: integer, description: Variation de couple (Nm). }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    UpgradePartList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/UpgradePart' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    CarUpgrade:
+      type: object
+      description: >
+        Upgrade disponible pour une voiture : une pièce du catalogue assortie de
+        ses contraintes d'installation (prérequis, groupe exclusif).
+      required: [part]
+      properties:
+        part: { $ref: '#/components/schemas/UpgradePart' }
+        requiresPartId:
+          type: string
+          description: Pièce prérequise (réf. upgrade-parts) à monter avant celle-ci. Absent si aucune.
+        exclusiveGroup:
+          type: string
+          description: >
+            Groupe exclusif : une seule pièce d'un même groupe peut être montée
+            à la fois (ex. compounds de pneus). Absent si non concerné.
+
+    CarUpgradeList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CarUpgrade' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    CarMasteryPerk:
+      type: object
+      description: >
+        Perk de l'arbre Car Mastery FH6 : une case (row, col) de la grille 4×4 de
+        la voiture, débloquée contre des Skill Points. Champs non sourcés → NULL
+        (sourcing progressif : dataset forzagarage.com + wiki Fandom).
+      required: [id, carId]
+      properties:
+        id: { type: string }
+        carId: { type: string, description: Voiture propriétaire de l'arbre (réf. /v1/cars). }
+        row: { type: integer, minimum: 1, maximum: 4, description: Ligne dans la grille (1-4). }
+        col: { type: integer, minimum: 1, maximum: 4, description: Colonne dans la grille (1-4). }
+        name: { type: string }
+        spCost: { type: integer, description: Coût en Skill Points. }
+        effectDescription: { type: string }
+        effectType:
+          type: string
+          description: >
+            Type d'effet (valeur libre). Courants : credits, xp_boost, wheelspin,
+            super_wheelspin, skill_score, car_unlock.
+        effectValue:
+          type: integer
+          description: Valeur de l'effet (montant de crédits ou pourcentage de boost selon le type).
+        prereqPerkId: { type: string, description: Perk prérequise dans la grille. Absent si point d'entrée. }
+        unlockedCarId:
+          type: string
+          description: >
+            Voiture cachée débloquée par cette perk (effectType car_unlock ;
+            réf. /v1/cars). Absent sinon.
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
 
     Error:
       type: object

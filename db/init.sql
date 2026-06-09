@@ -147,6 +147,108 @@ CREATE TABLE IF NOT EXISTS car_dlc (
 -- pack (« voitures du DLC X »).
 CREATE INDEX IF NOT EXISTS car_dlc_dlc_idx ON car_dlc (dlc_id);
 
+-- Voitures cachées FH6 : Barn Finds & Treasure Cars (2 mécaniques distinctes) --
+-- Sources propres (wiki Fandom + guides commu : GamesRadar, MitchCactus…).
+-- Coords NULL si non sourcées. Tout porte game ; car_id réf. la voiture obtenue.
+-- Barn Finds : épaves cachées dans une zone de recherche, déblocage progressif
+-- via les stamps Discover Japan (prerequisite_stamp_level 1-7 : Visitor →
+-- Master Explorer), puis restauration (restoration_time_h).
+CREATE TABLE IF NOT EXISTS barn_finds (
+    id                       TEXT PRIMARY KEY,
+    car_id                   TEXT NOT NULL REFERENCES cars (id) ON DELETE CASCADE,
+    game                     TEXT NOT NULL,
+    region                   TEXT,
+    search_zone_center_lat   NUMERIC,
+    search_zone_center_lng   NUMERIC,
+    search_zone_radius_m     INT,
+    prerequisite_stamp_level INT CHECK (prerequisite_stamp_level BETWEEN 1 AND 7),
+    restoration_time_h       INT,
+    source                   TEXT,
+    last_verified            TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS barn_finds_game_idx        ON barn_finds (game);
+CREATE INDEX IF NOT EXISTS barn_finds_game_region_idx ON barn_finds (game, region);
+CREATE INDEX IF NOT EXISTS barn_finds_car_idx         ON barn_finds (car_id);
+
+-- Treasure Cars : voitures liées aux postcards (indice texte), conduisibles
+-- immédiatement après la cutscene de lavage. Pas de stamp ni de restauration.
+CREATE TABLE IF NOT EXISTS treasure_cars (
+    id                 TEXT PRIMARY KEY,
+    car_id             TEXT NOT NULL REFERENCES cars (id) ON DELETE CASCADE,
+    game               TEXT NOT NULL,
+    region             TEXT,
+    postcard_clue_text TEXT,
+    location_lat       NUMERIC,
+    location_lng       NUMERIC,
+    source             TEXT,
+    last_verified      TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS treasure_cars_game_idx        ON treasure_cars (game);
+CREATE INDEX IF NOT EXISTS treasure_cars_game_region_idx ON treasure_cars (game, region);
+CREATE INDEX IF NOT EXISTS treasure_cars_car_idx         ON treasure_cars (car_id);
+
+-- Catalogue des pièces d'upgrade & upgrades par voiture -----------------------
+-- Sources propres (dataset forzagarage.com, wiki Fandom). Sourcing progressif :
+-- voitures populaires d'abord, extension par séries ensuite. Deltas NULL si non
+-- sourcés (précision > exhaustivité). Tout porte game.
+-- upgrade_parts : pièce générique (delta PI/poids/puissance/couple par palier).
+CREATE TABLE IF NOT EXISTS upgrade_parts (
+    id              TEXT PRIMARY KEY,
+    game            TEXT NOT NULL,
+    category        TEXT NOT NULL CHECK (category IN ('engine','drivetrain','aspiration','tires','weight','aero','brakes','transmission','intake','exhaust','cooling','fuel_system')),
+    name            TEXT NOT NULL,
+    level           INT CHECK (level >= 1),
+    pi_delta        INT,
+    weight_delta_kg INT,
+    power_delta_hp  INT,
+    torque_delta_nm INT,
+    source          TEXT,
+    last_verified   TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS upgrade_parts_game_idx          ON upgrade_parts (game);
+CREATE INDEX IF NOT EXISTS upgrade_parts_game_category_idx ON upgrade_parts (game, category);
+
+-- car_upgrades : N-N voiture ↔ pièce + contraintes d'installation.
+-- requires_part_id : pièce prérequise (chaîne d'upgrade). exclusive_group : une
+-- seule pièce du groupe montable à la fois (ex. compounds de pneus).
+CREATE TABLE IF NOT EXISTS car_upgrades (
+    car_id           TEXT NOT NULL REFERENCES cars (id)          ON DELETE CASCADE,
+    part_id          TEXT NOT NULL REFERENCES upgrade_parts (id) ON DELETE CASCADE,
+    requires_part_id TEXT REFERENCES upgrade_parts (id)          ON DELETE SET NULL,
+    exclusive_group  TEXT,
+    PRIMARY KEY (car_id, part_id)
+);
+-- Le PK couvre les lookups par car_id (préfixe) ; index dédié pour retrouver les
+-- voitures qui montent une pièce donnée.
+CREATE INDEX IF NOT EXISTS car_upgrades_part_idx ON car_upgrades (part_id);
+
+-- Car Mastery FH6 : grille de perks 4×4 par voiture ---------------------------
+-- Sources propres (dataset forzagarage.com qui indexe déjà les ~622 arbres, wiki
+-- Fandom). Sourcing progressif. Une perk = une case (row, col) de la grille,
+-- débloquée contre des Skill Points (sp_cost). effect_type est LIBRE (valeurs
+-- courantes : credits, xp_boost, wheelspin, super_wheelspin, skill_score,
+-- car_unlock, …). prereq_perk_id chaîne les perks ; unlocked_car_id pointe la
+-- voiture débloquée par une perk car_unlock (hidden cars FH6 : Corvette Stingray
+-- 427 via Stingray Coupe, Honda Civic RS via Civic Type R, Ferrari F50 GT via
+-- F50, Ford Supervan 4 via Supervan 3, …). Pas de game : dérivé via car_id.
+CREATE TABLE IF NOT EXISTS car_mastery_perks (
+    id                 TEXT PRIMARY KEY,
+    car_id             TEXT NOT NULL REFERENCES cars (id) ON DELETE CASCADE,
+    row                INT  CHECK (row BETWEEN 1 AND 4),
+    col                INT  CHECK (col BETWEEN 1 AND 4),
+    name               TEXT,
+    sp_cost            INT,
+    effect_description TEXT,
+    effect_type        TEXT,
+    effect_value       INT,
+    prereq_perk_id     TEXT REFERENCES car_mastery_perks (id) ON DELETE SET NULL,
+    unlocked_car_id    TEXT REFERENCES cars (id)              ON DELETE SET NULL,
+    source             TEXT,
+    last_verified      TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS car_mastery_perks_car_idx          ON car_mastery_perks (car_id);
+CREATE INDEX IF NOT EXISTS car_mastery_perks_unlocked_car_idx ON car_mastery_perks (unlocked_car_id);
+
 -- Clés API (jamais la clé en clair : seul le hash sha256 est stocké) -----------
 CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,
