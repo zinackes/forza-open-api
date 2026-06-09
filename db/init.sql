@@ -147,6 +147,46 @@ CREATE TABLE IF NOT EXISTS car_dlc (
 -- pack (« voitures du DLC X »).
 CREATE INDEX IF NOT EXISTS car_dlc_dlc_idx ON car_dlc (dlc_id);
 
+-- Voitures cachées FH6 : Barn Finds & Treasure Cars (2 mécaniques distinctes) --
+-- Sources propres (wiki Fandom + guides commu : GamesRadar, MitchCactus…).
+-- Coords NULL si non sourcées. Tout porte game ; car_id réf. la voiture obtenue.
+-- Barn Finds : épaves cachées dans une zone de recherche, déblocage progressif
+-- via les stamps Discover Japan (prerequisite_stamp_level 1-7 : Visitor →
+-- Master Explorer), puis restauration (restoration_time_h).
+CREATE TABLE IF NOT EXISTS barn_finds (
+    id                       TEXT PRIMARY KEY,
+    car_id                   TEXT NOT NULL REFERENCES cars (id) ON DELETE CASCADE,
+    game                     TEXT NOT NULL,
+    region                   TEXT,
+    search_zone_center_lat   NUMERIC,
+    search_zone_center_lng   NUMERIC,
+    search_zone_radius_m     INT,
+    prerequisite_stamp_level INT CHECK (prerequisite_stamp_level BETWEEN 1 AND 7),
+    restoration_time_h       INT,
+    source                   TEXT,
+    last_verified            TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS barn_finds_game_idx        ON barn_finds (game);
+CREATE INDEX IF NOT EXISTS barn_finds_game_region_idx ON barn_finds (game, region);
+CREATE INDEX IF NOT EXISTS barn_finds_car_idx         ON barn_finds (car_id);
+
+-- Treasure Cars : voitures liées aux postcards (indice texte), conduisibles
+-- immédiatement après la cutscene de lavage. Pas de stamp ni de restauration.
+CREATE TABLE IF NOT EXISTS treasure_cars (
+    id                 TEXT PRIMARY KEY,
+    car_id             TEXT NOT NULL REFERENCES cars (id) ON DELETE CASCADE,
+    game               TEXT NOT NULL,
+    region             TEXT,
+    postcard_clue_text TEXT,
+    location_lat       NUMERIC,
+    location_lng       NUMERIC,
+    source             TEXT,
+    last_verified      TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS treasure_cars_game_idx        ON treasure_cars (game);
+CREATE INDEX IF NOT EXISTS treasure_cars_game_region_idx ON treasure_cars (game, region);
+CREATE INDEX IF NOT EXISTS treasure_cars_car_idx         ON treasure_cars (car_id);
+
 -- Clés API (jamais la clé en clair : seul le hash sha256 est stocké) -----------
 CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,

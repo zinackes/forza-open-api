@@ -35,6 +35,193 @@ func (s *ApiKeyAuth) SetRoles(val []string) {
 	s.Roles = val
 }
 
+// Barn Find FH6 : épave cachée à localiser dans une zone de recherche, puis à restaurer.
+// Déblocage progressif via les stamps Discover Japan (prerequisiteStampLevel 1-7 : Visitor,
+// Sightseer, Traveller, Pathfinder, Navigator, Adventurer, Master Explorer). Mécanique distincte
+// des Treasure Cars. Coordonnées NULL si non sourcées (datasets communautaires).
+// Ref: #/components/schemas/BarnFind
+type BarnFind struct {
+	ID   string `json:"id"`
+	Game Game   `json:"game"`
+	// Identifiant de la voiture obtenue (réf. /v1/cars).
+	CarId  string    `json:"carId"`
+	Region OptRegion `json:"region"`
+	// Latitude du centre de la zone de recherche.
+	SearchZoneCenterLat OptFloat64 `json:"searchZoneCenterLat"`
+	// Longitude du centre de la zone de recherche.
+	SearchZoneCenterLng OptFloat64 `json:"searchZoneCenterLng"`
+	// Rayon de la zone de recherche (mètres).
+	SearchZoneRadiusM OptInt `json:"searchZoneRadiusM"`
+	// Niveau de stamp Discover Japan requis pour débloquer ce Barn Find (1=Visitor, 2=Sightseer,
+	// 3=Traveller, 4=Pathfinder, 5=Navigator, 6=Adventurer, 7=Master Explorer).
+	PrerequisiteStampLevel OptInt `json:"prerequisiteStampLevel"`
+	// Durée de restauration (heures de jeu).
+	RestorationTimeH OptInt `json:"restorationTimeH"`
+	// Source propre de la donnée.
+	Source       OptString   `json:"source"`
+	LastVerified OptDateTime `json:"lastVerified"`
+}
+
+// GetID returns the value of ID.
+func (s *BarnFind) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *BarnFind) GetGame() Game {
+	return s.Game
+}
+
+// GetCarId returns the value of CarId.
+func (s *BarnFind) GetCarId() string {
+	return s.CarId
+}
+
+// GetRegion returns the value of Region.
+func (s *BarnFind) GetRegion() OptRegion {
+	return s.Region
+}
+
+// GetSearchZoneCenterLat returns the value of SearchZoneCenterLat.
+func (s *BarnFind) GetSearchZoneCenterLat() OptFloat64 {
+	return s.SearchZoneCenterLat
+}
+
+// GetSearchZoneCenterLng returns the value of SearchZoneCenterLng.
+func (s *BarnFind) GetSearchZoneCenterLng() OptFloat64 {
+	return s.SearchZoneCenterLng
+}
+
+// GetSearchZoneRadiusM returns the value of SearchZoneRadiusM.
+func (s *BarnFind) GetSearchZoneRadiusM() OptInt {
+	return s.SearchZoneRadiusM
+}
+
+// GetPrerequisiteStampLevel returns the value of PrerequisiteStampLevel.
+func (s *BarnFind) GetPrerequisiteStampLevel() OptInt {
+	return s.PrerequisiteStampLevel
+}
+
+// GetRestorationTimeH returns the value of RestorationTimeH.
+func (s *BarnFind) GetRestorationTimeH() OptInt {
+	return s.RestorationTimeH
+}
+
+// GetSource returns the value of Source.
+func (s *BarnFind) GetSource() OptString {
+	return s.Source
+}
+
+// GetLastVerified returns the value of LastVerified.
+func (s *BarnFind) GetLastVerified() OptDateTime {
+	return s.LastVerified
+}
+
+// SetID sets the value of ID.
+func (s *BarnFind) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *BarnFind) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetCarId sets the value of CarId.
+func (s *BarnFind) SetCarId(val string) {
+	s.CarId = val
+}
+
+// SetRegion sets the value of Region.
+func (s *BarnFind) SetRegion(val OptRegion) {
+	s.Region = val
+}
+
+// SetSearchZoneCenterLat sets the value of SearchZoneCenterLat.
+func (s *BarnFind) SetSearchZoneCenterLat(val OptFloat64) {
+	s.SearchZoneCenterLat = val
+}
+
+// SetSearchZoneCenterLng sets the value of SearchZoneCenterLng.
+func (s *BarnFind) SetSearchZoneCenterLng(val OptFloat64) {
+	s.SearchZoneCenterLng = val
+}
+
+// SetSearchZoneRadiusM sets the value of SearchZoneRadiusM.
+func (s *BarnFind) SetSearchZoneRadiusM(val OptInt) {
+	s.SearchZoneRadiusM = val
+}
+
+// SetPrerequisiteStampLevel sets the value of PrerequisiteStampLevel.
+func (s *BarnFind) SetPrerequisiteStampLevel(val OptInt) {
+	s.PrerequisiteStampLevel = val
+}
+
+// SetRestorationTimeH sets the value of RestorationTimeH.
+func (s *BarnFind) SetRestorationTimeH(val OptInt) {
+	s.RestorationTimeH = val
+}
+
+// SetSource sets the value of Source.
+func (s *BarnFind) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetLastVerified sets the value of LastVerified.
+func (s *BarnFind) SetLastVerified(val OptDateTime) {
+	s.LastVerified = val
+}
+
+// Ref: #/components/schemas/BarnFindList
+type BarnFindList struct {
+	Items    []BarnFind `json:"items"`
+	Total    int64      `json:"total"`
+	Page     int        `json:"page"`
+	PageSize int        `json:"pageSize"`
+}
+
+// GetItems returns the value of Items.
+func (s *BarnFindList) GetItems() []BarnFind {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *BarnFindList) GetTotal() int64 {
+	return s.Total
+}
+
+// GetPage returns the value of Page.
+func (s *BarnFindList) GetPage() int {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *BarnFindList) GetPageSize() int {
+	return s.PageSize
+}
+
+// SetItems sets the value of Items.
+func (s *BarnFindList) SetItems(val []BarnFind) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *BarnFindList) SetTotal(val int64) {
+	s.Total = val
+}
+
+// SetPage sets the value of Page.
+func (s *BarnFindList) SetPage(val int) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *BarnFindList) SetPageSize(val int) {
+	s.PageSize = val
+}
+
+func (*BarnFindList) listBarnFindsRes() {}
+
 // Ref: #/components/schemas/Car
 type Car struct {
 	ID           string      `json:"id"`
@@ -1127,6 +1314,18 @@ type GetSeriesUnauthorized Error
 
 func (*GetSeriesUnauthorized) getSeriesRes() {}
 
+type ListBarnFindsBadRequest Error
+
+func (*ListBarnFindsBadRequest) listBarnFindsRes() {}
+
+type ListBarnFindsTooManyRequests Error
+
+func (*ListBarnFindsTooManyRequests) listBarnFindsRes() {}
+
+type ListBarnFindsUnauthorized Error
+
+func (*ListBarnFindsUnauthorized) listBarnFindsRes() {}
+
 type ListCarsBadRequest Error
 
 func (*ListCarsBadRequest) listCarsRes() {}
@@ -1222,6 +1421,18 @@ func (*ListTracksTooManyRequests) listTracksRes() {}
 type ListTracksUnauthorized Error
 
 func (*ListTracksUnauthorized) listTracksRes() {}
+
+type ListTreasureCarsBadRequest Error
+
+func (*ListTreasureCarsBadRequest) listTreasureCarsRes() {}
+
+type ListTreasureCarsTooManyRequests Error
+
+func (*ListTreasureCarsTooManyRequests) listTreasureCarsRes() {}
+
+type ListTreasureCarsUnauthorized Error
+
+func (*ListTreasureCarsUnauthorized) listTreasureCarsRes() {}
 
 // Ref: #/components/schemas/Manufacturer
 type Manufacturer struct {
@@ -2561,3 +2772,164 @@ func (s *TrackType) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// Treasure Car FH6 : voiture associée à une postcard, conduisible immédiatement après la
+// cutscene de lavage. Mécanique distincte des Barn Finds (pas de stamp ni de restauration).
+// Coordonnées NULL si non sourcées (l'indice de la postcard suffit à localiser in-game).
+// Ref: #/components/schemas/TreasureCar
+type TreasureCar struct {
+	ID   string `json:"id"`
+	Game Game   `json:"game"`
+	// Identifiant de la voiture obtenue (réf. /v1/cars).
+	CarId  string    `json:"carId"`
+	Region OptRegion `json:"region"`
+	// Texte de l'indice (postcard) menant à la voiture.
+	PostcardClue OptString `json:"postcardClue"`
+	// Latitude de l'emplacement si sourcée.
+	LocationLat OptFloat64 `json:"locationLat"`
+	// Longitude de l'emplacement si sourcée.
+	LocationLng OptFloat64 `json:"locationLng"`
+	// Source propre de la donnée.
+	Source       OptString   `json:"source"`
+	LastVerified OptDateTime `json:"lastVerified"`
+}
+
+// GetID returns the value of ID.
+func (s *TreasureCar) GetID() string {
+	return s.ID
+}
+
+// GetGame returns the value of Game.
+func (s *TreasureCar) GetGame() Game {
+	return s.Game
+}
+
+// GetCarId returns the value of CarId.
+func (s *TreasureCar) GetCarId() string {
+	return s.CarId
+}
+
+// GetRegion returns the value of Region.
+func (s *TreasureCar) GetRegion() OptRegion {
+	return s.Region
+}
+
+// GetPostcardClue returns the value of PostcardClue.
+func (s *TreasureCar) GetPostcardClue() OptString {
+	return s.PostcardClue
+}
+
+// GetLocationLat returns the value of LocationLat.
+func (s *TreasureCar) GetLocationLat() OptFloat64 {
+	return s.LocationLat
+}
+
+// GetLocationLng returns the value of LocationLng.
+func (s *TreasureCar) GetLocationLng() OptFloat64 {
+	return s.LocationLng
+}
+
+// GetSource returns the value of Source.
+func (s *TreasureCar) GetSource() OptString {
+	return s.Source
+}
+
+// GetLastVerified returns the value of LastVerified.
+func (s *TreasureCar) GetLastVerified() OptDateTime {
+	return s.LastVerified
+}
+
+// SetID sets the value of ID.
+func (s *TreasureCar) SetID(val string) {
+	s.ID = val
+}
+
+// SetGame sets the value of Game.
+func (s *TreasureCar) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetCarId sets the value of CarId.
+func (s *TreasureCar) SetCarId(val string) {
+	s.CarId = val
+}
+
+// SetRegion sets the value of Region.
+func (s *TreasureCar) SetRegion(val OptRegion) {
+	s.Region = val
+}
+
+// SetPostcardClue sets the value of PostcardClue.
+func (s *TreasureCar) SetPostcardClue(val OptString) {
+	s.PostcardClue = val
+}
+
+// SetLocationLat sets the value of LocationLat.
+func (s *TreasureCar) SetLocationLat(val OptFloat64) {
+	s.LocationLat = val
+}
+
+// SetLocationLng sets the value of LocationLng.
+func (s *TreasureCar) SetLocationLng(val OptFloat64) {
+	s.LocationLng = val
+}
+
+// SetSource sets the value of Source.
+func (s *TreasureCar) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetLastVerified sets the value of LastVerified.
+func (s *TreasureCar) SetLastVerified(val OptDateTime) {
+	s.LastVerified = val
+}
+
+// Ref: #/components/schemas/TreasureCarList
+type TreasureCarList struct {
+	Items    []TreasureCar `json:"items"`
+	Total    int64         `json:"total"`
+	Page     int           `json:"page"`
+	PageSize int           `json:"pageSize"`
+}
+
+// GetItems returns the value of Items.
+func (s *TreasureCarList) GetItems() []TreasureCar {
+	return s.Items
+}
+
+// GetTotal returns the value of Total.
+func (s *TreasureCarList) GetTotal() int64 {
+	return s.Total
+}
+
+// GetPage returns the value of Page.
+func (s *TreasureCarList) GetPage() int {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *TreasureCarList) GetPageSize() int {
+	return s.PageSize
+}
+
+// SetItems sets the value of Items.
+func (s *TreasureCarList) SetItems(val []TreasureCar) {
+	s.Items = val
+}
+
+// SetTotal sets the value of Total.
+func (s *TreasureCarList) SetTotal(val int64) {
+	s.Total = val
+}
+
+// SetPage sets the value of Page.
+func (s *TreasureCarList) SetPage(val int) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *TreasureCarList) SetPageSize(val int) {
+	s.PageSize = val
+}
+
+func (*TreasureCarList) listTreasureCarsRes() {}

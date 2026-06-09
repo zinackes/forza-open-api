@@ -14,10 +14,10 @@ var (
 	rn8AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn2AllowedHeaders = map[string]string{
+	rn9AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn9AllowedHeaders = map[string]string{
+	rn2AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn10AllowedHeaders = map[string]string{
@@ -26,19 +26,25 @@ var (
 	rn11AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
+	rn12AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
 	rn4AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn14AllowedHeaders = map[string]string{
+	rn15AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn7AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn13AllowedHeaders = map[string]string{
+	rn14AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn15AllowedHeaders = map[string]string{
+	rn16AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn18AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 )
@@ -94,6 +100,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
+			case 'b': // Prefix: "barn-finds"
+
+				if l := len("barn-finds"); len(elem) >= l && elem[0:l] == "barn-finds" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleListBarnFindsRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET",
+							allowedHeaders: rn8AllowedHeaders,
+							acceptPost:     "",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+
 			case 'c': // Prefix: "cars"
 
 				if l := len("cars"); len(elem) >= l && elem[0:l] == "cars" {
@@ -109,7 +140,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn8AllowedHeaders,
+							allowedHeaders: rn9AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -172,7 +203,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn9AllowedHeaders,
+							allowedHeaders: rn10AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -197,7 +228,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn10AllowedHeaders,
+							allowedHeaders: rn11AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -222,7 +253,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn11AllowedHeaders,
+							allowedHeaders: rn12AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -295,7 +326,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn14AllowedHeaders,
+									allowedHeaders: rn15AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -360,7 +391,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn13AllowedHeaders,
+								allowedHeaders: rn14AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -371,29 +402,68 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 				}
 
-			case 't': // Prefix: "tracks"
+			case 't': // Prefix: "tr"
 
-				if l := len("tracks"); len(elem) >= l && elem[0:l] == "tracks" {
+				if l := len("tr"); len(elem) >= l && elem[0:l] == "tr" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					// Leaf node.
-					switch r.Method {
-					case "GET":
-						s.handleListTracksRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, notAllowedParams{
-							allowedMethods: "GET",
-							allowedHeaders: rn15AllowedHeaders,
-							acceptPost:     "",
-							acceptPatch:    "",
-						})
+					break
+				}
+				switch elem[0] {
+				case 'a': // Prefix: "acks"
+
+					if l := len("acks"); len(elem) >= l && elem[0:l] == "acks" {
+						elem = elem[l:]
+					} else {
+						break
 					}
 
-					return
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleListTracksRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "GET",
+								allowedHeaders: rn16AllowedHeaders,
+								acceptPost:     "",
+								acceptPatch:    "",
+							})
+						}
+
+						return
+					}
+
+				case 'e': // Prefix: "easure-cars"
+
+					if l := len("easure-cars"); len(elem) >= l && elem[0:l] == "easure-cars" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleListTreasureCarsRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "GET",
+								allowedHeaders: rn18AllowedHeaders,
+								acceptPost:     "",
+								acceptPatch:    "",
+							})
+						}
+
+						return
+					}
+
 				}
 
 			}
@@ -496,6 +566,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
+			case 'b': // Prefix: "barn-finds"
+
+				if l := len("barn-finds"); len(elem) >= l && elem[0:l] == "barn-finds" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = ListBarnFindsOperation
+						r.summary = "Liste les Barn Finds (épaves cachées à trouver puis restaurer)."
+						r.operationID = "listBarnFinds"
+						r.operationGroup = "BarnFinds"
+						r.pathPattern = "/v1/barn-finds"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
 			case 'c': // Prefix: "cars"
 
 				if l := len("cars"); len(elem) >= l && elem[0:l] == "cars" {
@@ -769,29 +864,68 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 				}
 
-			case 't': // Prefix: "tracks"
+			case 't': // Prefix: "tr"
 
-				if l := len("tracks"); len(elem) >= l && elem[0:l] == "tracks" {
+				if l := len("tr"); len(elem) >= l && elem[0:l] == "tr" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					// Leaf node.
-					switch method {
-					case "GET":
-						r.name = ListTracksOperation
-						r.summary = "Liste les tracés / circuits indexés."
-						r.operationID = "listTracks"
-						r.operationGroup = "Tracks"
-						r.pathPattern = "/v1/tracks"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
+					break
+				}
+				switch elem[0] {
+				case 'a': // Prefix: "acks"
+
+					if l := len("acks"); len(elem) >= l && elem[0:l] == "acks" {
+						elem = elem[l:]
+					} else {
+						break
 					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = ListTracksOperation
+							r.summary = "Liste les tracés / circuits indexés."
+							r.operationID = "listTracks"
+							r.operationGroup = "Tracks"
+							r.pathPattern = "/v1/tracks"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+				case 'e': // Prefix: "easure-cars"
+
+					if l := len("easure-cars"); len(elem) >= l && elem[0:l] == "easure-cars" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = ListTreasureCarsOperation
+							r.summary = "Liste les Treasure Cars (voitures liées aux postcards)."
+							r.operationID = "listTreasureCars"
+							r.operationGroup = "TreasureCars"
+							r.pathPattern = "/v1/treasure-cars"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
 				}
 
 			}

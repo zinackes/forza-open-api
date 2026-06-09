@@ -32,6 +32,10 @@ tags:
     description: Événements / courses (routes fixes, circuits, drag meets…).
   - name: DLC
     description: Packs DLC / extensions (Car Pass, expansions, standalone).
+  - name: BarnFinds
+    description: Barn Finds (épaves cachées débloquées via les stamps Discover Japan, puis restaurées).
+  - name: TreasureCars
+    description: Treasure Cars (voitures liées aux postcards, conduisibles après la cutscene de lavage).
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -290,6 +294,54 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/EventList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/barn-finds:
+    get:
+      operationId: listBarnFinds
+      summary: Liste les Barn Finds (épaves cachées à trouver puis restaurer).
+      tags: [BarnFinds]
+      x-ogen-operation-group: BarnFinds
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de Barn Finds.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BarnFindList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/treasure-cars:
+    get:
+      operationId: listTreasureCars
+      summary: Liste les Treasure Cars (voitures liées aux postcards).
+      tags: [TreasureCars]
+      x-ogen-operation-group: TreasureCars
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de Treasure Cars.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreasureCarList' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -574,6 +626,76 @@ components:
         items:
           type: array
           items: { $ref: '#/components/schemas/Event' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    BarnFind:
+      type: object
+      description: >
+        Barn Find FH6 : épave cachée à localiser dans une zone de recherche, puis
+        à restaurer. Déblocage progressif via les stamps Discover Japan
+        (prerequisiteStampLevel 1-7 : Visitor, Sightseer, Traveller, Pathfinder,
+        Navigator, Adventurer, Master Explorer). Mécanique distincte des
+        Treasure Cars. Coordonnées NULL si non sourcées (datasets communautaires).
+      required: [id, game, carId]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        carId: { type: string, description: Identifiant de la voiture obtenue (réf. /v1/cars). }
+        region: { $ref: '#/components/schemas/Region' }
+        searchZoneCenterLat: { type: number, format: double, description: Latitude du centre de la zone de recherche. }
+        searchZoneCenterLng: { type: number, format: double, description: Longitude du centre de la zone de recherche. }
+        searchZoneRadiusM: { type: integer, description: Rayon de la zone de recherche (mètres). }
+        prerequisiteStampLevel:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: >
+            Niveau de stamp Discover Japan requis pour débloquer ce Barn Find
+            (1=Visitor, 2=Sightseer, 3=Traveller, 4=Pathfinder, 5=Navigator,
+            6=Adventurer, 7=Master Explorer).
+        restorationTimeH: { type: integer, description: Durée de restauration (heures de jeu). }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    BarnFindList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/BarnFind' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    TreasureCar:
+      type: object
+      description: >
+        Treasure Car FH6 : voiture associée à une postcard, conduisible
+        immédiatement après la cutscene de lavage. Mécanique distincte des
+        Barn Finds (pas de stamp ni de restauration). Coordonnées NULL si non
+        sourcées (l'indice de la postcard suffit à localiser in-game).
+      required: [id, game, carId]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        carId: { type: string, description: Identifiant de la voiture obtenue (réf. /v1/cars). }
+        region: { $ref: '#/components/schemas/Region' }
+        postcardClue: { type: string, description: Texte de l'indice (postcard) menant à la voiture. }
+        locationLat: { type: number, format: double, description: Latitude de l'emplacement si sourcée. }
+        locationLng: { type: number, format: double, description: Longitude de l'emplacement si sourcée. }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    TreasureCarList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/TreasureCar' }
         total: { type: integer, format: int64 }
         page: { type: integer }
         pageSize: { type: integer }

@@ -40,6 +40,15 @@ func (UnimplementedHandler) GetSeries(ctx context.Context, params GetSeriesParam
 	return r, ht.ErrNotImplemented
 }
 
+// ListBarnFinds implements listBarnFinds operation.
+//
+// Liste les Barn Finds (épaves cachées à trouver puis restaurer).
+//
+// GET /v1/barn-finds
+func (UnimplementedHandler) ListBarnFinds(ctx context.Context, params ListBarnFindsParams) (r ListBarnFindsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListCars implements listCars operation.
 //
 // Liste les voitures du catalogue.
@@ -100,5 +109,14 @@ func (UnimplementedHandler) ListSeries(ctx context.Context, params ListSeriesPar
 //
 // GET /v1/tracks
 func (UnimplementedHandler) ListTracks(ctx context.Context, params ListTracksParams) (r ListTracksRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListTreasureCars implements listTreasureCars operation.
+//
+// Liste les Treasure Cars (voitures liées aux postcards).
+//
+// GET /v1/treasure-cars
+func (UnimplementedHandler) ListTreasureCars(ctx context.Context, params ListTreasureCarsParams) (r ListTreasureCarsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

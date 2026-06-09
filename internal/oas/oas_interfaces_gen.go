@@ -13,6 +13,10 @@ type GetSeriesRes interface {
 	getSeriesRes()
 }
 
+type ListBarnFindsRes interface {
+	listBarnFindsRes()
+}
+
 type ListCarsRes interface {
 	listCarsRes()
 }
@@ -39,4 +43,8 @@ type ListSeriesRes interface {
 
 type ListTracksRes interface {
 	listTracksRes()
+}
+
+type ListTreasureCarsRes interface {
+	listTreasureCarsRes()
 }

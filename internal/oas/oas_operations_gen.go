@@ -9,6 +9,7 @@ const (
 	GetCarOperation             OperationName = "GetCar"
 	GetCurrentPlaylistOperation OperationName = "GetCurrentPlaylist"
 	GetSeriesOperation          OperationName = "GetSeries"
+	ListBarnFindsOperation      OperationName = "ListBarnFinds"
 	ListCarsOperation           OperationName = "ListCars"
 	ListDlcPacksOperation       OperationName = "ListDlcPacks"
 	ListEventsOperation         OperationName = "ListEvents"
@@ -16,4 +17,5 @@ const (
 	ListPrStuntsOperation       OperationName = "ListPrStunts"
 	ListSeriesOperation         OperationName = "ListSeries"
 	ListTracksOperation         OperationName = "ListTracks"
+	ListTreasureCarsOperation   OperationName = "ListTreasureCars"
 )

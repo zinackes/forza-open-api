@@ -8,6 +8,7 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	BarnFindsHandler
 	CarsHandler
 	DLCHandler
 	EventsHandler
@@ -15,6 +16,19 @@ type Handler interface {
 	PRStuntsHandler
 	PlaylistHandler
 	TracksHandler
+	TreasureCarsHandler
+}
+
+// BarnFindsHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: BarnFinds
+type BarnFindsHandler interface {
+	// ListBarnFinds implements listBarnFinds operation.
+	//
+	// Liste les Barn Finds (épaves cachées à trouver puis restaurer).
+	//
+	// GET /v1/barn-finds
+	ListBarnFinds(ctx context.Context, params ListBarnFindsParams) (ListBarnFindsRes, error)
 }
 
 // CarsHandler handles operations described by OpenAPI v3 specification.
@@ -117,6 +131,18 @@ type TracksHandler interface {
 	//
 	// GET /v1/tracks
 	ListTracks(ctx context.Context, params ListTracksParams) (ListTracksRes, error)
+}
+
+// TreasureCarsHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: TreasureCars
+type TreasureCarsHandler interface {
+	// ListTreasureCars implements listTreasureCars operation.
+	//
+	// Liste les Treasure Cars (voitures liées aux postcards).
+	//
+	// GET /v1/treasure-cars
+	ListTreasureCars(ctx context.Context, params ListTreasureCarsParams) (ListTreasureCarsRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and
