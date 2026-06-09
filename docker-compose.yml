@@ -1,5 +1,5 @@
-# Stack de dev local : Postgres 18 (source de vérité) + Valkey (cache/rate-limit).
-# L'API tourne hors compose en Phase 0 (`task run`).
+# Stack de dev local : Postgres 18 (source de vérité) + Valkey (cache/rate-limit) + API.
+# `task up` lève les trois services et attend qu'ils soient sains (/healthz 200).
 services:
   postgres:
     image: postgres:18-alpine
@@ -20,7 +20,7 @@ services:
       retries: 10
 
   valkey:
-    image: valkey/valkey:8-alpine
+    image: valkey/valkey:9.1-alpine
     command: ["valkey-server", "--save", "", "--appendonly", "no"]
     ports:
       - "${VALKEY_HOST_PORT:-6379}:6379"
@@ -29,6 +29,31 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      API_ADDR: ":8080"
+      # DSN internes au réseau compose (noms de services), pas les ports hôtes.
+      DATABASE_URL: "postgres://forza:forza@postgres:5432/forza?sslmode=disable"
+      REDIS_URL: "redis://valkey:6379/0"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    ports:
+      - "${API_HOST_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    healthcheck:
+      # Image distroless (sans shell/curl) : sonde via le binaire lui-même.
+      test: ["CMD", "/api", "-healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
 volumes:
   pgdata:

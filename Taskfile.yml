@@ -31,9 +31,9 @@ tasks:
       - go test ./...
 
   up:
-    desc: Lève Postgres + Valkey (docker compose)
+    desc: Lève Postgres + Valkey + API et attend qu'ils soient sains (/healthz 200)
     cmds:
-      - docker compose up -d
+      - docker compose up -d --build --wait
 
   down:
     desc: Arrête et nettoie les services

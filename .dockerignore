@@ -1,0 +1,15 @@
+# Contexte de build minimal : code Go + go.mod/sum + api/openapi.yaml.
+# Jamais de secrets ni d'artefacts dans les couches d'image.
+.git
+.gitignore
+.codegraph
+.claude
+bin
+docs
+*.md
+.env
+.env.*
+Taskfile.yml
+docker-compose.yml
+Dockerfile
+.dockerignore
