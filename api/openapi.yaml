@@ -668,11 +668,15 @@ components:
 
     Manufacturer:
       type: object
-      required: [game, name]
+      required: [game, name, carCount]
       properties:
         game: { $ref: '#/components/schemas/Game' }
         name: { type: string }
         country: { type: string }
+        carCount:
+          type: integer
+          format: int64
+          description: Nombre de voitures du constructeur pour le jeu (agrégat GROUP BY ; 0 si aucune).
 
     DlcKind:
       type: string

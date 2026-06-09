@@ -5839,12 +5839,17 @@ func (s *Manufacturer) encodeFields(e *jx.Encoder) {
 			s.Country.Encode(e)
 		}
 	}
+	{
+		e.FieldStart("carCount")
+		e.Int64(s.CarCount)
+	}
 }
 
-var jsonFieldsNameOfManufacturer = [3]string{
+var jsonFieldsNameOfManufacturer = [4]string{
 	0: "game",
 	1: "name",
 	2: "country",
+	3: "carCount",
 }
 
 // Decode decodes Manufacturer from json.
@@ -5888,6 +5893,18 @@ func (s *Manufacturer) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"country\"")
 			}
+		case "carCount":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Int64()
+				s.CarCount = int64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"carCount\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -5898,7 +5915,7 @@ func (s *Manufacturer) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00001011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

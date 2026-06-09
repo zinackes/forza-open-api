@@ -2115,6 +2115,8 @@ type Manufacturer struct {
 	Game    Game      `json:"game"`
 	Name    string    `json:"name"`
 	Country OptString `json:"country"`
+	// Nombre de voitures du constructeur pour le jeu (agrégat GROUP BY ; 0 si aucune).
+	CarCount int64 `json:"carCount"`
 }
 
 // GetGame returns the value of Game.
@@ -2132,6 +2134,11 @@ func (s *Manufacturer) GetCountry() OptString {
 	return s.Country
 }
 
+// GetCarCount returns the value of CarCount.
+func (s *Manufacturer) GetCarCount() int64 {
+	return s.CarCount
+}
+
 // SetGame sets the value of Game.
 func (s *Manufacturer) SetGame(val Game) {
 	s.Game = val
@@ -2145,6 +2152,11 @@ func (s *Manufacturer) SetName(val string) {
 // SetCountry sets the value of Country.
 func (s *Manufacturer) SetCountry(val OptString) {
 	s.Country = val
+}
+
+// SetCarCount sets the value of CarCount.
+func (s *Manufacturer) SetCarCount(val int64) {
+	s.CarCount = val
 }
 
 // NewOptCarClass returns new OptCarClass with value set to v.
