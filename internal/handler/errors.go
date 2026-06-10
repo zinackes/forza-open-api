@@ -39,6 +39,13 @@ func errNotFound(detail string) error {
 	return &apiError{status: http.StatusNotFound, detail: detail}
 }
 
+// errUnauthorized construit un 401 typé. Utilisé par les endpoints à
+// authentification requise (GET /v1/me) quand la clé n'a pu être résolue (clé
+// absente sur un endpoint authentifié, ou révoquée entre le cache et le lookup).
+func errUnauthorized(detail string) error {
+	return &apiError{status: http.StatusUnauthorized, detail: detail}
+}
+
 // problemType renvoie le code d'erreur stable (URN) associé à un statut HTTP.
 // Indépendant de l'host (le domaine prod n'est pas figé) et stable dans le temps.
 // Documenté dans le schéma Error du contrat. Statut inconnu → about:blank (le
