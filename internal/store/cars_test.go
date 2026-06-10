@@ -77,6 +77,58 @@ func TestListCarsScalarFilters(t *testing.T) {
 	}
 }
 
+// TestListCarsIDsFilter vérifie le filtre ids : restriction à la liste fournie
+// (ordre de tri conservé, total = correspondances), ids inconnus ignorés sans
+// erreur (liste partielle), ids d'un autre jeu exclus par le filtre game,
+// aucune correspondance → page vide, et combinaison avec un filtre scalaire.
+func TestListCarsIDsFilter(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
+		('i-audi','fh6','R8','Audi','S1',850,'AWD'),
+		('i-ford','fh6','GT','Ford','S2',920,'RWD'),
+		('i-honda','fh6','Civic','Honda','A',780,'FWD'),
+		('i-beetle','fh5','Beetle','Volkswagen','D',400,'RWD')`)
+
+	cases := []struct {
+		name  string
+		ids   []string
+		want  []string // IDs ordonnés (ORDER BY pi, name, id)
+		total int64
+	}{
+		{"sous-ensemble", []string{"i-ford", "i-audi"}, []string{"i-audi", "i-ford"}, 2},
+		{"ids inconnus ignorés (liste partielle)", []string{"i-honda", "ghost", "nope"}, []string{"i-honda"}, 1},
+		{"ids d'un autre jeu exclus", []string{"i-beetle", "i-audi"}, []string{"i-audi"}, 1},
+		{"aucune correspondance", []string{"ghost"}, []string{}, 0},
+		{"nil = pas de filtre", nil, []string{"i-honda", "i-audi", "i-ford"}, 3},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cars, total, err := st.ListCars(ctx, store.CarFilter{Game: "fh6", IDs: tc.ids, Limit: 50})
+			if err != nil {
+				t.Fatalf("ListCars(ids=%v): %v", tc.ids, err)
+			}
+			if total != tc.total {
+				t.Errorf("total = %d, want %d", total, tc.total)
+			}
+			if got := carIDs(cars); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("ids = %v, want %v", got, tc.want)
+			}
+		})
+	}
+
+	// Combiné avec un filtre scalaire : intersection.
+	cars, total, err := st.ListCars(ctx, store.CarFilter{
+		Game: "fh6", IDs: []string{"i-audi", "i-ford"}, Drivetrain: strptr("RWD"), Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCars(ids+drivetrain): %v", err)
+	}
+	if total != 1 || !reflect.DeepEqual(carIDs(cars), []string{"i-ford"}) {
+		t.Errorf("ids+drivetrain = %v (total %d), want [i-ford] (1)", carIDs(cars), total)
+	}
+}
+
 // TestListCarsPagination vérifie le découpage LIMIT/OFFSET (total stable d'une page
 // à l'autre) et le cas « page hors borne » : au-delà des données la page est vide
 // mais le total reste exact (COUNT séparé, indépendant de l'OFFSET).

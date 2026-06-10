@@ -67,6 +67,19 @@ paths:
       x-ogen-operation-group: Cars
       parameters:
         - $ref: '#/components/parameters/Game'
+        - name: ids
+          in: query
+          description: >-
+            Restreint le résultat à une liste d'identifiants (CSV, ex.
+            ids=audi-r8,ford-gt), bornée à 100. Les ids inconnus ou d'un autre
+            jeu sont ignorés (pas d'erreur) ; total et pagination portent sur
+            les correspondances.
+          style: form
+          explode: false
+          schema:
+            type: array
+            maxItems: 100
+            items: { type: string }
         - name: make
           in: query
           description: Filtre par constructeur (ex. "Ford").

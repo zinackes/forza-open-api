@@ -2101,6 +2101,10 @@ func decodeListCarUpgradesParams(args [1]string, argsEscaped bool, r *http.Reque
 type ListCarsParams struct {
 	// Jeu cible (obligatoire sur les ressources multi-jeux).
 	Game Game
+	// Restreint le résultat à une liste d'identifiants (CSV, ex. ids=audi-r8,ford-gt), bornée à 100.
+	// Les ids inconnus ou d'un autre jeu sont ignorés (pas d'erreur) ; total et pagination portent sur
+	// les correspondances.
+	Ids []string `json:",omitempty"`
 	// Filtre par constructeur (ex. "Ford").
 	Make OptString `json:",omitempty,omitzero"`
 	// Filtre par classe PI.
@@ -2137,6 +2141,15 @@ func unpackListCarsParams(packed middleware.Parameters) (params ListCarsParams) 
 			In:   "query",
 		}
 		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "ids",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Ids = v.([]string)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -2291,6 +2304,65 @@ func decodeListCarsParams(args [0]string, argsEscaped bool, r *http.Request) (pa
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: ids.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "ids",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				return d.DecodeArray(func(d uri.Decoder) error {
+					var paramsDotIdsVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotIdsVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					params.Ids = append(params.Ids, paramsDotIdsVal)
+					return nil
+				})
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if params.Ids == nil {
+					return nil // optional
+				}
+				if err := (validate.Array{
+					MinLength:    0,
+					MinLengthSet: false,
+					MaxLength:    100,
+					MaxLengthSet: true,
+				}).ValidateLength(len(params.Ids)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "ids",
 			In:   "query",
 			Err:  err,
 		}

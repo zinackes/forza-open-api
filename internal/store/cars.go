@@ -15,6 +15,7 @@ import (
 // CarFilter porte les filtres de GET /v1/cars. Pointeur nil = pas de filtre.
 type CarFilter struct {
 	Game         string
+	IDs          []string // restreint aux ids listés (vide/nil = pas de filtre) ; ids inconnus ignorés
 	Make         *string
 	Class        *string
 	PIMin        *int
@@ -95,7 +96,14 @@ WHERE c.game = $1
   AND ($8::text IS NULL OR c.name ILIKE '%' || $8 || '%' OR c.model ILIKE '%' || $8 || '%')
   AND ($9::text IS NULL OR EXISTS (
         SELECT 1 FROM car_dlc cd WHERE cd.car_id = c.id AND cd.dlc_id = $9))
-  AND ($10::timestamptz IS NULL OR c.updated_at > $10)`
+  AND ($10::timestamptz IS NULL OR c.updated_at > $10)
+  AND ($11::text[] IS NULL OR c.id = ANY($11))`
+
+	// Slice vide = pas de filtre (et non « aucun résultat ») : on passe NULL.
+	ids := f.IDs
+	if len(ids) == 0 {
+		ids = nil
+	}
 
 	// q est une recherche de sous-chaîne LITTÉRALE : on neutralise les
 	// métacaractères LIKE pour qu'un client ne puisse pas injecter ses propres
@@ -109,7 +117,7 @@ WHERE c.game = $1
 	var total int64
 	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
 		f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
-		f.Drivetrain, f.Category, qLit, f.Dlc, f.UpdatedSince).Scan(&total); err != nil {
+		f.Drivetrain, f.Category, qLit, f.Dlc, f.UpdatedSince, ids).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count cars: %w", err)
 	}
 
@@ -118,9 +126,9 @@ SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
        c.drivetrain, c.stats, c.body_type, c.category, c.rarity, c.value_cr,
        c.obtain_method, c.image_url, c.created_at, c.updated_at` + fromWhere +
 		carOrderBy(f.Sort) + `
-LIMIT $11 OFFSET $12`
+LIMIT $12 OFFSET $13`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
-		f.Drivetrain, f.Category, qLit, f.Dlc, f.UpdatedSince, f.Limit, f.Offset)
+		f.Drivetrain, f.Category, qLit, f.Dlc, f.UpdatedSince, ids, f.Limit, f.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("query cars: %w", err)
 	}
