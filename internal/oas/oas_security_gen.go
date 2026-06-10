@@ -49,6 +49,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	GetRandomTrackOperation:           []string{},
 	GetReferenceOperation:             []string{},
 	GetSeriesOperation:                []string{},
+	GetStatsOperation:                 []string{},
 	GetTrackOperation:                 []string{},
 	GetTreasureCarOperation:           []string{},
 	ListBarnFindsOperation:            []string{},

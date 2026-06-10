@@ -1434,6 +1434,21 @@ type CompareCarsUnauthorized Error
 
 func (*CompareCarsUnauthorized) compareCarsRes() {}
 
+// Compteur par code (clé → nombre de voitures). Les clés présentes ne couvrent que des valeurs
+// réellement observées (NULL exclu) ; une facette énumérée (classe, transmission) renvoie tous
+// ses codes valides, 0 inclus.
+// Ref: #/components/schemas/CountMap
+type CountMap map[string]int64
+
+func (s *CountMap) init() CountMap {
+	m := *s
+	if m == nil {
+		m = map[string]int64{}
+		*s = m
+	}
+	return m
+}
+
 // Type de pack DLC.
 // Ref: #/components/schemas/DlcKind
 type DlcKind string
@@ -2792,6 +2807,18 @@ type GetSeriesUnauthorized Error
 
 func (*GetSeriesUnauthorized) getSeriesRes() {}
 
+type GetStatsBadRequest Error
+
+func (*GetStatsBadRequest) getStatsRes() {}
+
+type GetStatsTooManyRequests Error
+
+func (*GetStatsTooManyRequests) getStatsRes() {}
+
+type GetStatsUnauthorized Error
+
+func (*GetStatsUnauthorized) getStatsRes() {}
+
 type GetTrackNotFound Error
 
 func (*GetTrackNotFound) getTrackRes() {}
@@ -3749,6 +3776,33 @@ func (s *MetaHeaders) SetResponse(val Meta) {
 }
 
 func (*MetaHeaders) getMetaRes() {}
+
+// Valeur libre et son nombre d'occurrences (pour les facettes triables par fréquence).
+// Ref: #/components/schemas/NamedCount
+type NamedCount struct {
+	Name  string `json:"name"`
+	Count int64  `json:"count"`
+}
+
+// GetName returns the value of Name.
+func (s *NamedCount) GetName() string {
+	return s.Name
+}
+
+// GetCount returns the value of Count.
+func (s *NamedCount) GetCount() int64 {
+	return s.Count
+}
+
+// SetName sets the value of Name.
+func (s *NamedCount) SetName(val string) {
+	s.Name = val
+}
+
+// SetCount sets the value of Count.
+func (s *NamedCount) SetCount(val int64) {
+	s.Count = val
+}
 
 // NewOptBarnFind returns new OptBarnFind with value set to v.
 func NewOptBarnFind(v BarnFind) OptBarnFind {
@@ -5057,6 +5111,34 @@ func (s *PRStuntType) UnmarshalText(data []byte) error {
 	}
 }
 
+// Palier de l'histogramme PI (intervalle fermé-ouvert de 50) et son effectif.
+// Ref: #/components/schemas/PiBucket
+type PiBucket struct {
+	// Intervalle PI, ex. "100-150" (borne haute exclue).
+	Bucket string `json:"bucket"`
+	Count  int64  `json:"count"`
+}
+
+// GetBucket returns the value of Bucket.
+func (s *PiBucket) GetBucket() string {
+	return s.Bucket
+}
+
+// GetCount returns the value of Count.
+func (s *PiBucket) GetCount() int64 {
+	return s.Count
+}
+
+// SetBucket sets the value of Bucket.
+func (s *PiBucket) SetBucket(val string) {
+	s.Bucket = val
+}
+
+// SetCount sets the value of Count.
+func (s *PiBucket) SetCount(val int64) {
+	s.Count = val
+}
+
 // Valeur d'une facette (code) et son nombre d'occurrences pour le jeu demandé. Pour les facettes
 // énumérées (classes, drivetrains), tous les codes valides sont renvoyés, count compris à 0.
 // Pour les facettes libres (bodyTypes, countries, categories), seules les valeurs présentes le sont.
@@ -5634,6 +5716,206 @@ func (s *SeriesHeaders) SetResponse(val Series) {
 func (*SeriesHeaders) getCurrentPlaylistRes() {}
 func (*SeriesHeaders) getSeriesRes()          {}
 
+// Agrégats statistiques du catalogue pour un jeu : compteurs par facette, histogramme PI (paliers
+// de 50) et classements. Réponse cacheable, purgée à l'ingestion.
+// Ref: #/components/schemas/Stats
+type Stats struct {
+	Game     Game          `json:"game"`
+	CountsBy StatsCountsBy `json:"countsBy"`
+	// Effectifs par palier PI de 50 (paliers vides omis, ordre croissant).
+	PiHistogram []PiBucket `json:"piHistogram"`
+	Top         StatsTop   `json:"top"`
+}
+
+// GetGame returns the value of Game.
+func (s *Stats) GetGame() Game {
+	return s.Game
+}
+
+// GetCountsBy returns the value of CountsBy.
+func (s *Stats) GetCountsBy() StatsCountsBy {
+	return s.CountsBy
+}
+
+// GetPiHistogram returns the value of PiHistogram.
+func (s *Stats) GetPiHistogram() []PiBucket {
+	return s.PiHistogram
+}
+
+// GetTop returns the value of Top.
+func (s *Stats) GetTop() StatsTop {
+	return s.Top
+}
+
+// SetGame sets the value of Game.
+func (s *Stats) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetCountsBy sets the value of CountsBy.
+func (s *Stats) SetCountsBy(val StatsCountsBy) {
+	s.CountsBy = val
+}
+
+// SetPiHistogram sets the value of PiHistogram.
+func (s *Stats) SetPiHistogram(val []PiBucket) {
+	s.PiHistogram = val
+}
+
+// SetTop sets the value of Top.
+func (s *Stats) SetTop(val StatsTop) {
+	s.Top = val
+}
+
+// Compteurs du catalogue ventilés par facette, scopés au jeu demandé.
+// Ref: #/components/schemas/StatsCountsBy
+type StatsCountsBy struct {
+	// Voitures par classe PI (tous les codes valides, 0 inclus).
+	Class CountMap `json:"class"`
+	// Voitures par transmission (tous les codes valides, 0 inclus).
+	Drivetrain CountMap `json:"drivetrain"`
+	// Voitures par constructeur (make), plus fréquents d'abord. Liste libre → tableau.
+	Manufacturer []NamedCount `json:"manufacturer"`
+	// Voitures par décennie (clé = année de début, ex. "1990"). Décennies sans voiture omises ;
+	// voitures sans année (NULL) exclues.
+	YearDecade CountMap `json:"yearDecade"`
+	// Voitures par type de carrosserie présent (NULL exclu).
+	BodyType CountMap `json:"bodyType"`
+	// Voitures par catégorie / division in-game présente (NULL exclu).
+	Category CountMap `json:"category"`
+}
+
+// GetClass returns the value of Class.
+func (s *StatsCountsBy) GetClass() CountMap {
+	return s.Class
+}
+
+// GetDrivetrain returns the value of Drivetrain.
+func (s *StatsCountsBy) GetDrivetrain() CountMap {
+	return s.Drivetrain
+}
+
+// GetManufacturer returns the value of Manufacturer.
+func (s *StatsCountsBy) GetManufacturer() []NamedCount {
+	return s.Manufacturer
+}
+
+// GetYearDecade returns the value of YearDecade.
+func (s *StatsCountsBy) GetYearDecade() CountMap {
+	return s.YearDecade
+}
+
+// GetBodyType returns the value of BodyType.
+func (s *StatsCountsBy) GetBodyType() CountMap {
+	return s.BodyType
+}
+
+// GetCategory returns the value of Category.
+func (s *StatsCountsBy) GetCategory() CountMap {
+	return s.Category
+}
+
+// SetClass sets the value of Class.
+func (s *StatsCountsBy) SetClass(val CountMap) {
+	s.Class = val
+}
+
+// SetDrivetrain sets the value of Drivetrain.
+func (s *StatsCountsBy) SetDrivetrain(val CountMap) {
+	s.Drivetrain = val
+}
+
+// SetManufacturer sets the value of Manufacturer.
+func (s *StatsCountsBy) SetManufacturer(val []NamedCount) {
+	s.Manufacturer = val
+}
+
+// SetYearDecade sets the value of YearDecade.
+func (s *StatsCountsBy) SetYearDecade(val CountMap) {
+	s.YearDecade = val
+}
+
+// SetBodyType sets the value of BodyType.
+func (s *StatsCountsBy) SetBodyType(val CountMap) {
+	s.BodyType = val
+}
+
+// SetCategory sets the value of Category.
+func (s *StatsCountsBy) SetCategory(val CountMap) {
+	s.Category = val
+}
+
+// StatsHeaders wraps Stats with response headers.
+type StatsHeaders struct {
+	CacheControl OptString
+	Response     Stats
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *StatsHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *StatsHeaders) GetResponse() Stats {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *StatsHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *StatsHeaders) SetResponse(val Stats) {
+	s.Response = val
+}
+
+func (*StatsHeaders) getStatsRes() {}
+
+// Classements (top 10) du catalogue. `pi` s'appuie sur la colonne réelle ; `speed`/`acceleration`
+// sur les notes in-game (champ stats, échelle 0–10), proxys faute de vitesse de pointe / 0–100
+// en unités physiques sourçables.
+// Ref: #/components/schemas/StatsTop
+type StatsTop struct {
+	// Top par Performance Index (colonne pi).
+	Pi []TopCar `json:"pi"`
+	// Top par note de vitesse in-game (stats.speed).
+	Speed []TopCar `json:"speed"`
+	// Top par note d'accélération in-game (stats.acceleration).
+	Acceleration []TopCar `json:"acceleration"`
+}
+
+// GetPi returns the value of Pi.
+func (s *StatsTop) GetPi() []TopCar {
+	return s.Pi
+}
+
+// GetSpeed returns the value of Speed.
+func (s *StatsTop) GetSpeed() []TopCar {
+	return s.Speed
+}
+
+// GetAcceleration returns the value of Acceleration.
+func (s *StatsTop) GetAcceleration() []TopCar {
+	return s.Acceleration
+}
+
+// SetPi sets the value of Pi.
+func (s *StatsTop) SetPi(val []TopCar) {
+	s.Pi = val
+}
+
+// SetSpeed sets the value of Speed.
+func (s *StatsTop) SetSpeed(val []TopCar) {
+	s.Speed = val
+}
+
+// SetAcceleration sets the value of Acceleration.
+func (s *StatsTop) SetAcceleration(val []TopCar) {
+	s.Acceleration = val
+}
+
 // Story FH6 : mission narrative de Discover Japan, rapporte des stamps au Collection Journal. Champs
 // non sourcés → omis.
 // Ref: #/components/schemas/Story
@@ -5791,6 +6073,45 @@ func (s *StoryList) SetPageSize(val int) {
 }
 
 func (*StoryList) listStoriesRes() {}
+
+// Entrée d'un classement — voiture et valeur de la métrique classée.
+// Ref: #/components/schemas/TopCar
+type TopCar struct {
+	CarId string `json:"carId"`
+	Name  string `json:"name"`
+	// Valeur de la métrique (PI entier, ou note in-game 0–10 pour speed/acceleration).
+	Value float64 `json:"value"`
+}
+
+// GetCarId returns the value of CarId.
+func (s *TopCar) GetCarId() string {
+	return s.CarId
+}
+
+// GetName returns the value of Name.
+func (s *TopCar) GetName() string {
+	return s.Name
+}
+
+// GetValue returns the value of Value.
+func (s *TopCar) GetValue() float64 {
+	return s.Value
+}
+
+// SetCarId sets the value of CarId.
+func (s *TopCar) SetCarId(val string) {
+	s.CarId = val
+}
+
+// SetName sets the value of Name.
+func (s *TopCar) SetName(val string) {
+	s.Name = val
+}
+
+// SetValue sets the value of Value.
+func (s *TopCar) SetValue(val float64) {
+	s.Value = val
+}
 
 // Tour FH6 (Tours of Japan) : visite guidée de l'activité Discovery, rapporte des stamps au
 // Collection Journal. Champs non sourcés → omis.

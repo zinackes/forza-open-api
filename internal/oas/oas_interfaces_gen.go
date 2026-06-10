@@ -61,6 +61,10 @@ type GetSeriesRes interface {
 	getSeriesRes()
 }
 
+type GetStatsRes interface {
+	getStatsRes()
+}
+
 type GetTrackRes interface {
 	getTrackRes()
 }
