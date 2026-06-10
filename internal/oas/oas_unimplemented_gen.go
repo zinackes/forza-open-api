@@ -13,6 +13,20 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// CompareCars implements compareCars operation.
+//
+// Renvoie les voitures demandées (2 à 3, via `ids`) dans l'ordre de la requête, pour un affichage
+// côte à côte (overlays, bots Discord) : PI, classe, transmission et stats
+// (vitesse/accélération/handling/freinage) sont alignés. Chaque entrée est l'objet Car complet.
+// Comparaison stricte : 400 si moins de 2 ou plus de 3 ids ; 404 si un id est inconnu (contrairement
+// au filtre `ids` de /v1/cars, aucun id n'est ignoré). L'id étant la clé stable globale, pas de
+// paramètre `game`.
+//
+// GET /v1/cars/compare
+func (UnimplementedHandler) CompareCars(ctx context.Context, params CompareCarsParams) (r CompareCarsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetBarnFind implements getBarnFind operation.
 //
 // Récupère un Barn Find par identifiant.

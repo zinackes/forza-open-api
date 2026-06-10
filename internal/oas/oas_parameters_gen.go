@@ -16,6 +16,90 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
+// CompareCarsParams is parameters of compareCars operation.
+type CompareCarsParams struct {
+	// Identifiants des voitures à comparer (CSV, ex. ids=fh6-mazda-rx7-1997,fh6-toyota-supra-1998), 2
+	// à 3 valeurs. L'ordre est conservé dans la réponse.
+	Ids []string `json:",omitempty"`
+}
+
+func unpackCompareCarsParams(packed middleware.Parameters) (params CompareCarsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "ids",
+			In:   "query",
+		}
+		params.Ids = packed[key].([]string)
+	}
+	return params
+}
+
+func decodeCompareCarsParams(args [0]string, argsEscaped bool, r *http.Request) (params CompareCarsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: ids.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "ids",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				return d.DecodeArray(func(d uri.Decoder) error {
+					var paramsDotIdsVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotIdsVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					params.Ids = append(params.Ids, paramsDotIdsVal)
+					return nil
+				})
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if params.Ids == nil {
+					return errors.New("nil is invalid value")
+				}
+				if err := (validate.Array{
+					MinLength:    2,
+					MinLengthSet: true,
+					MaxLength:    3,
+					MaxLengthSet: true,
+				}).ValidateLength(len(params.Ids)); err != nil {
+					return errors.Wrap(err, "array")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "ids",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetBarnFindParams is parameters of getBarnFind operation.
 type GetBarnFindParams struct {
 	// Identifiant stable du Barn Find.

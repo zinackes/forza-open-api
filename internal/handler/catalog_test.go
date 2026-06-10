@@ -137,6 +137,13 @@ func TestCatalogGolden(t *testing.T) {
 		// getCar : trouvé puis 404 RFC 9457.
 		{"getcar_found", "/v1/cars/honda-civic", http.StatusOK},
 		{"getcar_not_found", "/v1/cars/ghost", http.StatusNotFound},
+		// compareCars : 2 puis 3 voitures alignées sur l'ordre des ids ; bornes
+		// 2..3 (ogen → 400) ; id inconnu → 404 (comparaison stricte).
+		{"compare_two", "/v1/cars/compare?ids=ford-gt,audi-r8", http.StatusOK},
+		{"compare_three", "/v1/cars/compare?ids=audi-r8,ford-gt,honda-civic", http.StatusOK},
+		{"compare_too_few", "/v1/cars/compare?ids=audi-r8", http.StatusBadRequest},
+		{"compare_too_many", "/v1/cars/compare?ids=audi-r8,ford-gt,honda-civic,mazda-rx7", http.StatusBadRequest},
+		{"compare_missing_id", "/v1/cars/compare?ids=audi-r8,ghost", http.StatusNotFound},
 		// manufacturers.
 		{"manufacturers", "/v1/manufacturers?game=fh6", http.StatusOK},
 	}
