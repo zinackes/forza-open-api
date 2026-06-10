@@ -11,6 +11,13 @@ import (
 	"github.com/zinackes/forza-open-api/internal/store"
 )
 
+// playlistCacheControl : la Festival Playlist tourne ~hebdo et is_current bascule
+// à l'ingestion. Cache court côté navigateur/bord pour une fraîcheur de quelques
+// minutes, mais stale-while-revalidate sert périmé jusqu'à 1 j en revalidant en
+// arrière-plan (absorbe redémarrages/fenêtres d'ingestion). Couplé à l'ETag
+// (ConditionalGet) + bump DATA_VERSION au refresh → revalidation gratuite (304).
+const playlistCacheControl = "public, max-age=300, s-maxage=900, stale-while-revalidate=86400"
+
 // ListSeries implémente GET /v1/playlist/series : les séries connues d'un jeu,
 // les plus récentes d'abord. Sans rewards/challenges (liste légère).
 func (h *Handler) ListSeries(ctx context.Context, params oas.ListSeriesParams) (oas.ListSeriesRes, error) {
@@ -18,11 +25,14 @@ func (h *Handler) ListSeries(ctx context.Context, params oas.ListSeriesParams) (
 	if err != nil {
 		return nil, err
 	}
-	out := make(oas.ListSeriesOKApplicationJSON, 0, len(rows))
+	out := make([]oas.Series, 0, len(rows))
 	for _, ser := range rows {
 		out = append(out, mapSeries(ser, nil, nil))
 	}
-	return &out, nil
+	return &oas.ListSeriesOKHeaders{
+		CacheControl: oas.NewOptString(playlistCacheControl),
+		Response:     out,
+	}, nil
 }
 
 // GetSeries implémente GET /v1/playlist/series/{id} : la série demandée avec ses
@@ -35,8 +45,10 @@ func (h *Handler) GetSeries(ctx context.Context, params oas.GetSeriesParams) (oa
 	if ser == nil {
 		return nil, errNotFound("no series with the given id")
 	}
-	out := mapSeries(*ser, rewards, challenges)
-	return &out, nil
+	return &oas.SeriesHeaders{
+		CacheControl: oas.NewOptString(playlistCacheControl),
+		Response:     mapSeries(*ser, rewards, challenges),
+	}, nil
 }
 
 // GetCurrentPlaylist implémente GET /v1/playlist/current : la série courante du
@@ -49,8 +61,10 @@ func (h *Handler) GetCurrentPlaylist(ctx context.Context, params oas.GetCurrentP
 	if ser == nil {
 		return nil, errNotFound("no current playlist for the given game")
 	}
-	out := mapSeries(*ser, rewards, challenges)
-	return &out, nil
+	return &oas.SeriesHeaders{
+		CacheControl: oas.NewOptString(playlistCacheControl),
+		Response:     mapSeries(*ser, rewards, challenges),
+	}, nil
 }
 
 // mapSeries projette la vue DB d'une série (+ ses enfants) sur le modèle du

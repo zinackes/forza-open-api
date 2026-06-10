@@ -2886,9 +2886,33 @@ type ListSeriesBadRequest Error
 
 func (*ListSeriesBadRequest) listSeriesRes() {}
 
-type ListSeriesOKApplicationJSON []Series
+// ListSeriesOKHeaders wraps []Series with response headers.
+type ListSeriesOKHeaders struct {
+	CacheControl OptString
+	Response     []Series
+}
 
-func (*ListSeriesOKApplicationJSON) listSeriesRes() {}
+// GetCacheControl returns the value of CacheControl.
+func (s *ListSeriesOKHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *ListSeriesOKHeaders) GetResponse() []Series {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *ListSeriesOKHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ListSeriesOKHeaders) SetResponse(val []Series) {
+	s.Response = val
+}
+
+func (*ListSeriesOKHeaders) listSeriesRes() {}
 
 type ListSeriesTooManyRequests Error
 
@@ -4941,8 +4965,34 @@ func (s *Series) SetChallenges(val []Challenge) {
 	s.Challenges = val
 }
 
-func (*Series) getCurrentPlaylistRes() {}
-func (*Series) getSeriesRes()          {}
+// SeriesHeaders wraps Series with response headers.
+type SeriesHeaders struct {
+	CacheControl OptString
+	Response     Series
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *SeriesHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *SeriesHeaders) GetResponse() Series {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *SeriesHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SeriesHeaders) SetResponse(val Series) {
+	s.Response = val
+}
+
+func (*SeriesHeaders) getCurrentPlaylistRes() {}
+func (*SeriesHeaders) getSeriesRes()          {}
 
 // Story FH6 : mission narrative de Discover Japan, rapporte des stamps au Collection Journal. Champs
 // non sourcés → omis.

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -160,6 +161,13 @@ func TestPlaylistEndpoints(t *testing.T) {
 	}
 	if current.ID != "fh6-s01w2" || !current.IsCurrent || len(current.Rewards) != 2 {
 		t.Fatalf("current = %+v", current)
+	}
+
+	// Cache-Control : TTL court + stale-while-revalidate posé par le handler.
+	rec := httptest.NewRecorder()
+	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/v1/playlist/current?game=fh6", nil))
+	if cc := rec.Header().Get("Cache-Control"); !strings.Contains(cc, "max-age=300") || !strings.Contains(cc, "stale-while-revalidate=") {
+		t.Errorf("Cache-Control = %q, want court + SWR", cc)
 	}
 
 	// Id inconnu → 404 RFC 9457.

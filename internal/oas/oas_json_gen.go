@@ -7566,56 +7566,6 @@ func (s *ListSeriesBadRequest) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes ListSeriesOKApplicationJSON as json.
-func (s ListSeriesOKApplicationJSON) Encode(e *jx.Encoder) {
-	unwrapped := []Series(s)
-
-	e.ArrStart()
-	for _, elem := range unwrapped {
-		elem.Encode(e)
-	}
-	e.ArrEnd()
-}
-
-// Decode decodes ListSeriesOKApplicationJSON from json.
-func (s *ListSeriesOKApplicationJSON) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ListSeriesOKApplicationJSON to nil")
-	}
-	var unwrapped []Series
-	if err := func() error {
-		unwrapped = make([]Series, 0)
-		if err := d.Arr(func(d *jx.Decoder) error {
-			var elem Series
-			if err := elem.Decode(d); err != nil {
-				return err
-			}
-			unwrapped = append(unwrapped, elem)
-			return nil
-		}); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = ListSeriesOKApplicationJSON(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s ListSeriesOKApplicationJSON) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ListSeriesOKApplicationJSON) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes ListSeriesTooManyRequests as json.
 func (s *ListSeriesTooManyRequests) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)

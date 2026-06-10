@@ -338,6 +338,26 @@ CREATE TABLE IF NOT EXISTS data_changes (
 -- résiduel) : l'index (game, occurred_at DESC) porte le tri.
 CREATE INDEX IF NOT EXISTS data_changes_game_occurred_idx ON data_changes (game, occurred_at DESC);
 
+-- Santé des scrapers : une ligne par passe d'ingestion ------------------------
+-- Écrite par les jobs (cmd/seed, cmd/scheduler) via internal/health ; jamais par
+-- les handlers de lecture. status='anomaly' = parse « réussi » mais données
+-- suspectes (rupture de structure source probable) ; 'failed' = échec dur.
+-- Nourrit le dashboard ops `seed health` (fraîcheur / échecs par source).
+CREATE TABLE IF NOT EXISTS scrape_runs (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    source      TEXT NOT NULL,                       -- playlist | cars | tracks
+    game        TEXT,
+    status      TEXT NOT NULL CHECK (status IN ('ok','anomaly','failed')),
+    records     INT,                                 -- volume ingéré (séries, voitures, tracés)
+    violations  JSONB,                               -- [{rule,detail,severity}] (NULL si ok)
+    error       TEXT,                                -- message d'échec dur (NULL sinon)
+    duration_ms INT,
+    started_at  TIMESTAMPTZ NOT NULL,
+    finished_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- Dernier run par source/jeu (dashboard) : DISTINCT ON (source, game) ORDER BY finished_at DESC.
+CREATE INDEX IF NOT EXISTS scrape_runs_source_game_idx ON scrape_runs (source, game, finished_at DESC);
+
 -- Clés API (jamais la clé en clair : seul le hash sha256 est stocké) -----------
 CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,

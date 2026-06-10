@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,14 @@ type Config struct {
 	// Le quota (api_keys.rate_limit) s'entend « requêtes par fenêtre ». Env
 	// RATE_LIMIT_WINDOW en secondes (défaut 60s).
 	RateLimitWindow time.Duration
+	// Scheduler (cmd/scheduler) — rafraîchissement périodique de la Festival
+	// Playlist. PlaylistCron : spec cron 5 champs (fuseau UTC), défaut « 0 15 * *
+	// 4 » = jeudi 15:00 UTC, peu après le reset hebdo Forza (14:30 UTC).
+	// PlaylistGames : jeux rafraîchis (CSV, défaut « fh6 »). AlertWebhookURL :
+	// webhook d'alerte sur échec (vide = log structuré seul).
+	PlaylistCron    string
+	PlaylistGames   []string
+	AlertWebhookURL string
 }
 
 // Load lit la config depuis l'environnement avec des défauts orientés dev local.
@@ -30,7 +39,22 @@ func Load() Config {
 		LogLevel:        parseLevel(getenv("LOG_LEVEL", "info")),
 		DataVersion:     os.Getenv("DATA_VERSION"),
 		RateLimitWindow: time.Duration(getenvInt("RATE_LIMIT_WINDOW", 60)) * time.Second,
+		PlaylistCron:    getenv("PLAYLIST_CRON", "0 15 * * 4"),
+		PlaylistGames:   splitCSV(getenv("PLAYLIST_GAMES", "fh6")),
+		AlertWebhookURL: os.Getenv("ALERT_WEBHOOK_URL"),
 	}
+}
+
+// splitCSV découpe une liste CSV en éléments propres (trim, minuscules, vides
+// écartés). Sert aux jeux du scheduler (« fh6,fh5 »).
+func splitCSV(s string) []string {
+	var out []string
+	for _, p := range strings.Split(s, ",") {
+		if p = strings.ToLower(strings.TrimSpace(p)); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 func getenv(key, def string) string {
