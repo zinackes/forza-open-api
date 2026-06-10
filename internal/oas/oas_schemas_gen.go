@@ -2076,6 +2076,14 @@ type GetEventUnauthorized Error
 
 func (*GetEventUnauthorized) getEventRes() {}
 
+type GetMetaTooManyRequests Error
+
+func (*GetMetaTooManyRequests) getMetaRes() {}
+
+type GetMetaUnauthorized Error
+
+func (*GetMetaUnauthorized) getMetaRes() {}
+
 type GetPrStuntNotFound Error
 
 func (*GetPrStuntNotFound) getPrStuntRes() {}
@@ -2900,6 +2908,131 @@ func (s *Manufacturer) SetCountry(val OptString) {
 func (s *Manufacturer) SetCarCount(val int64) {
 	s.CarCount = val
 }
+
+// Métadonnées du service : jeux supportés, volumes et fraîcheur des données. Pensé pour les
+// consommateurs (sélecteur de jeu, indicateur « data à jour ? ») et le dogfooding. games liste
+// un MetaGame par valeur de l'enum Game (les jeux sans données apparaissent à 0).
+// Ref: #/components/schemas/Meta
+type Meta struct {
+	// Jeux supportés et leurs volumes / fraîcheur (un par valeur de l'enum Game).
+	Games []MetaGame `json:"games"`
+	// Version du jeu de données publiée (tampon opérateur, ex. snapshot wiki daté). Absente si non
+	// renseignée.
+	DataVersion OptString `json:"dataVersion"`
+	// Instant de calcul de la réponse (permet d'estimer l'âge des données côté client).
+	GeneratedAt time.Time `json:"generatedAt"`
+}
+
+// GetGames returns the value of Games.
+func (s *Meta) GetGames() []MetaGame {
+	return s.Games
+}
+
+// GetDataVersion returns the value of DataVersion.
+func (s *Meta) GetDataVersion() OptString {
+	return s.DataVersion
+}
+
+// GetGeneratedAt returns the value of GeneratedAt.
+func (s *Meta) GetGeneratedAt() time.Time {
+	return s.GeneratedAt
+}
+
+// SetGames sets the value of Games.
+func (s *Meta) SetGames(val []MetaGame) {
+	s.Games = val
+}
+
+// SetDataVersion sets the value of DataVersion.
+func (s *Meta) SetDataVersion(val OptString) {
+	s.DataVersion = val
+}
+
+// SetGeneratedAt sets the value of GeneratedAt.
+func (s *Meta) SetGeneratedAt(val time.Time) {
+	s.GeneratedAt = val
+}
+
+// Volumes et fraîcheur des données d'un jeu supporté. carCount = voitures au catalogue (0 si rien
+// n'est encore ingéré). catalogUpdatedAt / playlistUpdatedAt = dernier timestamp d'ingestion
+// (journal data_changes) pour les ressources car / series ; absents si jamais ingéré pour ce jeu.
+// Ref: #/components/schemas/MetaGame
+type MetaGame struct {
+	Game     Game  `json:"game"`
+	CarCount int64 `json:"carCount"`
+	// Dernière ingestion du catalogue (voitures) pour ce jeu. Absent si jamais ingéré.
+	CatalogUpdatedAt OptDateTime `json:"catalogUpdatedAt"`
+	// Dernière ingestion de la playlist (séries) pour ce jeu. Absent si jamais ingérée.
+	PlaylistUpdatedAt OptDateTime `json:"playlistUpdatedAt"`
+}
+
+// GetGame returns the value of Game.
+func (s *MetaGame) GetGame() Game {
+	return s.Game
+}
+
+// GetCarCount returns the value of CarCount.
+func (s *MetaGame) GetCarCount() int64 {
+	return s.CarCount
+}
+
+// GetCatalogUpdatedAt returns the value of CatalogUpdatedAt.
+func (s *MetaGame) GetCatalogUpdatedAt() OptDateTime {
+	return s.CatalogUpdatedAt
+}
+
+// GetPlaylistUpdatedAt returns the value of PlaylistUpdatedAt.
+func (s *MetaGame) GetPlaylistUpdatedAt() OptDateTime {
+	return s.PlaylistUpdatedAt
+}
+
+// SetGame sets the value of Game.
+func (s *MetaGame) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetCarCount sets the value of CarCount.
+func (s *MetaGame) SetCarCount(val int64) {
+	s.CarCount = val
+}
+
+// SetCatalogUpdatedAt sets the value of CatalogUpdatedAt.
+func (s *MetaGame) SetCatalogUpdatedAt(val OptDateTime) {
+	s.CatalogUpdatedAt = val
+}
+
+// SetPlaylistUpdatedAt sets the value of PlaylistUpdatedAt.
+func (s *MetaGame) SetPlaylistUpdatedAt(val OptDateTime) {
+	s.PlaylistUpdatedAt = val
+}
+
+// MetaHeaders wraps Meta with response headers.
+type MetaHeaders struct {
+	CacheControl OptString
+	Response     Meta
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *MetaHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *MetaHeaders) GetResponse() Meta {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *MetaHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *MetaHeaders) SetResponse(val Meta) {
+	s.Response = val
+}
+
+func (*MetaHeaders) getMetaRes() {}
 
 // NewOptBarnFind returns new OptBarnFind with value set to v.
 func NewOptBarnFind(v BarnFind) OptBarnFind {

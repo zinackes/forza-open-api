@@ -29,6 +29,10 @@ type GetEventRes interface {
 	getEventRes()
 }
 
+type GetMetaRes interface {
+	getMetaRes()
+}
+
 type GetPrStuntRes interface {
 	getPrStuntRes()
 }

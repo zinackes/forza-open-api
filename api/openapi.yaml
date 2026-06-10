@@ -52,6 +52,8 @@ tags:
     description: Recherche globale multi-ressources (autocomplete).
   - name: Changes
     description: Journal des changements de données (nouvelles voitures, packs, séries…).
+  - name: Meta
+    description: Métadonnées du service (jeux supportés, volumes, fraîcheur des données).
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -379,6 +381,35 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Reference' }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/meta:
+    get:
+      operationId: getMeta
+      summary: "Métadonnées du service : jeux supportés, volumes et fraîcheur des données."
+      description: >
+        Métadonnées légères pour les consommateurs et le dogfooding : jeux
+        supportés (fh6, fh5), nombre de voitures par jeu et derniers timestamps
+        d'ingestion du catalogue et de la playlist. Les timestamps proviennent du
+        journal d'ingestion (data_changes) : `catalogUpdatedAt` (ressource car) et
+        `playlistUpdatedAt` (ressource series) sont absents si la ressource n'a
+        jamais été ingérée pour le jeu (rien d'inventé). `dataVersion` porte la
+        version de jeu de données publiée si l'opérateur l'a tamponnée.
+        `generatedAt` = instant de calcul, pour estimer l'âge côté client.
+        Réponse à cache court : la fraîcheur est l'objet même de l'endpoint.
+      tags: [Meta]
+      x-ogen-operation-group: Meta
+      responses:
+        '200':
+          description: Métadonnées du service.
+          headers:
+            Cache-Control:
+              description: Cache court (la donnée de fraîcheur doit rester quasi temps réel).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Meta' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
@@ -1599,6 +1630,49 @@ components:
           type: array
           description: Jeux disponibles et leurs volumes (global, indépendant du paramètre game).
           items: { $ref: '#/components/schemas/GameCount' }
+
+    MetaGame:
+      type: object
+      description: >
+        Volumes et fraîcheur des données d'un jeu supporté. carCount = voitures au
+        catalogue (0 si rien n'est encore ingéré). catalogUpdatedAt /
+        playlistUpdatedAt = dernier timestamp d'ingestion (journal data_changes)
+        pour les ressources car / series ; absents si jamais ingéré pour ce jeu.
+      required: [game, carCount]
+      properties:
+        game: { $ref: '#/components/schemas/Game' }
+        carCount: { type: integer, format: int64 }
+        catalogUpdatedAt:
+          type: string
+          format: date-time
+          description: Dernière ingestion du catalogue (voitures) pour ce jeu. Absent si jamais ingéré.
+        playlistUpdatedAt:
+          type: string
+          format: date-time
+          description: Dernière ingestion de la playlist (séries) pour ce jeu. Absent si jamais ingérée.
+
+    Meta:
+      type: object
+      description: >
+        Métadonnées du service : jeux supportés, volumes et fraîcheur des données.
+        Pensé pour les consommateurs (sélecteur de jeu, indicateur « data à
+        jour ? ») et le dogfooding. games liste un MetaGame par valeur de l'enum
+        Game (les jeux sans données apparaissent à 0).
+      required: [games, generatedAt]
+      properties:
+        games:
+          type: array
+          description: Jeux supportés et leurs volumes / fraîcheur (un par valeur de l'enum Game).
+          items: { $ref: '#/components/schemas/MetaGame' }
+        dataVersion:
+          type: string
+          description: >
+            Version du jeu de données publiée (tampon opérateur, ex. snapshot wiki
+            daté). Absente si non renseignée.
+        generatedAt:
+          type: string
+          format: date-time
+          description: Instant de calcul de la réponse (permet d'estimer l'âge des données côté client).
 
     CarObtainMasteryUnlock:
       type: object

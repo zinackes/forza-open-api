@@ -16,7 +16,7 @@ import (
 // en Phase 0 les stubs renvoient 501 sans toucher aux dépendances de données.
 func newServer(t *testing.T) http.Handler {
 	t.Helper()
-	srv, err := oas.NewServer(handler.New(nil), handler.SecurityHandler{},
+	srv, err := oas.NewServer(handler.New(nil, ""), handler.SecurityHandler{},
 		oas.WithErrorHandler(handler.ProblemErrorHandler))
 	if err != nil {
 		t.Fatalf("oas.NewServer: %v", err)

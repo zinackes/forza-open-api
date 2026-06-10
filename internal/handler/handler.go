@@ -17,11 +17,15 @@ import (
 type Handler struct {
 	oas.UnimplementedHandler
 	store *store.Store
+	// dataVersion : version du jeu de données publiée (tampon opérateur, env
+	// DATA_VERSION), exposée par GET /v1/meta. Vide → champ omis.
+	dataVersion string
 }
 
-// New construit le handler avec ses dépendances.
-func New(st *store.Store) *Handler {
-	return &Handler{store: st}
+// New construit le handler avec ses dépendances. dataVersion peut être vide
+// (aucune version de data tamponnée → champ meta omis).
+func New(st *store.Store, dataVersion string) *Handler {
+	return &Handler{store: st, dataVersion: dataVersion}
 }
 
 // SecurityHandler implémente oas.SecurityHandler.

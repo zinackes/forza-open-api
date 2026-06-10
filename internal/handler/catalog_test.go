@@ -76,7 +76,7 @@ func newSeededCatalogServer(t *testing.T) http.Handler {
 
 	seedCatalog(ctx, t, pool)
 
-	srv, err := oas.NewServer(handler.New(&store.Store{DB: pool}), handler.SecurityHandler{},
+	srv, err := oas.NewServer(handler.New(&store.Store{DB: pool}, ""), handler.SecurityHandler{},
 		oas.WithErrorHandler(handler.ProblemErrorHandler))
 	if err != nil {
 		t.Fatalf("oas.NewServer: %v", err)

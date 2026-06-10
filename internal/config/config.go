@@ -12,6 +12,7 @@ type Config struct {
 	DatabaseURL string     // DSN Postgres (pgx)
 	RedisURL    string     // URL Valkey/Redis
 	LogLevel    slog.Level // niveau de log slog
+	DataVersion string     // version du jeu de données publiée, exposée par /v1/meta (vide = non tamponnée)
 }
 
 // Load lit la config depuis l'environnement avec des défauts orientés dev local.
@@ -21,6 +22,7 @@ func Load() Config {
 		DatabaseURL: getenv("DATABASE_URL", "postgres://forza:forza@localhost:5432/forza?sslmode=disable"),
 		RedisURL:    getenv("REDIS_URL", "redis://localhost:6379/0"),
 		LogLevel:    parseLevel(getenv("LOG_LEVEL", "info")),
+		DataVersion: os.Getenv("DATA_VERSION"),
 	}
 }
 

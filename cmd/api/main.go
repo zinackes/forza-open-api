@@ -49,7 +49,7 @@ func main() {
 	}
 	defer st.Close()
 
-	oasSrv, err := oas.NewServer(handler.New(st), handler.SecurityHandler{},
+	oasSrv, err := oas.NewServer(handler.New(st, cfg.DataVersion), handler.SecurityHandler{},
 		oas.WithErrorHandler(handler.ProblemErrorHandler))
 	if err != nil {
 		logger.Error("oas server", "err", err)
