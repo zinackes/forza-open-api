@@ -20,6 +20,11 @@ type Config struct {
 	// Le quota (api_keys.rate_limit) s'entend « requêtes par fenêtre ». Env
 	// RATE_LIMIT_WINDOW en secondes (défaut 60s).
 	RateLimitWindow time.Duration
+	// AnonRateLimit : quota par IP du trafic SANS clé, sur la même fenêtre.
+	// Protège l'origin tant que le bord (Cloudflare) n'est pas devant. Env
+	// ANON_RATE_LIMIT (défaut 60) ; 0 = désactivé (à poser une fois derrière le
+	// bord, où tout le trafic tunnelé partage la même IP locale).
+	AnonRateLimit int
 	// CORSAllowedOrigins : origines autorisées pour la lecture publique (GET/HEAD).
 	// Large par défaut ("*") car l'API en lecture est ouverte ; env
 	// CORS_ALLOWED_ORIGINS (CSV). "*" → toute origine.
@@ -65,6 +70,7 @@ func Load() Config {
 		LogLevel:        parseLevel(getenv("LOG_LEVEL", "info")),
 		DataVersion:     os.Getenv("DATA_VERSION"),
 		RateLimitWindow: time.Duration(getenvInt("RATE_LIMIT_WINDOW", 60)) * time.Second,
+		AnonRateLimit:   getenvNonNegInt("ANON_RATE_LIMIT", 60),
 		// Lecture publique ouverte par défaut ; writes fermés tant que des
 		// origines ne sont pas explicitement autorisées.
 		CORSAllowedOrigins: splitCSV(getenv("CORS_ALLOWED_ORIGINS", "*")),
@@ -112,6 +118,17 @@ func getenv(key, def string) string {
 func getenvInt(key string, def int) int {
 	if v := os.Getenv(key); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			return n
+		}
+	}
+	return def
+}
+
+// getenvNonNegInt lit un entier >= 0 depuis l'environnement (0 est une valeur
+// légitime : « désactivé ») ; absent, non numérique ou négatif → def.
+func getenvNonNegInt(key string, def int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
 			return n
 		}
 	}
