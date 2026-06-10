@@ -8,9 +8,12 @@ changes.
 
 | | Anonymous (no key) | With an API key |
 |---|---|---|
-| Per‑key quota | None — traffic is shaped at the edge | **1000 requests / 60 s** by default (raisable per key) |
-| Identified by | Source IP, at the edge (Cloudflare) | The key's hash |
+| Quota | **60 requests / 60 s** per source IP | **1000 requests / 60 s** by default (raisable per key) |
+| Identified by | Source IP (hashed) | The key's hash |
 | Guaranteed throughput | No | Yes, up to your quota |
+
+Anonymous reads work, but they share a small per‑IP budget — grab a (free) key
+for anything beyond casual browsing.
 
 The quota is a **sliding window** (Redis). "1000 / 60 s" means at any instant,
 the last 60 seconds may contain at most 1000 of your requests. The window width

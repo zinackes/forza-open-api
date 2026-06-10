@@ -71,7 +71,9 @@ func TestRateLimitMiddleware(t *testing.T) {
 	if err != nil {
 		t.Fatalf("oas.NewServer: %v", err)
 	}
-	h := handler.NewRateLimiter(sec, time.Minute).Middleware(oasSrv)
+	// Quota anonyme désactivé (0) : ce test couvre le chemin par clé et le
+	// passthrough anonyme historique ; le quota par IP a son propre test.
+	h := handler.NewRateLimiter(sec, time.Minute, 0).Middleware(oasSrv)
 
 	do := func(withKey bool) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(http.MethodGet, "/v1/playlist/series?game=fh6", nil)
@@ -119,10 +121,74 @@ func TestRateLimitMiddleware(t *testing.T) {
 		t.Errorf("RateLimit-Policy = %q, attendu q=%d", rp, limit)
 	}
 
-	// Anonyme (sans clé) : lecture publique non limitée, même au-delà de limit.
+	// Anonyme (sans clé) : quota par IP désactivé (0) → jamais limité.
 	for i := 0; i < limit+2; i++ {
 		if rec := do(false); rec.Code == http.StatusTooManyRequests {
-			t.Fatalf("anonyme req %d: 429 inattendu (lecture publique non limitée)", i)
+			t.Fatalf("anonyme req %d: 429 inattendu (quota anonyme désactivé)", i)
 		}
+	}
+}
+
+// TestRateLimitAnonymousPerIP vérifie le quota par IP du trafic sans clé :
+// chaque IP a son seau (même fenêtre glissante Redis que les clés), le
+// dépassement rend un 429 typé, une autre IP n'est pas affectée, et une requête
+// AVEC clé reste sur le quota de la clé (seaux disjoints).
+func TestRateLimitAnonymousPerIP(t *testing.T) {
+	st := newAuthStore(t)
+	st.Redis = newRedisClient(t)
+
+	const anonLimit = 3
+	key := mustKey(t, st, "rl-anon", 100, false)
+
+	sec := handler.NewSecurityHandler(st)
+	oasSrv, err := oas.NewServer(handler.New(st, ""), sec, oas.WithErrorHandler(handler.ProblemErrorHandler))
+	if err != nil {
+		t.Fatalf("oas.NewServer: %v", err)
+	}
+	h := handler.NewRateLimiter(sec, time.Minute, anonLimit).Middleware(oasSrv)
+
+	do := func(remoteAddr, apiKey string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodGet, "/v1/playlist/series?game=fh6", nil)
+		req.RemoteAddr = remoteAddr
+		if apiKey != "" {
+			req.Header.Set("X-API-Key", apiKey)
+		}
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec
+	}
+
+	// anonLimit requêtes anonymes sous le quota : en-têtes posés, pas de 429.
+	for i := 1; i <= anonLimit; i++ {
+		rec := do("203.0.113.7:4242", "")
+		if rec.Code == http.StatusTooManyRequests {
+			t.Fatalf("anonyme req %d: 429 prématuré\nbody: %s", i, rec.Body.String())
+		}
+		if got := rec.Header().Get("X-RateLimit-Limit"); got != strconv.Itoa(anonLimit) {
+			t.Errorf("req %d: X-RateLimit-Limit = %q, attendu %d", i, got, anonLimit)
+		}
+	}
+
+	// Dépassement → 429 RFC 9457 + Retry-After.
+	rec := do("203.0.113.7:4242", "")
+	if rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("dépassement anonyme: status = %d, attendu 429\nbody: %s", rec.Code, rec.Body.String())
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "application/problem+json" {
+		t.Errorf("Content-Type = %q, attendu application/problem+json", ct)
+	}
+	if ra := rec.Header().Get("Retry-After"); ra == "" {
+		t.Error("Retry-After absent du 429 anonyme")
+	}
+
+	// Une AUTRE IP a son propre seau : pas affectée par le 429 ci-dessus.
+	if rec := do("203.0.113.99:4242", ""); rec.Code == http.StatusTooManyRequests {
+		t.Fatalf("autre IP: 429 inattendu (seaux par IP disjoints)\nbody: %s", rec.Body.String())
+	}
+
+	// Une requête AVEC clé depuis l'IP saturée suit le quota de la clé, pas
+	// celui de l'IP : elle passe.
+	if rec := do("203.0.113.7:4242", key); rec.Code == http.StatusTooManyRequests {
+		t.Fatalf("clé valide depuis IP saturée: 429 inattendu (seaux disjoints)\nbody: %s", rec.Body.String())
 	}
 }
