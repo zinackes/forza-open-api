@@ -20,6 +20,17 @@ type Config struct {
 	// Le quota (api_keys.rate_limit) s'entend « requêtes par fenêtre ». Env
 	// RATE_LIMIT_WINDOW en secondes (défaut 60s).
 	RateLimitWindow time.Duration
+	// AnonRateLimit : quota par IP (même fenêtre RateLimitWindow) des requêtes
+	// SANS clé API. 0 (défaut) = désactivé — la protection du trafic anonyme
+	// relève alors du bord (Cloudflare). À activer en défense en profondeur tant
+	// que l'origine est joignable en direct. Env ANON_RATE_LIMIT.
+	AnonRateLimit int
+	// ClientIPHeader : en-tête portant l'IP cliente réelle quand l'API est
+	// derrière un proxy de confiance (ex. « CF-Connecting-IP » derrière
+	// Cloudflare). Vide (défaut) = IP de la connexion TCP. Ne jamais pointer un
+	// en-tête spoofable (X-Forwarded-For) si l'origine est joignable en direct.
+	// Env CLIENT_IP_HEADER.
+	ClientIPHeader string
 	// CORSAllowedOrigins : origines autorisées pour la lecture publique (GET/HEAD).
 	// Large par défaut ("*") car l'API en lecture est ouverte ; env
 	// CORS_ALLOWED_ORIGINS (CSV). "*" → toute origine.
@@ -65,6 +76,8 @@ func Load() Config {
 		LogLevel:        parseLevel(getenv("LOG_LEVEL", "info")),
 		DataVersion:     os.Getenv("DATA_VERSION"),
 		RateLimitWindow: time.Duration(getenvInt("RATE_LIMIT_WINDOW", 60)) * time.Second,
+		AnonRateLimit:   getenvInt("ANON_RATE_LIMIT", 0),
+		ClientIPHeader:  os.Getenv("CLIENT_IP_HEADER"),
 		// Lecture publique ouverte par défaut ; writes fermés tant que des
 		// origines ne sont pas explicitement autorisées.
 		CORSAllowedOrigins: splitCSV(getenv("CORS_ALLOWED_ORIGINS", "*")),

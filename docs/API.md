@@ -50,7 +50,10 @@ Header `X-API-Key` (SecurityHandler ogen). Clés opaques hashées. Lecture publi
 
 ## Rate-limit
 
-Sliding window par clé (Redis). Headers X-RateLimit-Limit/Remaining/Reset. 429 + Retry-After au dépassement.
+Sliding window (Redis). Headers X-RateLimit-Limit/Remaining/Reset + IETF `RateLimit`/`RateLimit-Policy`. 429 + Retry-After au dépassement.
+
+- **Par clé** : quota `api_keys.rate_limit`, requêtes par fenêtre `RATE_LIMIT_WINDOW` (défaut 60 s).
+- **Anonyme (sans clé)** : quota par IP si `ANON_RATE_LIMIT` > 0 (défense en profondeur tant que l'origine est joignable en direct ; défaut 0 = délégué au bord Cloudflare). IP cliente lue dans `CLIENT_IP_HEADER` (ex. `CF-Connecting-IP`) derrière un proxy de confiance, sinon IP de la connexion TCP — jamais `X-Forwarded-For` implicitement (spoofable).
 
 ## CORS
 
