@@ -528,6 +528,12 @@ paths:
       responses:
         '200':
           description: La série courante avec ses récompenses et défis.
+          headers:
+            Cache-Control:
+              description: >-
+                Cache court + stale-while-revalidate (la playlist tourne ~hebdo).
+                Revalidation conditionnelle via ETag / If-None-Match (304).
+              schema: { type: string }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Series' }
@@ -547,6 +553,12 @@ paths:
       responses:
         '200':
           description: Les séries connues pour le jeu (récentes d'abord).
+          headers:
+            Cache-Control:
+              description: >-
+                Cache court + stale-while-revalidate (la playlist tourne ~hebdo).
+                Revalidation conditionnelle via ETag / If-None-Match (304).
+              schema: { type: string }
           content:
             application/json:
               schema:
@@ -571,6 +583,12 @@ paths:
       responses:
         '200':
           description: La série demandée avec ses récompenses et défis.
+          headers:
+            Cache-Control:
+              description: >-
+                Cache court + stale-while-revalidate (la playlist tourne ~hebdo).
+                Revalidation conditionnelle via ETag / If-None-Match (304).
+              schema: { type: string }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Series' }
