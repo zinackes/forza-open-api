@@ -89,7 +89,7 @@ func newSeededExpansionServer(t *testing.T) http.Handler {
 		}
 	}
 
-	srv, err := oas.NewServer(handler.New(&store.Store{DB: pool}), handler.SecurityHandler{},
+	srv, err := oas.NewServer(handler.New(&store.Store{DB: pool}, ""), handler.SecurityHandler{},
 		oas.WithErrorHandler(handler.ProblemErrorHandler))
 	if err != nil {
 		t.Fatalf("oas.NewServer: %v", err)

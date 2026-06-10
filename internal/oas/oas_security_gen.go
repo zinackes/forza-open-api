@@ -41,6 +41,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	GetCurrentPlaylistOperation: []string{},
 	GetDlcPackOperation:         []string{},
 	GetEventOperation:           []string{},
+	GetMetaOperation:            []string{},
 	GetPrStuntOperation:         []string{},
 	GetRandomCarOperation:       []string{},
 	GetRandomTrackOperation:     []string{},

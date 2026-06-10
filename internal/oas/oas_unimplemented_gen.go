@@ -82,6 +82,21 @@ func (UnimplementedHandler) GetEvent(ctx context.Context, params GetEventParams)
 	return r, ht.ErrNotImplemented
 }
 
+// GetMeta implements getMeta operation.
+//
+// Métadonnées légères pour les consommateurs et le dogfooding : jeux supportés (fh6, fh5),
+// nombre de voitures par jeu et derniers timestamps d'ingestion du catalogue et de la playlist. Les
+// timestamps proviennent du journal d'ingestion (data_changes) : `catalogUpdatedAt` (ressource car)
+// et `playlistUpdatedAt` (ressource series) sont absents si la ressource n'a jamais été ingérée
+// pour le jeu (rien d'inventé). `dataVersion` porte la version de jeu de données publiée si
+// l'opérateur l'a tamponnée. `generatedAt` = instant de calcul, pour estimer l'âge côté client.
+// Réponse à cache court : la fraîcheur est l'objet même de l'endpoint.
+//
+// GET /v1/meta
+func (UnimplementedHandler) GetMeta(ctx context.Context) (r GetMetaRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetPrStunt implements getPrStunt operation.
 //
 // Récupère un PR Stunt par identifiant.

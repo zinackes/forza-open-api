@@ -36,6 +36,7 @@ type Invoker interface {
 	JournalInvoker
 	ManufacturersInvoker
 	MasteryInvoker
+	MetaInvoker
 	PRStuntsInvoker
 	PlaylistInvoker
 	ReferenceInvoker
@@ -192,6 +193,24 @@ type MasteryInvoker interface {
 	//
 	// GET /v1/cars/{id}/mastery
 	GetCarMastery(ctx context.Context, params GetCarMasteryParams) (GetCarMasteryRes, error)
+}
+
+// MetaInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Meta
+type MetaInvoker interface {
+	// GetMeta invokes getMeta operation.
+	//
+	// Métadonnées légères pour les consommateurs et le dogfooding : jeux supportés (fh6, fh5),
+	// nombre de voitures par jeu et derniers timestamps d'ingestion du catalogue et de la playlist. Les
+	// timestamps proviennent du journal d'ingestion (data_changes) : `catalogUpdatedAt` (ressource car)
+	// et `playlistUpdatedAt` (ressource series) sont absents si la ressource n'a jamais été ingérée
+	// pour le jeu (rien d'inventé). `dataVersion` porte la version de jeu de données publiée si
+	// l'opérateur l'a tamponnée. `generatedAt` = instant de calcul, pour estimer l'âge côté client.
+	// Réponse à cache court : la fraîcheur est l'objet même de l'endpoint.
+	//
+	// GET /v1/meta
+	GetMeta(ctx context.Context) (GetMetaRes, error)
 }
 
 // PRStuntsInvoker invokes operations described by OpenAPI v3 specification.
@@ -1281,6 +1300,120 @@ func (c *Client) sendGetEvent(ctx context.Context, params GetEventParams) (res G
 
 	stage = "DecodeResponse"
 	result, err := decodeGetEventResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetMeta invokes getMeta operation.
+//
+// Métadonnées légères pour les consommateurs et le dogfooding : jeux supportés (fh6, fh5),
+// nombre de voitures par jeu et derniers timestamps d'ingestion du catalogue et de la playlist. Les
+// timestamps proviennent du journal d'ingestion (data_changes) : `catalogUpdatedAt` (ressource car)
+// et `playlistUpdatedAt` (ressource series) sont absents si la ressource n'a jamais été ingérée
+// pour le jeu (rien d'inventé). `dataVersion` porte la version de jeu de données publiée si
+// l'opérateur l'a tamponnée. `generatedAt` = instant de calcul, pour estimer l'âge côté client.
+// Réponse à cache court : la fraîcheur est l'objet même de l'endpoint.
+//
+// GET /v1/meta
+func (c *Client) GetMeta(ctx context.Context) (GetMetaRes, error) {
+	res, err := c.sendGetMeta(ctx)
+	return res, err
+}
+
+func (c *Client) sendGetMeta(ctx context.Context) (res GetMetaRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getMeta"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/meta"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetMetaOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/meta"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetMetaOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetMetaResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
