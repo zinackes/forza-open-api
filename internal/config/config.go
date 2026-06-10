@@ -20,13 +20,17 @@ type Config struct {
 	// Le quota (api_keys.rate_limit) s'entend « requêtes par fenêtre ». Env
 	// RATE_LIMIT_WINDOW en secondes (défaut 60s).
 	RateLimitWindow time.Duration
-	// Scheduler (cmd/scheduler) — rafraîchissement périodique de la Festival
-	// Playlist. PlaylistCron : spec cron 5 champs (fuseau UTC), défaut « 0 15 * *
-	// 4 » = jeudi 15:00 UTC, peu après le reset hebdo Forza (14:30 UTC).
-	// PlaylistGames : jeux rafraîchis (CSV, défaut « fh6 »). AlertWebhookURL :
-	// webhook d'alerte sur échec (vide = log structuré seul).
+	// Scheduler (cmd/scheduler) — rafraîchissement périodique des données
+	// volatiles. Les crons sont des specs 5 champs (fuseau UTC), défaut « 0 15 * *
+	// 4 » = jeudi 15:00 UTC, peu après le reset hebdo Forza (14:30 UTC). Les *Games
+	// sont les jeux rafraîchis (CSV, défaut « fh6 »).
+	//   - PlaylistCron / PlaylistGames : Festival Playlist.
+	//   - ForzathonCron / ForzathonGames : Forzathon Shop (rotation hebdo).
+	// AlertWebhookURL : webhook d'alerte sur échec (vide = log structuré seul).
 	PlaylistCron    string
 	PlaylistGames   []string
+	ForzathonCron   string
+	ForzathonGames  []string
 	AlertWebhookURL string
 }
 
@@ -41,6 +45,8 @@ func Load() Config {
 		RateLimitWindow: time.Duration(getenvInt("RATE_LIMIT_WINDOW", 60)) * time.Second,
 		PlaylistCron:    getenv("PLAYLIST_CRON", "0 15 * * 4"),
 		PlaylistGames:   splitCSV(getenv("PLAYLIST_GAMES", "fh6")),
+		ForzathonCron:   getenv("FORZATHON_CRON", "0 15 * * 4"),
+		ForzathonGames:  splitCSV(getenv("FORZATHON_GAMES", "fh6")),
 		AlertWebhookURL: os.Getenv("ALERT_WEBHOOK_URL"),
 	}
 }

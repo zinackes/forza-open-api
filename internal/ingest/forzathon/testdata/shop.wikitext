@@ -1,0 +1,18 @@
+The '''Forzathon Shop''' rotates every Thursday at 14:30 UTC.
+
+{| class="wikitable sortable"
+! Item !! Category !! Cost (FP) !! Notes
+|-
+| [[Mazda Furai|Mazda Furai Concept]] || Car || 750 || Rare festival exclusive
+|-
+| Festive Air Horn || Horn || 75 ||
+|-
+| Driver Outfit: Aviator || Clothing || 150 || Apparel set
+|-
+| "Let's Go!" || Forza LINK Phrase || 50 ||
+|-
+| Mystery Box || Other || 1,000 || Random reward
+|}
+
+== Previous rotations ==
+See the history section.

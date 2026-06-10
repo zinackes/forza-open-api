@@ -11,19 +11,19 @@ import (
 )
 
 var (
-	rn30AllowedHeaders = map[string]string{
+	rn31AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn4AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn32AllowedHeaders = map[string]string{
+	rn33AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn1AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn19AllowedHeaders = map[string]string{
+	rn20AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn6AllowedHeaders = map[string]string{
@@ -35,76 +35,82 @@ var (
 	rn9AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn31AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn34AllowedHeaders = map[string]string{
+	rn32AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn35AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn12AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
 	rn36AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn14AllowedHeaders = map[string]string{
+	rn12AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn37AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn39AllowedHeaders = map[string]string{
+	rn14AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn15AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn10AllowedHeaders = map[string]string{
+	rn38AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn39AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn41AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn24AllowedHeaders = map[string]string{
+	rn16AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn40AllowedHeaders = map[string]string{
+	rn10AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn18AllowedHeaders = map[string]string{
+	rn43AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn21AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn49AllowedHeaders = map[string]string{
+	rn25AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn42AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
+	rn19AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn22AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn51AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
 	rn44AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn45AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn20AllowedHeaders = map[string]string{
-		"GET": "X-Api-Key",
-	}
-	rn26AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 	rn46AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn29AllowedHeaders = map[string]string{
+	rn47AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
-	rn47AllowedHeaders = map[string]string{
+	rn21AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn27AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn48AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn30AllowedHeaders = map[string]string{
+		"GET": "X-Api-Key",
+	}
+	rn49AllowedHeaders = map[string]string{
 		"GET": "X-Api-Key",
 	}
 )
@@ -175,7 +181,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn30AllowedHeaders,
+							allowedHeaders: rn31AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -249,7 +255,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn32AllowedHeaders,
+								allowedHeaders: rn33AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -312,7 +318,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET",
-										allowedHeaders: rn19AllowedHeaders,
+										allowedHeaders: rn20AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -434,7 +440,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET",
-											allowedHeaders: rn31AllowedHeaders,
+											allowedHeaders: rn32AllowedHeaders,
 											acceptPost:     "",
 											acceptPatch:    "",
 										})
@@ -465,7 +471,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn34AllowedHeaders,
+								allowedHeaders: rn35AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -491,7 +497,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn35AllowedHeaders,
+							allowedHeaders: rn36AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -553,7 +559,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn36AllowedHeaders,
+							allowedHeaders: rn37AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -600,6 +606,57 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 				}
 
+			case 'f': // Prefix: "forzathon-shop"
+
+				if l := len("forzathon-shop"); len(elem) >= l && elem[0:l] == "forzathon-shop" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "GET":
+						s.handleGetForzathonShopRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET",
+							allowedHeaders: rn15AllowedHeaders,
+							acceptPost:     "",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/history"
+
+					if l := len("/history"); len(elem) >= l && elem[0:l] == "/history" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleListForzathonShopHistoryRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "GET",
+								allowedHeaders: rn38AllowedHeaders,
+								acceptPost:     "",
+								acceptPatch:    "",
+							})
+						}
+
+						return
+					}
+
+				}
+
 			case 'j': // Prefix: "journal"
 
 				if l := len("journal"); len(elem) >= l && elem[0:l] == "journal" {
@@ -616,7 +673,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn37AllowedHeaders,
+							allowedHeaders: rn39AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -653,7 +710,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn39AllowedHeaders,
+								allowedHeaders: rn41AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -678,7 +735,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn15AllowedHeaders,
+								allowedHeaders: rn16AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -753,7 +810,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn41AllowedHeaders,
+									allowedHeaders: rn43AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -789,7 +846,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET",
-										allowedHeaders: rn24AllowedHeaders,
+										allowedHeaders: rn25AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -817,7 +874,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn40AllowedHeaders,
+								allowedHeaders: rn42AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -853,7 +910,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn18AllowedHeaders,
+									allowedHeaders: rn19AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -882,7 +939,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn21AllowedHeaders,
+							allowedHeaders: rn22AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -919,7 +976,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn49AllowedHeaders,
+								allowedHeaders: rn51AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -944,7 +1001,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn42AllowedHeaders,
+								allowedHeaders: rn44AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -983,7 +1040,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn44AllowedHeaders,
+								allowedHeaders: rn46AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -1019,7 +1076,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn45AllowedHeaders,
+									allowedHeaders: rn47AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -1056,7 +1113,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET",
-											allowedHeaders: rn20AllowedHeaders,
+											allowedHeaders: rn21AllowedHeaders,
 											acceptPost:     "",
 											acceptPatch:    "",
 										})
@@ -1086,7 +1143,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET",
-										allowedHeaders: rn26AllowedHeaders,
+										allowedHeaders: rn27AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -1112,7 +1169,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn46AllowedHeaders,
+									allowedHeaders: rn48AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -1148,7 +1205,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET",
-										allowedHeaders: rn29AllowedHeaders,
+										allowedHeaders: rn30AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -1179,7 +1236,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn47AllowedHeaders,
+							allowedHeaders: rn49AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -1706,6 +1763,57 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							r.pathPattern = "/v1/events/{id}"
 							r.args = args
 							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+
+				}
+
+			case 'f': // Prefix: "forzathon-shop"
+
+				if l := len("forzathon-shop"); len(elem) >= l && elem[0:l] == "forzathon-shop" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						r.name = GetForzathonShopOperation
+						r.summary = "Rotation courante du Forzathon Shop d'un jeu."
+						r.operationID = "getForzathonShop"
+						r.operationGroup = "ForzathonShop"
+						r.pathPattern = "/v1/forzathon-shop"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/history"
+
+					if l := len("/history"); len(elem) >= l && elem[0:l] == "/history" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "GET":
+							r.name = ListForzathonShopHistoryOperation
+							r.summary = "Historique des rotations du Forzathon Shop."
+							r.operationID = "listForzathonShopHistory"
+							r.operationGroup = "ForzathonShop"
+							r.pathPattern = "/v1/forzathon-shop/history"
+							r.args = args
+							r.count = 0
 							return r, true
 						default:
 							return

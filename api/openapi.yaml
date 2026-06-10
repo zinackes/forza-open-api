@@ -24,6 +24,8 @@ tags:
     description: Constructeurs automobiles.
   - name: Playlist
     description: Festival Playlist (séries saisonnières, récompenses, défis).
+  - name: ForzathonShop
+    description: Forzathon Shop (rotation hebdomadaire d'objets contre Forza Points).
   - name: Tracks
     description: Tracés / circuits indexés (fondation des leaderboards et de la carte).
   - name: PRStunts
@@ -594,6 +596,60 @@ paths:
               schema: { $ref: '#/components/schemas/Series' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/forzathon-shop:
+    get:
+      operationId: getForzathonShop
+      summary: Rotation courante du Forzathon Shop d'un jeu.
+      description: >
+        Les objets de la rotation hebdomadaire en cours (la plus récente connue)
+        du Forzathon Shop, achetables contre des Forza Points. Chaque objet porte
+        sa semaine (weekStart/weekEnd). Tableau vide si aucune rotation connue.
+      tags: [ForzathonShop]
+      x-ogen-operation-group: ForzathonShop
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Les objets de la rotation courante.
+          headers:
+            Cache-Control:
+              description: >-
+                Cache court + stale-while-revalidate (la rotation tourne ~hebdo).
+                Revalidation conditionnelle via ETag / If-None-Match (304).
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ForzathonShopItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/forzathon-shop/history:
+    get:
+      operationId: listForzathonShopHistory
+      summary: Historique des rotations du Forzathon Shop.
+      description: >
+        Les objets de toutes les rotations connues du Forzathon Shop pour le jeu,
+        les plus récentes d'abord (paginé). Regroupables par weekStart côté client
+        pour reconstituer chaque rotation hebdomadaire.
+      tags: [ForzathonShop]
+      x-ogen-operation-group: ForzathonShop
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page d'objets de Forzathon Shop (rotations récentes d'abord).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ForzathonShopList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /v1/tracks:
@@ -1305,6 +1361,52 @@ components:
         challenges:
           type: array
           items: { $ref: '#/components/schemas/Challenge' }
+
+    ForzathonShopKind:
+      type: string
+      description: Catégorie d'un objet du Forzathon Shop.
+      enum: [car, horn, clothing, forza_link_phrase, other]
+
+    ForzathonShopItem:
+      type: object
+      description: >
+        Objet d'une rotation hebdomadaire du Forzathon Shop, achetable contre des
+        Forza Points (qui se reportent d'une semaine à l'autre). Champs non sourcés → omis.
+      required: [id, game, weekStart, kind, name]
+      examples:
+        - id: fh6-20260604-mazda-furai
+          game: fh6
+          weekStart: 2026-06-04T14:30:00Z
+          weekEnd: 2026-06-11T14:30:00Z
+          kind: car
+          carId: fh6-mazda-furai-2008
+          name: Mazda Furai
+          fpCost: 750
+          source: forza.net
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        weekStart: { type: string, format: date-time, description: Début de la fenêtre de rotation (reset hebdo Forza, jeudi 14:30 UTC). }
+        weekEnd: { type: string, format: date-time, description: Fin de la fenêtre. Absente si non sourcée. }
+        kind: { $ref: '#/components/schemas/ForzathonShopKind' }
+        carId: { type: string, description: Voiture liée (réf. /v1/cars). Présent uniquement pour les objets kind=car identifiés au catalogue. }
+        name: { type: string }
+        fpCost: { type: integer, description: Coût en Forza Points. Absent si non sourcé. }
+        description: { type: string }
+        imageUrl: { type: string, format: uri }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    ForzathonShopList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ForzathonShopItem' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
 
     Region:
       type: string

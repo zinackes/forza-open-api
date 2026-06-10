@@ -13,6 +13,7 @@ type Handler interface {
 	ChangesHandler
 	DLCHandler
 	EventsHandler
+	ForzathonShopHandler
 	JournalHandler
 	ManufacturersHandler
 	MasteryHandler
@@ -141,6 +142,28 @@ type EventsHandler interface {
 	//
 	// GET /v1/events
 	ListEvents(ctx context.Context, params ListEventsParams) (ListEventsRes, error)
+}
+
+// ForzathonShopHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: ForzathonShop
+type ForzathonShopHandler interface {
+	// GetForzathonShop implements getForzathonShop operation.
+	//
+	// Les objets de la rotation hebdomadaire en cours (la plus récente connue) du Forzathon Shop,
+	// achetables contre des Forza Points. Chaque objet porte sa semaine (weekStart/weekEnd). Tableau
+	// vide si aucune rotation connue.
+	//
+	// GET /v1/forzathon-shop
+	GetForzathonShop(ctx context.Context, params GetForzathonShopParams) (GetForzathonShopRes, error)
+	// ListForzathonShopHistory implements listForzathonShopHistory operation.
+	//
+	// Les objets de toutes les rotations connues du Forzathon Shop pour le jeu, les plus récentes
+	// d'abord (paginé). Regroupables par weekStart côté client pour reconstituer chaque rotation
+	// hebdomadaire.
+	//
+	// GET /v1/forzathon-shop/history
+	ListForzathonShopHistory(ctx context.Context, params ListForzathonShopHistoryParams) (ListForzathonShopHistoryRes, error)
 }
 
 // JournalHandler handles operations described by OpenAPI v3 specification.

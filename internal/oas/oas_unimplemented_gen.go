@@ -96,6 +96,17 @@ func (UnimplementedHandler) GetEvent(ctx context.Context, params GetEventParams)
 	return r, ht.ErrNotImplemented
 }
 
+// GetForzathonShop implements getForzathonShop operation.
+//
+// Les objets de la rotation hebdomadaire en cours (la plus récente connue) du Forzathon Shop,
+// achetables contre des Forza Points. Chaque objet porte sa semaine (weekStart/weekEnd). Tableau
+// vide si aucune rotation connue.
+//
+// GET /v1/forzathon-shop
+func (UnimplementedHandler) GetForzathonShop(ctx context.Context, params GetForzathonShopParams) (r GetForzathonShopRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetMeta implements getMeta operation.
 //
 // Métadonnées légères pour les consommateurs et le dogfooding : jeux supportés (fh6, fh5),
@@ -239,6 +250,17 @@ func (UnimplementedHandler) ListDlcPacks(ctx context.Context, params ListDlcPack
 //
 // GET /v1/events
 func (UnimplementedHandler) ListEvents(ctx context.Context, params ListEventsParams) (r ListEventsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListForzathonShopHistory implements listForzathonShopHistory operation.
+//
+// Les objets de toutes les rotations connues du Forzathon Shop pour le jeu, les plus récentes
+// d'abord (paginé). Regroupables par weekStart côté client pour reconstituer chaque rotation
+// hebdomadaire.
+//
+// GET /v1/forzathon-shop/history
+func (UnimplementedHandler) ListForzathonShopHistory(ctx context.Context, params ListForzathonShopHistoryParams) (r ListForzathonShopHistoryRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
