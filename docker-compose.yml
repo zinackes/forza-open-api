@@ -21,7 +21,10 @@ services:
 
   valkey:
     image: valkey/valkey:9.1-alpine
-    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    # maxmemory + éviction LRU : borne le pire cas (pollution du cache négatif
+    # apikey, ZSET de quota). Tout ce que l'API y écrit porte un TTL → éviction
+    # sans danger (au pire un compteur de quota repart, cohérent avec fail-open).
+    command: ["valkey-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
     ports:
       - "${VALKEY_HOST_PORT:-6379}:6379"
     healthcheck:
