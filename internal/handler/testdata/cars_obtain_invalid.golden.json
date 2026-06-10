@@ -1,7 +1,8 @@
 {
-  "type": "about:blank",
+  "type": "urn:forza-open-api:problem:validation",
   "title": "Bad Request",
   "status": 400,
-  "detail": "operation ListCars: decode params: query: \"obtain\": invalid value: bogus"
+  "detail": "operation ListCars: decode params: query: \"obtain\": invalid value: bogus",
+  "instance": "/v1/cars"
 }
 

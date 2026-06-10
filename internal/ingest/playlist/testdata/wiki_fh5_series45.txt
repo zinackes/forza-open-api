@@ -1,0 +1,49 @@
+{{Game|fh5=y}}{{DISPLAYTITLE:Series 45}}{{InfoboxFH5FestivalPlaylist
+|name     = Horizon Wilds Takeover
+|image    = FH5 Series18.jpg
+|series   = 45
+|duration = March 27, 2025 - April 24, 2025
+|start    = March 27, 2025
+|end      = April 24, 2025
+|summer   = 70
+|autumn   = 70
+|winter   = 70
+|spring   = 75
+|complete = 229
+|total    = 285
+}}
+'''Series 45''', dubbed "Horizon Wilds Takeover", is the forty-fifth [[Forza Horizon 5/Festival Playlist|Festival Playlist]] in ''[[Forza Horizon 5]]'' held between March 27, 2025 to April 24, 2025. 
+
+It followed on from [[Forza Horizon 5/Series 44|Series 44: "High Performance"]], and was proceeded by [[Forza Horizon 5/Series 46|Series 46]], which is a repeat of [[Forza Horizon 5/Series 7|Series 7: "Cinco de Mayo"]], on April 24, 2025. Series 45 has the same name as [[Forza Horizon 5/Series 18|Series 18: "Horizon Wilds Takeover"]], along with almost identical challenges and rewards.
+
+Players can earn points (PTS) from completing objectives listed in the Festival Playlist. These objectives can include completing the weekly Forzathon, events, PR Stunts, and challenges listed in the Festival Playlist. Completed objectives in the Festival Playlist are highlighted in gold.
+
+==Series 45==
+Series 45 has a total of 285 points available for completing objectives in each of the series' four seasons in the Festival Playlist. Earning 229 points is required to complete the Series.
+
+As players earn points by completing objectives in a season, they can earn two rewards by accumulating a certain amount of points during each season, and can earn two rewards by accumulating a certain amount of points over an entire series.
+
+{|class="table" style="width: 100%; text-align: center"
+!<div style="display: grid; grid-template-columns: 1fr 250px; grid-column-start: 1; grid-column-end: 2;>
+<div>Season Progress Milestone</div>
+<div>Reward</div>
+</div>
+|-
+{{FH5FPEvent|seriescar|80|{{FH5FPReward|htf|Subaru Impreza 22B STi|[[Subaru Impreza 22B STi|SUBARU 22B]]|l}}}}
+{{FH5FPEvent|seriescar|160|{{FH5FPReward|htf|Sierra Cars 700R|[[Sierra Cars 700R|SIERRA 700R]]|r}}}}
+|}
+
+{{FH5SeasonSection|summer|45|March 27, 2025|April 3, 2025|total = 70|complete = 56}}
+{{FH5SeasonSection|autumn|45|April 3, 2025|April 10, 2025|total = 70|complete = 56}}
+{{FH5SeasonSection|winter|45|April 10, 2025|April 17, 2025|total = 70|complete = 61}}
+{{FH5SeasonSection|spring|45|April 17, 2025|April 24, 2025|total = 75|complete = 61}}
+
+==Evolving World==
+===Horizon Mexico===
+*Returning Seasonal Murals at the Horizon Wilds Outpost
+*Returning Stunt Park in the Horizon Stadium
+*Returning Piñata Dinosaur Collectible around the Horizon Stadium
+
+==References==
+<references />
+{{FH5FPNav}}

@@ -16,6 +16,7 @@ type Handler interface {
 	JournalHandler
 	ManufacturersHandler
 	MasteryHandler
+	MetaHandler
 	PRStuntsHandler
 	PlaylistHandler
 	ReferenceHandler
@@ -49,6 +50,17 @@ type BarnFindsHandler interface {
 //
 // x-ogen-operation-group: Cars
 type CarsHandler interface {
+	// CompareCars implements compareCars operation.
+	//
+	// Renvoie les voitures demandées (2 à 3, via `ids`) dans l'ordre de la requête, pour un affichage
+	// côte à côte (overlays, bots Discord) : PI, classe, transmission et stats
+	// (vitesse/accélération/handling/freinage) sont alignés. Chaque entrée est l'objet Car complet.
+	// Comparaison stricte : 400 si moins de 2 ou plus de 3 ids ; 404 si un id est inconnu (contrairement
+	// au filtre `ids` de /v1/cars, aucun id n'est ignoré). L'id étant la clé stable globale, pas de
+	// paramètre `game`.
+	//
+	// GET /v1/cars/compare
+	CompareCars(ctx context.Context, params CompareCarsParams) (CompareCarsRes, error)
 	// GetCar implements getCar operation.
 	//
 	// Récupère une voiture par identifiant.
@@ -172,6 +184,24 @@ type MasteryHandler interface {
 	//
 	// GET /v1/cars/{id}/mastery
 	GetCarMastery(ctx context.Context, params GetCarMasteryParams) (GetCarMasteryRes, error)
+}
+
+// MetaHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Meta
+type MetaHandler interface {
+	// GetMeta implements getMeta operation.
+	//
+	// Métadonnées légères pour les consommateurs et le dogfooding : jeux supportés (fh6, fh5),
+	// nombre de voitures par jeu et derniers timestamps d'ingestion du catalogue et de la playlist. Les
+	// timestamps proviennent du journal d'ingestion (data_changes) : `catalogUpdatedAt` (ressource car)
+	// et `playlistUpdatedAt` (ressource series) sont absents si la ressource n'a jamais été ingérée
+	// pour le jeu (rien d'inventé). `dataVersion` porte la version de jeu de données publiée si
+	// l'opérateur l'a tamponnée. `generatedAt` = instant de calcul, pour estimer l'âge côté client.
+	// Réponse à cache court : la fraîcheur est l'objet même de l'endpoint.
+	//
+	// GET /v1/meta
+	GetMeta(ctx context.Context) (GetMetaRes, error)
 }
 
 // PRStuntsHandler handles operations described by OpenAPI v3 specification.

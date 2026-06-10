@@ -5,7 +5,6 @@ package handler
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/zinackes/forza-open-api/internal/oas"
 	"github.com/zinackes/forza-open-api/internal/store"
@@ -40,11 +39,7 @@ func (h *Handler) GetBarnFind(ctx context.Context, params oas.GetBarnFindParams)
 		return nil, err
 	}
 	if b == nil {
-		return &oas.GetBarnFindNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no barn find with the given id"),
-		}, nil
+		return nil, errNotFound("no barn find with the given id")
 	}
 	bf := mapBarnFind(*b)
 	return &bf, nil
@@ -79,11 +74,7 @@ func (h *Handler) GetTreasureCar(ctx context.Context, params oas.GetTreasureCarP
 		return nil, err
 	}
 	if t == nil {
-		return &oas.GetTreasureCarNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no treasure car with the given id"),
-		}, nil
+		return nil, errNotFound("no treasure car with the given id")
 	}
 	tc := mapTreasureCar(*t)
 	return &tc, nil

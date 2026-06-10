@@ -3,7 +3,6 @@ package handler
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/zinackes/forza-open-api/internal/oas"
 	"github.com/zinackes/forza-open-api/internal/store"
@@ -32,11 +31,7 @@ func (h *Handler) GetDlcPack(ctx context.Context, params oas.GetDlcPackParams) (
 		return nil, err
 	}
 	if d == nil {
-		return &oas.GetDlcPackNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no dlc pack with the given id"),
-		}, nil
+		return nil, errNotFound("no dlc pack with the given id")
 	}
 	pack := mapDlcPack(*d)
 	return &pack, nil

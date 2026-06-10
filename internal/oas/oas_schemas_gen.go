@@ -427,8 +427,6 @@ func (s *Car) SetUpdatedAt(val OptDateTime) {
 	s.UpdatedAt = val
 }
 
-func (*Car) getCarRes() {}
-
 // Classe Performance Index. R (voitures track-focused) introduite en FH6 ; absente de FH5.
 // Ref: #/components/schemas/CarClass
 type CarClass string
@@ -514,6 +512,51 @@ func (s *CarClass) UnmarshalText(data []byte) error {
 	}
 }
 
+// Comparaison de 2 à 3 voitures, alignées dans l'ordre des ids demandés. Chaque entrée est
+// l'objet Car complet (PI, classe, transmission, stats).
+// Ref: #/components/schemas/CarComparison
+type CarComparison struct {
+	Items []Car `json:"items"`
+}
+
+// GetItems returns the value of Items.
+func (s *CarComparison) GetItems() []Car {
+	return s.Items
+}
+
+// SetItems sets the value of Items.
+func (s *CarComparison) SetItems(val []Car) {
+	s.Items = val
+}
+
+// CarComparisonHeaders wraps CarComparison with response headers.
+type CarComparisonHeaders struct {
+	CacheControl OptString
+	Response     CarComparison
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *CarComparisonHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *CarComparisonHeaders) GetResponse() CarComparison {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *CarComparisonHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *CarComparisonHeaders) SetResponse(val CarComparison) {
+	s.Response = val
+}
+
+func (*CarComparisonHeaders) compareCarsRes() {}
+
 // CarHeaders wraps Car with response headers.
 type CarHeaders struct {
 	CacheControl OptString
@@ -540,6 +583,7 @@ func (s *CarHeaders) SetResponse(val Car) {
 	s.Response = val
 }
 
+func (*CarHeaders) getCarRes()       {}
 func (*CarHeaders) getRandomCarRes() {}
 
 // Ref: #/components/schemas/CarList
@@ -590,7 +634,33 @@ func (s *CarList) SetPageSize(val int) {
 	s.PageSize = val
 }
 
-func (*CarList) listCarsRes() {}
+// CarListHeaders wraps CarList with response headers.
+type CarListHeaders struct {
+	CacheControl OptString
+	Response     CarList
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *CarListHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *CarListHeaders) GetResponse() CarList {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *CarListHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *CarListHeaders) SetResponse(val CarList) {
+	s.Response = val
+}
+
+func (*CarListHeaders) listCarsRes() {}
 
 // Perk de l'arbre Car Mastery FH6 : une case (row, col) de la grille 4×4 de la voiture, débloquée
 // contre des Skill Points. Champs non sourcés → NULL (sourcing progressif : dataset forzagarage.
@@ -1348,6 +1418,22 @@ func (s *ChangeList) SetPageSize(val int) {
 
 func (*ChangeList) listChangesRes() {}
 
+type CompareCarsBadRequest Error
+
+func (*CompareCarsBadRequest) compareCarsRes() {}
+
+type CompareCarsNotFound Error
+
+func (*CompareCarsNotFound) compareCarsRes() {}
+
+type CompareCarsTooManyRequests Error
+
+func (*CompareCarsTooManyRequests) compareCarsRes() {}
+
+type CompareCarsUnauthorized Error
+
+func (*CompareCarsUnauthorized) compareCarsRes() {}
+
 // Type de pack DLC.
 // Ref: #/components/schemas/DlcKind
 type DlcKind string
@@ -1545,14 +1631,26 @@ func (s *Drivetrain) UnmarshalText(data []byte) error {
 	}
 }
 
-// Erreur au format RFC 9457 (application/problem+json).
+// Erreur au format RFC 9457 (application/problem+json). Toutes les réponses d'erreur (400, 401, 404,
+//
+//	429, 5xx) partagent ce format. Le champ `type` porte un code stable (URN, indépendant de l'host)
+//
+// :
+// - urn:forza-open-api:problem:validation — requête invalide (400) ;
+// - urn:forza-open-api:problem:unauthorized — clé API absente/invalide (401) ;
+// - urn:forza-open-api:problem:not-found — ressource introuvable (404) ;
+// - urn:forza-open-api:problem:rate-limited — quota dépassé (429) ;
+// - urn:forza-open-api:problem:internal — erreur interne (500).
 // Ref: #/components/schemas/Error
 type Error struct {
-	Type     OptURI    `json:"type"`
-	Title    OptString `json:"title"`
-	Status   OptInt    `json:"status"`
-	Detail   OptString `json:"detail"`
-	Instance OptURI    `json:"instance"`
+	// Code d'erreur stable (URN). Voir la liste dans la description du schéma. Référence stable dans
+	// le temps, dissociée du statut HTTP.
+	Type   OptURI    `json:"type"`
+	Title  OptString `json:"title"`
+	Status OptInt    `json:"status"`
+	Detail OptString `json:"detail"`
+	// Chemin de la requête à l'origine de l'erreur (ex. /v1/cars/ghost).
+	Instance OptURI `json:"instance"`
 }
 
 // GetType returns the value of Type.
@@ -2075,6 +2173,14 @@ func (*GetEventTooManyRequests) getEventRes() {}
 type GetEventUnauthorized Error
 
 func (*GetEventUnauthorized) getEventRes() {}
+
+type GetMetaTooManyRequests Error
+
+func (*GetMetaTooManyRequests) getMetaRes() {}
+
+type GetMetaUnauthorized Error
+
+func (*GetMetaUnauthorized) getMetaRes() {}
 
 type GetPrStuntNotFound Error
 
@@ -2780,9 +2886,33 @@ type ListSeriesBadRequest Error
 
 func (*ListSeriesBadRequest) listSeriesRes() {}
 
-type ListSeriesOKApplicationJSON []Series
+// ListSeriesOKHeaders wraps []Series with response headers.
+type ListSeriesOKHeaders struct {
+	CacheControl OptString
+	Response     []Series
+}
 
-func (*ListSeriesOKApplicationJSON) listSeriesRes() {}
+// GetCacheControl returns the value of CacheControl.
+func (s *ListSeriesOKHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *ListSeriesOKHeaders) GetResponse() []Series {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *ListSeriesOKHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ListSeriesOKHeaders) SetResponse(val []Series) {
+	s.Response = val
+}
+
+func (*ListSeriesOKHeaders) listSeriesRes() {}
 
 type ListSeriesTooManyRequests Error
 
@@ -2900,6 +3030,131 @@ func (s *Manufacturer) SetCountry(val OptString) {
 func (s *Manufacturer) SetCarCount(val int64) {
 	s.CarCount = val
 }
+
+// Métadonnées du service : jeux supportés, volumes et fraîcheur des données. Pensé pour les
+// consommateurs (sélecteur de jeu, indicateur « data à jour ? ») et le dogfooding. games liste
+// un MetaGame par valeur de l'enum Game (les jeux sans données apparaissent à 0).
+// Ref: #/components/schemas/Meta
+type Meta struct {
+	// Jeux supportés et leurs volumes / fraîcheur (un par valeur de l'enum Game).
+	Games []MetaGame `json:"games"`
+	// Version du jeu de données publiée (tampon opérateur, ex. snapshot wiki daté). Absente si non
+	// renseignée.
+	DataVersion OptString `json:"dataVersion"`
+	// Instant de calcul de la réponse (permet d'estimer l'âge des données côté client).
+	GeneratedAt time.Time `json:"generatedAt"`
+}
+
+// GetGames returns the value of Games.
+func (s *Meta) GetGames() []MetaGame {
+	return s.Games
+}
+
+// GetDataVersion returns the value of DataVersion.
+func (s *Meta) GetDataVersion() OptString {
+	return s.DataVersion
+}
+
+// GetGeneratedAt returns the value of GeneratedAt.
+func (s *Meta) GetGeneratedAt() time.Time {
+	return s.GeneratedAt
+}
+
+// SetGames sets the value of Games.
+func (s *Meta) SetGames(val []MetaGame) {
+	s.Games = val
+}
+
+// SetDataVersion sets the value of DataVersion.
+func (s *Meta) SetDataVersion(val OptString) {
+	s.DataVersion = val
+}
+
+// SetGeneratedAt sets the value of GeneratedAt.
+func (s *Meta) SetGeneratedAt(val time.Time) {
+	s.GeneratedAt = val
+}
+
+// Volumes et fraîcheur des données d'un jeu supporté. carCount = voitures au catalogue (0 si rien
+// n'est encore ingéré). catalogUpdatedAt / playlistUpdatedAt = dernier timestamp d'ingestion
+// (journal data_changes) pour les ressources car / series ; absents si jamais ingéré pour ce jeu.
+// Ref: #/components/schemas/MetaGame
+type MetaGame struct {
+	Game     Game  `json:"game"`
+	CarCount int64 `json:"carCount"`
+	// Dernière ingestion du catalogue (voitures) pour ce jeu. Absent si jamais ingéré.
+	CatalogUpdatedAt OptDateTime `json:"catalogUpdatedAt"`
+	// Dernière ingestion de la playlist (séries) pour ce jeu. Absent si jamais ingérée.
+	PlaylistUpdatedAt OptDateTime `json:"playlistUpdatedAt"`
+}
+
+// GetGame returns the value of Game.
+func (s *MetaGame) GetGame() Game {
+	return s.Game
+}
+
+// GetCarCount returns the value of CarCount.
+func (s *MetaGame) GetCarCount() int64 {
+	return s.CarCount
+}
+
+// GetCatalogUpdatedAt returns the value of CatalogUpdatedAt.
+func (s *MetaGame) GetCatalogUpdatedAt() OptDateTime {
+	return s.CatalogUpdatedAt
+}
+
+// GetPlaylistUpdatedAt returns the value of PlaylistUpdatedAt.
+func (s *MetaGame) GetPlaylistUpdatedAt() OptDateTime {
+	return s.PlaylistUpdatedAt
+}
+
+// SetGame sets the value of Game.
+func (s *MetaGame) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetCarCount sets the value of CarCount.
+func (s *MetaGame) SetCarCount(val int64) {
+	s.CarCount = val
+}
+
+// SetCatalogUpdatedAt sets the value of CatalogUpdatedAt.
+func (s *MetaGame) SetCatalogUpdatedAt(val OptDateTime) {
+	s.CatalogUpdatedAt = val
+}
+
+// SetPlaylistUpdatedAt sets the value of PlaylistUpdatedAt.
+func (s *MetaGame) SetPlaylistUpdatedAt(val OptDateTime) {
+	s.PlaylistUpdatedAt = val
+}
+
+// MetaHeaders wraps Meta with response headers.
+type MetaHeaders struct {
+	CacheControl OptString
+	Response     Meta
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *MetaHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *MetaHeaders) GetResponse() Meta {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *MetaHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *MetaHeaders) SetResponse(val Meta) {
+	s.Response = val
+}
+
+func (*MetaHeaders) getMetaRes() {}
 
 // NewOptBarnFind returns new OptBarnFind with value set to v.
 func NewOptBarnFind(v BarnFind) OptBarnFind {
@@ -4377,7 +4632,7 @@ type Region string
 // Ref: #/components/schemas/Reward
 type Reward struct {
 	ID        string `json:"id"`
-	AtPercent int    `json:"atPercent"`
+	AtPercent OptInt `json:"atPercent"`
 	Type      string `json:"type"`
 	Item      string `json:"item"`
 }
@@ -4388,7 +4643,7 @@ func (s *Reward) GetID() string {
 }
 
 // GetAtPercent returns the value of AtPercent.
-func (s *Reward) GetAtPercent() int {
+func (s *Reward) GetAtPercent() OptInt {
 	return s.AtPercent
 }
 
@@ -4408,7 +4663,7 @@ func (s *Reward) SetID(val string) {
 }
 
 // SetAtPercent sets the value of AtPercent.
-func (s *Reward) SetAtPercent(val int) {
+func (s *Reward) SetAtPercent(val OptInt) {
 	s.AtPercent = val
 }
 
@@ -4710,8 +4965,34 @@ func (s *Series) SetChallenges(val []Challenge) {
 	s.Challenges = val
 }
 
-func (*Series) getCurrentPlaylistRes() {}
-func (*Series) getSeriesRes()          {}
+// SeriesHeaders wraps Series with response headers.
+type SeriesHeaders struct {
+	CacheControl OptString
+	Response     Series
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *SeriesHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *SeriesHeaders) GetResponse() Series {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *SeriesHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SeriesHeaders) SetResponse(val Series) {
+	s.Response = val
+}
+
+func (*SeriesHeaders) getCurrentPlaylistRes() {}
+func (*SeriesHeaders) getSeriesRes()          {}
 
 // Story FH6 : mission narrative de Discover Japan, rapporte des stamps au Collection Journal. Champs
 // non sourcés → omis.

@@ -11,9 +11,14 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
+# Scheduler (cron interne du rafraîchissement playlist) — même image, ENTRYPOINT
+# surchargé par le service compose dédié.
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o /out/scheduler ./cmd/scheduler
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/api /api
+COPY --from=build /out/scheduler /scheduler
 # Contrat embarqué dans l'image (référence runtime, source de vérité).
 COPY --from=build /src/api/openapi.yaml /openapi.yaml
 EXPOSE 8080

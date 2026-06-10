@@ -13,6 +13,20 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// CompareCars implements compareCars operation.
+//
+// Renvoie les voitures demandées (2 à 3, via `ids`) dans l'ordre de la requête, pour un affichage
+// côte à côte (overlays, bots Discord) : PI, classe, transmission et stats
+// (vitesse/accélération/handling/freinage) sont alignés. Chaque entrée est l'objet Car complet.
+// Comparaison stricte : 400 si moins de 2 ou plus de 3 ids ; 404 si un id est inconnu (contrairement
+// au filtre `ids` de /v1/cars, aucun id n'est ignoré). L'id étant la clé stable globale, pas de
+// paramètre `game`.
+//
+// GET /v1/cars/compare
+func (UnimplementedHandler) CompareCars(ctx context.Context, params CompareCarsParams) (r CompareCarsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetBarnFind implements getBarnFind operation.
 //
 // Récupère un Barn Find par identifiant.
@@ -79,6 +93,21 @@ func (UnimplementedHandler) GetDlcPack(ctx context.Context, params GetDlcPackPar
 //
 // GET /v1/events/{id}
 func (UnimplementedHandler) GetEvent(ctx context.Context, params GetEventParams) (r GetEventRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetMeta implements getMeta operation.
+//
+// Métadonnées légères pour les consommateurs et le dogfooding : jeux supportés (fh6, fh5),
+// nombre de voitures par jeu et derniers timestamps d'ingestion du catalogue et de la playlist. Les
+// timestamps proviennent du journal d'ingestion (data_changes) : `catalogUpdatedAt` (ressource car)
+// et `playlistUpdatedAt` (ressource series) sont absents si la ressource n'a jamais été ingérée
+// pour le jeu (rien d'inventé). `dataVersion` porte la version de jeu de données publiée si
+// l'opérateur l'a tamponnée. `generatedAt` = instant de calcul, pour estimer l'âge côté client.
+// Réponse à cache court : la fraîcheur est l'objet même de l'endpoint.
+//
+// GET /v1/meta
+func (UnimplementedHandler) GetMeta(ctx context.Context) (r GetMetaRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

@@ -6,6 +6,7 @@ package oas
 type OperationName = string
 
 const (
+	CompareCarsOperation        OperationName = "CompareCars"
 	GetBarnFindOperation        OperationName = "GetBarnFind"
 	GetCarOperation             OperationName = "GetCar"
 	GetCarMasteryOperation      OperationName = "GetCarMastery"
@@ -13,6 +14,7 @@ const (
 	GetCurrentPlaylistOperation OperationName = "GetCurrentPlaylist"
 	GetDlcPackOperation         OperationName = "GetDlcPack"
 	GetEventOperation           OperationName = "GetEvent"
+	GetMetaOperation            OperationName = "GetMeta"
 	GetPrStuntOperation         OperationName = "GetPrStunt"
 	GetRandomCarOperation       OperationName = "GetRandomCar"
 	GetRandomTrackOperation     OperationName = "GetRandomTrack"

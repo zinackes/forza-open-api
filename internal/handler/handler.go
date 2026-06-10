@@ -5,8 +5,6 @@
 package handler
 
 import (
-	"context"
-
 	"github.com/zinackes/forza-open-api/internal/oas"
 	"github.com/zinackes/forza-open-api/internal/store"
 )
@@ -17,19 +15,13 @@ import (
 type Handler struct {
 	oas.UnimplementedHandler
 	store *store.Store
+	// dataVersion : version du jeu de données publiée (tampon opérateur, env
+	// DATA_VERSION), exposée par GET /v1/meta. Vide → champ omis.
+	dataVersion string
 }
 
-// New construit le handler avec ses dépendances.
-func New(st *store.Store) *Handler {
-	return &Handler{store: st}
-}
-
-// SecurityHandler implémente oas.SecurityHandler.
-type SecurityHandler struct{}
-
-// HandleApiKeyAuth est un no-op en Phase 0 : aucune clé n'est exigée (lecture
-// publique). La vérification réelle (hash sha256 en DB, rate-limit, révocation)
-// sera branchée ici sans toucher au code généré.
-func (SecurityHandler) HandleApiKeyAuth(ctx context.Context, _ oas.OperationName, _ oas.ApiKeyAuth) (context.Context, error) {
-	return ctx, nil
+// New construit le handler avec ses dépendances. dataVersion peut être vide
+// (aucune version de data tamponnée → champ meta omis).
+func New(st *store.Store, dataVersion string) *Handler {
+	return &Handler{store: st, dataVersion: dataVersion}
 }

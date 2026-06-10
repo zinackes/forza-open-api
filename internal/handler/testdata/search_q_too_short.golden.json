@@ -1,7 +1,8 @@
 {
-  "type": "about:blank",
+  "type": "urn:forza-open-api:problem:validation",
   "title": "Bad Request",
   "status": 400,
-  "detail": "operation Search: decode params: query: \"q\": string: len 1 less than minimum 2"
+  "detail": "operation Search: decode params: query: \"q\": string: len 1 less than minimum 2",
+  "instance": "/v1/search"
 }
 

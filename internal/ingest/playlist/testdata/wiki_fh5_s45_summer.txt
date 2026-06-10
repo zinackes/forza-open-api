@@ -1,0 +1,154 @@
+{{game|fh5=y}}{{DISPLAYTITLE:Series 45 - Summer Season}}{{InfoboxFH5FestivalPlaylist
+|name     = Horizon Wilds Takeover
+|image    = 
+|series   = 45
+|season   = summer
+|duration = March 27, 2025 - April 3, 2025
+|start    = March 27, 2025
+|end      = April 3, 2025
+|hotwheels= 7
+|rally    = 7
+|seasonal = 35
+|challenge= 7
+|monthly  = 2
+|total    = 70
+|complete = 56
+}}{{FH5SeasonOverview|summer|45|start = March 27, 2025|end = April 3 2025|total = 70|complete = 56}}
+
+{|class="table" style="width: 100%; text-align: center"
+!<div style="display: grid; grid-template-columns: 1fr 250px; grid-column-start: 1; grid-column-end: 2;>
+<div>Season Progress Milestone</div>
+<div>Reward</div>
+</div>
+|-
+{{FH5FPEvent|seasoncar|20|{{FH5FPReward|htf|Audi 2 Sport quattro S1|[[Audi 2 Audi Sport quattro S1|#2 Audi S1]]|l}}}}
+{{FH5FPEvent|seasoncar|40|{{FH5FPReward|pass|Backstage Pass|[[Forza Horizon 5/Horizon Backstage]]|l}}}}
+|}
+
+==Forzathon==
+===Weekly Challenge: "Ready to Hoon"===
+{|class="table" style="width: 100%; text-align: center"
+!<div style="display: grid; grid-template-columns: 1fr 52px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Chapter and Challenge</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH5FPEvent|ftw1|One Who Hoons|'''Own''' and '''Drive''' the '''[[Hoonigan Gymkhana 10 Ford Escort Cosworth Group A|1991 Hoonigan GYMKHANA 10 Ford Escort Cosworth Group A]]''', famous for its unforgettable hoon through Los Angeles in GYMKHANA TEN.}}
+{{FH5FPEvent|ftw2|Automotive Aeronautics|Use all 620 bhp of the '''1991 Hoonigan GYMKHANA 10 Ford Escort Cosworth Group A''' to '''Earn 10 Ultimate Air Skills'''.}}
+{{FH5FPEvent|ftw3|Rally Champion|To honor the Group A era, take the '''1991 Hoonigan GYMKHANA 10 Ford Escort Cosworth Group A''' out for a spin to '''win a Dirt Race'''.}}
+{{FH5FPEvent|ftw4|Be Creative|'''Earn 5 Burn Out Skills''' in the '''1991 Hoonigan GYMKHANA 10 Ford Escort Cosworth Group A''' to put the 2.0L I4 Turbo to the test.|80}}
+|}
+
+===Daily Challenges===
+{|class="table" style="width: 100%; text-align: center"
+!<div style="display: grid; grid-template-columns: 1fr 52px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Chapter and Challenge</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH5FPEvent|ftd1|A Wild Welcome|Visit the Horizon Wilds Outpost}}
+{{FH5FPEvent|ftd2|Bulk Smash|Smash 25 items in 30 seconds}}
+{{FH5FPEvent|ftd3|Bear Necessities|Take a photo of Farid Rueda's Bear Mural in Playa Azul}}
+{{FH5FPEvent|ftd4|Rally-oop|Win any Dirt Racing event}}
+{{FH5FPEvent|ftd5|Gold Star, Retro Car|Earn 1 Star from Traiblazers in any [[:Category:Retro Rally (FH5)|Retro Rally]] car}}
+{{FH5FPEvent|ftd6|Hoonkigan|Honk your horn in any [[Hoonigan]]}}
+{{FH5FPEvent|ftd7|Clearing a Path|Earn a Landscaping Skill in any [[:Category:Sports Utility Heroes (FH5)|Sports Utility Hero]]}}
+|}
+
+===Forzathon Shop===
+{{FH5ShopTable|
+{{FH5ShopItem|car|Porsche 185 959 Prodrive Rally Raid|[[Porsche 185 959 Prodrive Rally Raid|#185 Porsche 959]]|l|742|fp = 550}}
+{{FH5ShopItem|pass|fp = 1000}}
+{{FH5ShopItem|ankle|Farid Rueda's Lion Crew Socks|Farid Rueda's Lion Crew Socks|l|fp = 75}}
+{{FH5ShopItem|horn| |Beautiful Morning|c|fp = 75}}
+{{FH5ShopItem|car|RJ Anderson 37 Polaris RZR-Rockstar Energy Pro 2 Truck|[[RJ Anderson 37 Polaris RZR-Rockstar Energy Pro 2 Truck|#37 Polaris RZR-Rockstar Energy Pro 2 Truck]]|e|776|fp = 300}}
+{{FH5ShopItem|superwheelspin|fp = 150}}
+{{FH5ShopItem|wheelspin|fp = 60}}
+}}
+
+==Seasonal Events==
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+<!-- Co-op -->
+{{FH5FPEvent|arcade}}
+{{FH5FPEvent|trial|That Don't Impreza Me Much|{{FH5CarPI|b|Evo vs. Impreza}}|{{FH5FPReward|car|Honda Civic Type R 2018|[[Honda Civic Type R (2018)|Honda Civic '18]]|r}}|10}}
+{{FH5FPEvent|lab|Utopia Gardens Recension|{{FH5CarPI|s1|ram}}|{{FH5FPReward|car|Hoonigan Gymkhana 10 Ford Escort Cosworth Group A|[[Hoonigan Gymkhana 10 Ford Escort Cosworth Group A|Hoonigan Group A]]|e}}|3}}
+{{FH5FPEvent|lab|Castillo Scramble|{{FH5CarPI|s1|[[Hoonigan]]}}|{{FH5FPReward|super}}|3}}
+
+<!-- PR Stunts -->
+{{FH5FPEvent|ds|Valle|{{FH5CarPI|s2|ag}} {{distance|300.0|m}}|{{FH5FPReward|super}}|2}}
+{{FH5FPEvent|sz|Orilla del Río|{{FH5CarPI|s2|ag}} {{speed|120.0}}|{{FH5FPReward|super}}|2}}
+{{FH5FPEvent|tb|Cascadas|{{FH5CarPI|s2|ag}} 27 seconds|{{FH5FPReward|super}}|2}}
+
+<!-- Championships -->
+{{FH5FPEvent|dc|Instant Classic|{{FH5CarPI|c|crl}}|{{FH5FPReward|car|Ford Racing Puma|[[Ford Racing Puma]]|r|}}|5}}
+{{FH5FPEvent|dc|#43|{{FH5CarPI|s1|[[Hoonigan]]}}|{{FH5FPReward|car|Hoonigan Gymkhana 9 Ford Focus RS RX|[[Hoonigan Gymkhana 9 Ford Focus RS RX|Hoonigan Focus]]|l|}}|5}}
+|}
+
+==Challenges==
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH5FPEvent|treasure|Retro Skills to Pay the Bills|Banking 25k required serious skill back in the 80's, do you rally think you can do it?|{{FH5FPReward|FP| |300|c}}|3}}
+{{FH5FPEvent|photo|WildHorizons|Photograph any [[:Category:Modern Rally (FH5)|Modern Rally]] car at the Horizon Wilds Outpost|{{FH5FPReward|song| |ODESZA - A Moment Apart|l}}|2}}
+{{FH5FPEvent|open|Go Fast|Complete a Horizon Open Custom Race in any [[Hoonigan]]|{{FH5FPReward|car|Hoonigan Chevrolet Bel Air|[[Hoonigan Chevrolet Bel Air|Hoonigan Bel Air]]|r|}}|2}}
+|}
+
+==Monthly Events==
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH5FPEvent|rivals|La Selva Scramble| | |1}}
+{{FH5FPEvent|rivals|River Scramble| | |1}}
+|}
+
+==Expansions==
+===Rally Adventure Events===
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH5FPEvent|rst|Canyon Rush|{{FH5CarPI|a|[[Alfa Romeo]]}} {{speed|155.0}}|{{FH5FPReward|super}}|2}}
+{{FH5FPEvent|rrs|O Romeo, Romeo|{{FH5CarPI|a|[[Alfa Romeo]]}}|{{FH5FPReward|horn| |Predator Howl|e|}}|5}}
+|}
+
+===Hot Wheels Events===
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH5FPEvent|hst|Forest Edge|{{FH5CarPI|s2|ag}} {{speed|260.0}}|{{FH5FPReward|super}}|2}}
+{{FH5FPEvent|exc|Shadow Realm|{{FH5CarPI|s1|sgt}}|{{FH5FPReward|car|Mosler MT900S|[[Mosler MT900S]]|e|}}|5}}
+|}
+
+==Super7==
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH5FPEvent|super7| | |{{FH5FPReward|super}}}}
+|}

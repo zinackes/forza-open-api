@@ -5,7 +5,6 @@ package handler
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/zinackes/forza-open-api/internal/oas"
 )
@@ -18,11 +17,7 @@ func (h *Handler) GetCarObtain(ctx context.Context, params oas.GetCarObtainParam
 		return nil, err
 	}
 	if o == nil {
-		return &oas.GetCarObtainNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no car with the given id"),
-		}, nil
+		return nil, errNotFound("no car with the given id")
 	}
 
 	out := oas.CarObtain{

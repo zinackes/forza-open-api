@@ -16,7 +16,7 @@ import (
 // en Phase 0 les stubs renvoient 501 sans toucher aux dépendances de données.
 func newServer(t *testing.T) http.Handler {
 	t.Helper()
-	srv, err := oas.NewServer(handler.New(nil), handler.SecurityHandler{},
+	srv, err := oas.NewServer(handler.New(nil, ""), handler.SecurityHandler{},
 		oas.WithErrorHandler(handler.ProblemErrorHandler))
 	if err != nil {
 		t.Fatalf("oas.NewServer: %v", err)
@@ -24,15 +24,20 @@ func newServer(t *testing.T) http.Handler {
 	return srv
 }
 
-// TestUnimplementedReturns501 vérifie qu'un endpoint non encore implémenté répond
-// 501 en RFC 9457 (application/problem+json). game=fh6 est requis pour passer
-// la validation du contrat et atteindre le stub. /v1/playlist/series reste un stub
-// (cars, manufacturers, tracks, pr-stunts, events, dlc-packs sont eux implémentés).
+// TestUnimplementedReturns501 vérifie le filet UnimplementedHandler (embarqué par
+// handler.Handler) : un endpoint du contrat non implémenté rend un 501 en RFC 9457
+// (application/problem+json). Tous les endpoints actuels étant implémentés, on
+// exerce le mécanisme via un serveur monté directement sur oas.UnimplementedHandler.
 func TestUnimplementedReturns501(t *testing.T) {
+	srv, err := oas.NewServer(oas.UnimplementedHandler{}, handler.SecurityHandler{},
+		oas.WithErrorHandler(handler.ProblemErrorHandler))
+	if err != nil {
+		t.Fatalf("oas.NewServer: %v", err)
+	}
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/playlist/series?game=fh6", nil)
 
-	newServer(t).ServeHTTP(rec, req)
+	srv.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusNotImplemented {
 		t.Fatalf("status = %d, want 501\nbody: %s", rec.Code, rec.Body.String())
