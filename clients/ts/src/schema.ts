@@ -41,6 +41,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/cars/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compare 2 à 3 voitures côte à côte.
+         * @description Renvoie les voitures demandées (2 à 3, via `ids`) dans l'ordre de la requête, pour un affichage côte à côte (overlays, bots Discord) : PI, classe, transmission et stats (vitesse/accélération/handling/freinage) sont alignés. Chaque entrée est l'objet Car complet. Comparaison stricte : 400 si moins de 2 ou plus de 3 ids ; 404 si un id est inconnu (contrairement au filtre `ids` de /v1/cars, aucun id n'est ignoré). L'id étant la clé stable globale, pas de paramètre `game`.
+         */
+        get: operations["compareCars"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/cars/{id}": {
         parameters: {
             query?: never;
@@ -147,6 +167,26 @@ export interface paths {
          * @description Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement cacheable, invalidée par les jobs d'ingestion.
          */
         get: operations["getReference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/meta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Métadonnées du service : jeux supportés, volumes et fraîcheur des données.
+         * @description Métadonnées légères pour les consommateurs et le dogfooding : jeux supportés (fh6, fh5), nombre de voitures par jeu et derniers timestamps d'ingestion du catalogue et de la playlist. Les timestamps proviennent du journal d'ingestion (data_changes) : `catalogUpdatedAt` (ressource car) et `playlistUpdatedAt` (ressource series) sont absents si la ressource n'a jamais été ingérée pour le jeu (rien d'inventé). `dataVersion` porte la version de jeu de données publiée si l'opérateur l'a tamponnée. `generatedAt` = instant de calcul, pour estimer l'âge côté client. Réponse à cache court : la fraîcheur est l'objet même de l'endpoint.
+         */
+        get: operations["getMeta"];
         put?: never;
         post?: never;
         delete?: never;
@@ -626,6 +666,10 @@ export interface components {
             page: number;
             pageSize: number;
         };
+        /** @description Comparaison de 2 à 3 voitures, alignées dans l'ordre des ids demandés. Chaque entrée est l'objet Car complet (PI, classe, transmission, stats). */
+        CarComparison: {
+            items: components["schemas"]["Car"][];
+        };
         Manufacturer: {
             game: components["schemas"]["Game"];
             name: string;
@@ -660,7 +704,7 @@ export interface components {
         };
         Reward: {
             id: string;
-            atPercent: number;
+            atPercent?: number;
             type: string;
             item: string;
         };
@@ -1007,6 +1051,34 @@ export interface components {
             /** @description Jeux disponibles et leurs volumes (global, indépendant du paramètre game). */
             games: components["schemas"]["GameCount"][];
         };
+        /** @description Volumes et fraîcheur des données d'un jeu supporté. carCount = voitures au catalogue (0 si rien n'est encore ingéré). catalogUpdatedAt / playlistUpdatedAt = dernier timestamp d'ingestion (journal data_changes) pour les ressources car / series ; absents si jamais ingéré pour ce jeu. */
+        MetaGame: {
+            game: components["schemas"]["Game"];
+            /** Format: int64 */
+            carCount: number;
+            /**
+             * Format: date-time
+             * @description Dernière ingestion du catalogue (voitures) pour ce jeu. Absent si jamais ingéré.
+             */
+            catalogUpdatedAt?: string;
+            /**
+             * Format: date-time
+             * @description Dernière ingestion de la playlist (séries) pour ce jeu. Absent si jamais ingérée.
+             */
+            playlistUpdatedAt?: string;
+        };
+        /** @description Métadonnées du service : jeux supportés, volumes et fraîcheur des données. Pensé pour les consommateurs (sélecteur de jeu, indicateur « data à jour ? ») et le dogfooding. games liste un MetaGame par valeur de l'enum Game (les jeux sans données apparaissent à 0). */
+        Meta: {
+            /** @description Jeux supportés et leurs volumes / fraîcheur (un par valeur de l'enum Game). */
+            games: components["schemas"]["MetaGame"][];
+            /** @description Version du jeu de données publiée (tampon opérateur, ex. snapshot wiki daté). Absente si non renseignée. */
+            dataVersion?: string;
+            /**
+             * Format: date-time
+             * @description Instant de calcul de la réponse (permet d'estimer l'âge des données côté client).
+             */
+            generatedAt: string;
+        };
         /** @description Perk Car Mastery d'une autre voiture qui débloque cette voiture (effectType car_unlock). */
         CarObtainMasteryUnlock: {
             /** @description Identifiant de la perk (réf. /v1/cars/{id}/mastery). */
@@ -1151,17 +1223,30 @@ export interface components {
             page: number;
             pageSize: number;
         };
-        /** @description Erreur au format RFC 9457 (application/problem+json). */
+        /**
+         * @description Erreur au format RFC 9457 (application/problem+json). Toutes les réponses d'erreur (400, 401, 404, 429, 5xx) partagent ce format. Le champ `type` porte un code stable (URN, indépendant de l'host) :
+         *       - urn:forza-open-api:problem:validation — requête invalide (400) ;
+         *       - urn:forza-open-api:problem:unauthorized — clé API absente/invalide (401) ;
+         *       - urn:forza-open-api:problem:not-found — ressource introuvable (404) ;
+         *       - urn:forza-open-api:problem:rate-limited — quota dépassé (429) ;
+         *       - urn:forza-open-api:problem:internal — erreur interne (500).
+         */
         Error: {
             /**
              * Format: uri
+             * @description Code d'erreur stable (URN). Voir la liste dans la description du schéma. Référence stable dans le temps, dissociée du statut HTTP.
              * @default about:blank
+             * @example urn:forza-open-api:problem:not-found
+             * @example urn:forza-open-api:problem:validation
              */
             type: string;
             title?: string;
             status?: number;
             detail?: string;
-            /** Format: uri */
+            /**
+             * Format: uri
+             * @description Chemin de la requête à l'origine de l'erreur (ex. /v1/cars/ghost).
+             */
             instance?: string;
         };
     };
@@ -1262,6 +1347,8 @@ export interface operations {
             /** @description Page de voitures. */
             200: {
                 headers: {
+                    /** @description Cache long (catalogue quasi-statique). Revalidation conditionnelle via ETag / If-None-Match (304). */
+                    "Cache-Control"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1314,6 +1401,35 @@ export interface operations {
             429: components["responses"]["TooManyRequests"];
         };
     };
+    compareCars: {
+        parameters: {
+            query: {
+                /** @description Identifiants des voitures à comparer (CSV, ex. ids=fh6-mazda-rx7-1997,fh6-toyota-supra-1998), 2 à 3 valeurs. L'ordre est conservé dans la réponse. */
+                ids: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Les voitures demandées, alignées dans l'ordre des ids. */
+            200: {
+                headers: {
+                    /** @description Cache long (catalogue quasi-statique). Revalidation conditionnelle via ETag / If-None-Match (304). */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CarComparison"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
     getCar: {
         parameters: {
             query?: never;
@@ -1329,6 +1445,8 @@ export interface operations {
             /** @description La voiture demandée. */
             200: {
                 headers: {
+                    /** @description Cache long (catalogue quasi-statique). Revalidation conditionnelle via ETag / If-None-Match (304). */
+                    "Cache-Control"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1482,6 +1600,30 @@ export interface operations {
             429: components["responses"]["TooManyRequests"];
         };
     };
+    getMeta: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Métadonnées du service. */
+            200: {
+                headers: {
+                    /** @description Cache court (la donnée de fraîcheur doit rester quasi temps réel). */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Meta"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
     listDlcPacks: {
         parameters: {
             query: {
@@ -1551,6 +1693,8 @@ export interface operations {
             /** @description La série courante avec ses récompenses et défis. */
             200: {
                 headers: {
+                    /** @description Cache court + stale-while-revalidate (la playlist tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). */
+                    "Cache-Control"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1578,6 +1722,8 @@ export interface operations {
             /** @description Les séries connues pour le jeu (récentes d'abord). */
             200: {
                 headers: {
+                    /** @description Cache court + stale-while-revalidate (la playlist tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). */
+                    "Cache-Control"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1604,6 +1750,8 @@ export interface operations {
             /** @description La série demandée avec ses récompenses et défis. */
             200: {
                 headers: {
+                    /** @description Cache court + stale-while-revalidate (la playlist tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). */
+                    "Cache-Control"?: string;
                     [name: string]: unknown;
                 };
                 content: {
