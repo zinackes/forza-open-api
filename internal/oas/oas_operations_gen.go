@@ -15,6 +15,7 @@ const (
 	GetDlcPackOperation               OperationName = "GetDlcPack"
 	GetEventOperation                 OperationName = "GetEvent"
 	GetForzathonShopOperation         OperationName = "GetForzathonShop"
+	GetMeOperation                    OperationName = "GetMe"
 	GetMetaOperation                  OperationName = "GetMeta"
 	GetPrStuntOperation               OperationName = "GetPrStunt"
 	GetRandomCarOperation             OperationName = "GetRandomCar"

@@ -43,6 +43,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	GetDlcPackOperation:               []string{},
 	GetEventOperation:                 []string{},
 	GetForzathonShopOperation:         []string{},
+	GetMeOperation:                    []string{},
 	GetMetaOperation:                  []string{},
 	GetPrStuntOperation:               []string{},
 	GetRandomCarOperation:             []string{},

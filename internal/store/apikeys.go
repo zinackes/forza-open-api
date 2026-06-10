@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -17,24 +19,32 @@ type APIKey struct {
 	Hash      string
 	Name      string
 	RateLimit int
+	Scopes    []string
 	CreatedAt time.Time
 	RevokedAt *time.Time
 }
 
-// CreateAPIKey insère une clé par son hash. rateLimit <= 0 omet la colonne pour
-// laisser le DEFAULT du schéma (1000) faire foi. Échoue si le hash existe (PK).
-func (s *Store) CreateAPIKey(ctx context.Context, hash, name string, rateLimit int) error {
-	var err error
+// CreateAPIKey insère une clé par son hash. rateLimit <= 0 et scopes vide omettent
+// la colonne correspondante pour laisser le DEFAULT du schéma faire foi (rate_limit
+// 1000, scopes {read}). Échoue si le hash existe (PK). Colonnes statiques + valeurs
+// paramétrées : aucune concaténation de donnée dans le SQL.
+func (s *Store) CreateAPIKey(ctx context.Context, hash, name string, rateLimit int, scopes []string) error {
+	cols := []string{"key_hash", "name"}
+	ph := []string{"$1", "$2"}
+	args := []any{hash, name}
 	if rateLimit > 0 {
-		_, err = s.DB.Exec(ctx,
-			`INSERT INTO api_keys (key_hash, name, rate_limit) VALUES ($1, $2, $3)`,
-			hash, name, rateLimit)
-	} else {
-		_, err = s.DB.Exec(ctx,
-			`INSERT INTO api_keys (key_hash, name) VALUES ($1, $2)`,
-			hash, name)
+		args = append(args, rateLimit)
+		cols = append(cols, "rate_limit")
+		ph = append(ph, "$"+strconv.Itoa(len(args)))
 	}
-	if err != nil {
+	if len(scopes) > 0 {
+		args = append(args, scopes)
+		cols = append(cols, "scopes")
+		ph = append(ph, "$"+strconv.Itoa(len(args)))
+	}
+	q := fmt.Sprintf("INSERT INTO api_keys (%s) VALUES (%s)",
+		strings.Join(cols, ", "), strings.Join(ph, ", "))
+	if _, err := s.DB.Exec(ctx, q, args...); err != nil {
 		return fmt.Errorf("insert api key: %w", err)
 	}
 	return nil
@@ -44,11 +54,11 @@ func (s *Store) CreateAPIKey(ctx context.Context, hash, name string, rateLimit i
 // le statut, au caller de décider). Renvoie (nil, nil) si le hash est inconnu.
 func (s *Store) LookupAPIKey(ctx context.Context, hash string) (*APIKey, error) {
 	const q = `
-SELECT key_hash, name, rate_limit, created_at, revoked_at
+SELECT key_hash, name, rate_limit, scopes, created_at, revoked_at
 FROM api_keys
 WHERE key_hash = $1`
 	var k APIKey
-	err := s.DB.QueryRow(ctx, q, hash).Scan(&k.Hash, &k.Name, &k.RateLimit, &k.CreatedAt, &k.RevokedAt)
+	err := s.DB.QueryRow(ctx, q, hash).Scan(&k.Hash, &k.Name, &k.RateLimit, &k.Scopes, &k.CreatedAt, &k.RevokedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
@@ -82,7 +92,7 @@ func (s *Store) RevokeAPIKey(ctx context.Context, hash string) (bool, error) {
 // d'abord. Ne renvoie jamais de clé en clair (impossible : non stockée).
 func (s *Store) ListAPIKeys(ctx context.Context) ([]APIKey, error) {
 	const q = `
-SELECT key_hash, name, rate_limit, created_at, revoked_at
+SELECT key_hash, name, rate_limit, scopes, created_at, revoked_at
 FROM api_keys
 ORDER BY created_at DESC`
 	rows, err := s.DB.Query(ctx, q)
@@ -94,7 +104,7 @@ ORDER BY created_at DESC`
 	var out []APIKey
 	for rows.Next() {
 		var k APIKey
-		if err := rows.Scan(&k.Hash, &k.Name, &k.RateLimit, &k.CreatedAt, &k.RevokedAt); err != nil {
+		if err := rows.Scan(&k.Hash, &k.Name, &k.RateLimit, &k.Scopes, &k.CreatedAt, &k.RevokedAt); err != nil {
 			return nil, fmt.Errorf("scan api key: %w", err)
 		}
 		out = append(out, k)

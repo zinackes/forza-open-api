@@ -20,6 +20,14 @@ type Config struct {
 	// Le quota (api_keys.rate_limit) s'entend « requêtes par fenêtre ». Env
 	// RATE_LIMIT_WINDOW en secondes (défaut 60s).
 	RateLimitWindow time.Duration
+	// CORSAllowedOrigins : origines autorisées pour la lecture publique (GET/HEAD).
+	// Large par défaut ("*") car l'API en lecture est ouverte ; env
+	// CORS_ALLOWED_ORIGINS (CSV). "*" → toute origine.
+	CORSAllowedOrigins []string
+	// CORSWriteOrigins : origines autorisées pour les writes (POST/PUT/PATCH/
+	// DELETE). Restreint par défaut (vide → aucun write navigateur) ; env
+	// CORS_WRITE_ORIGINS (CSV). À renseigner explicitement par déploiement.
+	CORSWriteOrigins []string
 	// Scheduler (cmd/scheduler) — rafraîchissement périodique des données
 	// volatiles. Les crons sont des specs 5 champs (fuseau UTC), défaut « 0 15 * *
 	// 4 » = jeudi 15:00 UTC, peu après le reset hebdo Forza (14:30 UTC). Les *Games
@@ -57,6 +65,11 @@ func Load() Config {
 		LogLevel:        parseLevel(getenv("LOG_LEVEL", "info")),
 		DataVersion:     os.Getenv("DATA_VERSION"),
 		RateLimitWindow: time.Duration(getenvInt("RATE_LIMIT_WINDOW", 60)) * time.Second,
+		// Lecture publique ouverte par défaut ; writes fermés tant que des
+		// origines ne sont pas explicitement autorisées.
+		CORSAllowedOrigins: splitCSV(getenv("CORS_ALLOWED_ORIGINS", "*")),
+		CORSWriteOrigins:   splitCSV(os.Getenv("CORS_WRITE_ORIGINS")),
+
 		PlaylistCron:    getenv("PLAYLIST_CRON", "0 15 * * 4"),
 		PlaylistGames:   splitCSV(getenv("PLAYLIST_GAMES", "fh6")),
 		ForzathonCron:   getenv("FORZATHON_CRON", "0 15 * * 4"),
@@ -75,7 +88,8 @@ func Load() Config {
 }
 
 // splitCSV découpe une liste CSV en éléments propres (trim, minuscules, vides
-// écartés). Sert aux jeux du scheduler (« fh6,fh5 »).
+// écartés). Sert aux jeux du scheduler (« fh6,fh5 ») et aux origines CORS (les
+// navigateurs émettent l'en-tête Origin en minuscules — normalisation sans perte).
 func splitCSV(s string) []string {
 	var out []string
 	for _, p := range strings.Split(s, ",") {

@@ -232,6 +232,17 @@ type MasteryHandler interface {
 //
 // x-ogen-operation-group: Meta
 type MetaHandler interface {
+	// GetMe implements getMe operation.
+	//
+	// Renvoie l'identité de la clé présentée dans X-API-Key : nom, scopes, quota (rateLimit) et
+	// état courant du rate-limit (remaining, resetAt issus de la fenêtre glissante, cf. en-têtes
+	// X-RateLimit-*). Contrairement aux ressources de lecture publique, l'authentification est REQUISE :
+	// sans clé valide → 401. Pattern GitHub /rate_limit + Stripe /v1/me. remaining et resetAt sont
+	// omis si le compteur (Redis) est indisponible (rien d'inventé). Réponse propre à la clé et
+	// volatile → non cacheable (no-store).
+	//
+	// GET /v1/me
+	GetMe(ctx context.Context) (GetMeRes, error)
 	// GetMeta implements getMeta operation.
 	//
 	// Métadonnées légères pour les consommateurs et le dogfooding : jeux supportés (fh6, fh5),
