@@ -14,6 +14,7 @@ const (
 	GetCurrentPlaylistOperation OperationName = "GetCurrentPlaylist"
 	GetDlcPackOperation         OperationName = "GetDlcPack"
 	GetEventOperation           OperationName = "GetEvent"
+	GetMeOperation              OperationName = "GetMe"
 	GetMetaOperation            OperationName = "GetMeta"
 	GetPrStuntOperation         OperationName = "GetPrStunt"
 	GetRandomCarOperation       OperationName = "GetRandomCar"

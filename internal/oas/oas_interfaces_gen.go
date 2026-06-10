@@ -33,6 +33,10 @@ type GetEventRes interface {
 	getEventRes()
 }
 
+type GetMeRes interface {
+	getMeRes()
+}
+
 type GetMetaRes interface {
 	getMetaRes()
 }
