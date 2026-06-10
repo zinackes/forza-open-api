@@ -80,6 +80,7 @@ type carSource struct {
 
 var carSources = map[string]carSource{
 	"fh6": {listPage: "Forza Horizon 6/Cars", listTemplate: "CarListStatsFH6"},
+	"fh5": {listPage: "Forza Horizon 5/Cars", listTemplate: "CarListStatsFH5"},
 }
 
 func seedCars(logger *slog.Logger) {
