@@ -3,8 +3,9 @@
 // scraping in-game, lecture mémoire ni injection (doctrine zéro gris).
 //
 // Deux pages alimentent une voiture :
-//   - « <game>/Cars » : une ligne {{CarListStatsFH6|…}} par voiture (PI, stats,
-//     valeur, rareté, méthode d'obtention, pays). Source FH6-faisant-foi.
+//   - « <game>/Cars » : une ligne {{CarListStats<jeu>|…}} par voiture (PI, stats,
+//     valeur, rareté, méthode d'obtention, pays). Mêmes positions FH5/FH6 ;
+//     codes d'obtention propres à chaque jeu (cf. obtainNames).
 //   - la page voiture (CarInfobox) : layout → drivetrain, manufacturer/model,
 //     type → body_type. Récupérée par lots (multi-titres) pour limiter le réseau.
 //

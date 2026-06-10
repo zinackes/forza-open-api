@@ -36,11 +36,16 @@ const (
 
 func loadList(t *testing.T) []ListRow {
 	t.Helper()
-	raw, err := os.ReadFile(filepath.Join("testdata", "cars_list.wikitext"))
+	return loadFixture(t, "cars_list.wikitext", "CarListStatsFH6")
+}
+
+func loadFixture(t *testing.T, file, tmpl string) []ListRow {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("testdata", file))
 	if err != nil {
 		t.Fatalf("read fixture: %v", err)
 	}
-	return ParseCarList(string(raw), "CarListStatsFH6")
+	return ParseCarList(string(raw), tmpl)
 }
 
 func TestParseCarList(t *testing.T) {
@@ -139,6 +144,73 @@ func TestNormalize(t *testing.T) {
 	}
 }
 
+// TestNormalizeFH5 couvre les spécificités du template/catalogue FH5 : bandes
+// PI sans classe R, codes d'obtention propres au jeu (ita ≠ FH6), pages FE
+// déjà titrées « … Forza Edition » (pas de double suffixe) et pipe littéral
+// <nowiki>|</nowiki> dans le libellé variante.
+func TestNormalizeFH5(t *testing.T) {
+	rows := loadFixture(t, "cars_list_fh5.wikitext", "CarListStatsFH5")
+	if len(rows) != 4 {
+		t.Fatalf("rows = %d, want 4 (la ligne <nowiki> doit être parsée)", len(rows))
+	}
+
+	infoboxes := map[string]Infobox{
+		"Abarth 695 Biposto":                 ParseInfobox(ibAbarth),
+		"Ferrari F50":                        ParseInfobox(ibFerrari),
+		"Honda Civic Type R Forza Edition":   ParseInfobox(ibHonda),
+		"Extreme E 55 ACCIONA Sainz XE Team": {Manufacturer: "Extreme E", Layout: "4wd"},
+	}
+
+	out, rep := Normalize(rows, infoboxes, "fh5")
+	if rep.Imported != 4 || len(out) != 4 {
+		t.Fatalf("imported = %d (out=%d), want 4 — skips: %v", rep.Imported, len(out), rep.SkipReasons)
+	}
+
+	by := map[string]int{}
+	for i := range out {
+		by[out[i].ID] = i
+	}
+
+	// Bandes PI FH5 : 540 → C (et non B comme en FH6), 912 → S2 (pas de R).
+	ab := out[by["fh5-abarth-695-biposto"]]
+	if ab.Game != "fh5" || ab.Class != "C" {
+		t.Errorf("Abarth: game/class = %s/%s, want fh5/C", ab.Game, ab.Class)
+	}
+	fr := out[by["fh5-ferrari-f50"]]
+	if fr.Class != "S2" {
+		t.Errorf("Ferrari: class = %s, want S2 (FH5 sans classe R)", fr.Class)
+	}
+	// Code d'obtention FH5 : ita = pack Italian Exotics (≠ Italian Passion FH6).
+	if fr.ObtainMethod == nil || *fr.ObtainMethod != "Autoshow (DLC: Italian Exotics Car Pack)" {
+		t.Errorf("Ferrari obtain = %v, want pack FH5", fr.ObtainMethod)
+	}
+
+	// Page FE FH5 : nom déjà suffixé → ni double suffixe ni double slug.
+	idx, ok := by["fh5-honda-civic-type-r-forza-edition"]
+	if !ok {
+		t.Fatalf("id FE attendu absent ; ids: %v", by)
+	}
+	hf := out[idx]
+	if hf.Name != "Honda Civic Type R Forza Edition" {
+		t.Errorf("Honda FE name = %q (double suffixe ?)", hf.Name)
+	}
+	if hf.Rarity == nil || *hf.Rarity != "forza_edition" {
+		t.Errorf("Honda FE rarity = %v, want forza_edition", hf.Rarity)
+	}
+
+	// Ligne avec <nowiki>|</nowiki> dans la variante : champs non décalés.
+	ex := out[by["fh5-extreme-e-55-acciona-sainz-xe-team"]]
+	if ex.Year == nil || *ex.Year != 2022 || ex.PI != 748 || ex.Class != "A" {
+		t.Errorf("Extreme E: year/pi/class = %v/%d/%s, want 2022/748/A", ex.Year, ex.PI, ex.Class)
+	}
+	if ex.ValueCr == nil || *ex.ValueCr != 700000 {
+		t.Errorf("Extreme E value_cr = %v, want 700000", ex.ValueCr)
+	}
+	if ex.Drivetrain != "AWD" {
+		t.Errorf("Extreme E drivetrain = %s, want AWD", ex.Drivetrain)
+	}
+}
+
 func TestClassFromPI(t *testing.T) {
 	cases := []struct {
 		pi   int
@@ -153,7 +225,23 @@ func TestClassFromPI(t *testing.T) {
 			t.Errorf("classFromPI(fh6, %d) = %q, want %q", c.pi, got, c.want)
 		}
 	}
-	if classFromPI("fh5", 540) != "" {
+
+	// FH5 : bandes décalées (D jusqu'à 500) et pas de classe R (901-998 = S2).
+	fh5 := []struct {
+		pi   int
+		want string
+	}{
+		{100, "D"}, {500, "D"}, {501, "C"}, {600, "C"}, {601, "B"}, {700, "B"},
+		{701, "A"}, {800, "A"}, {801, "S1"}, {900, "S1"}, {901, "S2"}, {998, "S2"},
+		{999, "X"},
+	}
+	for _, c := range fh5 {
+		if got := classFromPI("fh5", c.pi); got != c.want {
+			t.Errorf("classFromPI(fh5, %d) = %q, want %q", c.pi, got, c.want)
+		}
+	}
+
+	if classFromPI("fm23", 540) != "" {
 		t.Errorf("jeu non supporté doit donner \"\"")
 	}
 }

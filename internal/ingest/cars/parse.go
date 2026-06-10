@@ -168,7 +168,10 @@ func Normalize(rows []ListRow, infoboxes map[string]Infobox, game string) ([]sto
 		isFE := strings.EqualFold(r.Rarity, "fe")
 		name := r.Name
 		id := game + "-" + slug(r.Name)
-		if isFE {
+		// FH6 liste les FE sous le nom de la voiture de base → suffixer pour
+		// les distinguer. FH5 leur dédie une page dont le titre contient déjà
+		// « Forza Edition » → ne pas doubler le suffixe.
+		if isFE && !strings.Contains(name, "Forza Edition") {
 			name += " Forza Edition"
 			id += "-forza-edition"
 		}
@@ -189,7 +192,7 @@ func Normalize(rows []ListRow, infoboxes map[string]Infobox, game string) ([]sto
 			Stats:        statsJSON(r.Stats),
 			Rarity:       rarityFromCode(r.Rarity),
 			ValueCr:      valueCrPtr(r.Value),
-			ObtainMethod: obtainMethod(r.Obtain, rep),
+			ObtainMethod: obtainMethod(game, r.Obtain, rep),
 			// body_type / category / image_url : non sourcés proprement → NULL.
 		}
 		rep.Imported++
@@ -233,31 +236,51 @@ func CarTitles(rows []ListRow) []string {
 
 // --- Tables de normalisation (sourcées du wiki, pas inventées) ----------------
 
-// classFromPI applique les bandes PI→class publiées du jeu. FH6 (page wiki
-// « Performance Index ») : D 100-400, C 401-500, B 501-600, A 601-700,
-// S1 701-800, S2 801-900, R 901-998, X 999. Jeu inconnu → "" (voiture écartée).
+// classFromPI applique les bandes PI→class publiées du jeu (page wiki
+// « Performance Index »). FH6 : D 100-400, C 401-500, B 501-600, A 601-700,
+// S1 701-800, S2 801-900, R 901-998, X 999. FH5 (série Horizon avant FH6,
+// pas de classe R) : D 100-500, C 501-600, B 601-700, A 701-800, S1 801-900,
+// S2 901-998, X 999. Jeu inconnu → "" (voiture écartée).
 func classFromPI(game string, pi int) string {
-	if game != "fh6" {
-		return ""
+	switch game {
+	case "fh6":
+		switch {
+		case pi <= 400:
+			return "D"
+		case pi <= 500:
+			return "C"
+		case pi <= 600:
+			return "B"
+		case pi <= 700:
+			return "A"
+		case pi <= 800:
+			return "S1"
+		case pi <= 900:
+			return "S2"
+		case pi <= 998:
+			return "R"
+		default:
+			return "X"
+		}
+	case "fh5":
+		switch {
+		case pi <= 500:
+			return "D"
+		case pi <= 600:
+			return "C"
+		case pi <= 700:
+			return "B"
+		case pi <= 800:
+			return "A"
+		case pi <= 900:
+			return "S1"
+		case pi <= 998:
+			return "S2"
+		default:
+			return "X"
+		}
 	}
-	switch {
-	case pi <= 400:
-		return "D"
-	case pi <= 500:
-		return "C"
-	case pi <= 600:
-		return "B"
-	case pi <= 700:
-		return "A"
-	case pi <= 800:
-		return "S1"
-	case pi <= 900:
-		return "S2"
-	case pi <= 998:
-		return "R"
-	default:
-		return "X"
-	}
+	return ""
 }
 
 // drivetrainFromLayout dérive le drivetrain du code layout de l'infobox : le 2e
@@ -287,6 +310,9 @@ func drivetrainFromLayout(layout string) string {
 var rarityNames = map[string]string{
 	"c": "common", "r": "rare", "e": "epic", "l": "legendary",
 	"fe": "forza_edition", "barn": "barn_find", "treasure": "treasure",
+	// Codes FH5 (badge du template CarListStatsFH5) : mot affiche le badge
+	// FORZA EDITION, ae ANNIVERSARY, de DONUT EDITION.
+	"mot": "forza_edition", "ae": "anniversary", "de": "donut_edition",
 }
 
 func rarityFromCode(code string) *string {
@@ -296,8 +322,16 @@ func rarityFromCode(code string) *string {
 	return nil
 }
 
-// obtainNames traduit les codes d'obtention (switch du template wiki) en texte.
-var obtainNames = map[string]string{
+// obtainNames traduit les codes d'obtention (switch du template wiki de chaque
+// jeu) en texte. Une table PAR JEU : les mêmes codes ont des sens différents
+// d'un template à l'autre (ex. ita, pass, wp, as entre FH5 et FH6).
+var obtainNames = map[string]map[string]string{
+	"fh6": obtainNamesFH6,
+	"fh5": obtainNamesFH5,
+}
+
+// obtainNamesFH6 : switch du template {{CarListStatsFH6}}.
+var obtainNamesFH6 = map[string]string{
 	"auto": "Autoshow", "w": "Wristband reward", "wh": "Wheelspin",
 	"whw": "Wheelspin, Wristband reward", "barn": "Barn Find",
 	"treasure": "Treasure Car", "cm": "Car Mastery", "htf": "Hard to Find",
@@ -316,14 +350,51 @@ var obtainNames = map[string]string{
 	"apromo": "Autoshow, Promotional", "ita": "Italian Passion Car Pack",
 }
 
-// obtainMethod mappe le code en texte ; code inconnu → on conserve le code brut
-// (donnée sourcée, pas inventée) et on l'enregistre comme anomalie.
-func obtainMethod(code string, rep Report) *string {
+// obtainNamesFH5 : switch du template {{CarListStatsFH5}}. Les détails portés
+// par des paramètres nommés du wiki (nom d'accolade, de story, de mission…)
+// ne sont pas captés par ParseCarList → texte générique du code seul.
+var obtainNamesFH5 = map[string]string{
+	"auto": "Autoshow", "as": "Autoshow, Showcase reward", "wh": "Wheelspin",
+	"mb": "Midnight Battle", "whmb": "Wheelspin, Midnight Battle",
+	"ac": "Accolade reward", "barn": "Barn Find", "cm": "Car Mastery",
+	"cc": "Car Collector", "htf": "Hard to Find", "awh": "Autoshow, Wheelspin",
+	"aa": "Autoshow, Accolade reward", "wha": "Wheelspin, Accolade reward",
+	"awha": "Autoshow, Wheelspin, Accolade reward", "hs": "Horizon Story",
+	"hwa":  "HW Academy, Autoshow (DLC: Hot Wheels)",
+	"hww":  "HW Academy (DLC: Hot Wheels), Wheelspin",
+	"ra":   "Expedition, Autoshow (DLC: Rally Adventure)",
+	"rah":  "Horizon Raptors, Autoshow (DLC: Rally Adventure)",
+	"raa":  "Apex Predators, Autoshow (DLC: Rally Adventure)",
+	"rag":  "Grit Reapers, Autoshow (DLC: Rally Adventure)",
+	"pass": "Autoshow (DLC: Car Pass)", "fd": "Autoshow (DLC: Formula Drift Pack)",
+	"hr":    "Autoshow (DLC: Horizon Racing Car Pack)",
+	"ita":   "Autoshow (DLC: Italian Exotics Car Pack)",
+	"spd":   "Autoshow (DLC: Super Speed Car Pack)",
+	"ama":   "Autoshow (DLC: American Automotive Car Pack)",
+	"fx":    "Autoshow (DLC: Fast X Car Pack)",
+	"cls":   "Autoshow (DLC: Chinese Lucky Stars Car Pack)",
+	"euro":  "Autoshow (DLC: European Automotive Car Pack)",
+	"acc":   "Autoshow (DLC: Acceleration Car Pack)",
+	"apex":  "Autoshow (DLC: Apex Allstars Car Pack)",
+	"uni":   "Autoshow (DLC: Universal Icons Car Pack)",
+	"jdm":   "Autoshow (DLC: JDM Jewels Car Pack)",
+	"nrr":   "Autoshow (DLC: Nissan Retro Rides Car Pack)",
+	"wp":    "Autoshow (DLC: Welcome Pack)",
+	"vip":   "Gifted (DLC: VIP Membership)",
+	"ctrl":  "Gifted (Forza Horizon 5 Limited Edition Xbox Controller)",
+	"promo": "Gifted (Promotional)", "ap": "Autoshow, Gifted (Promotional)",
+	"un": "Unobtainable",
+}
+
+// obtainMethod mappe le code en texte pour le jeu donné ; code inconnu → on
+// conserve le code brut (donnée sourcée, pas inventée) et on l'enregistre
+// comme anomalie.
+func obtainMethod(game, code string, rep Report) *string {
 	code = strings.TrimSpace(code)
 	if code == "" {
 		return nil
 	}
-	if name, ok := obtainNames[strings.ToLower(code)]; ok {
+	if name, ok := obtainNames[game][strings.ToLower(code)]; ok {
 		return &name
 	}
 	rep.UnknownCodes["obtain:"+code]++
@@ -485,14 +556,26 @@ func readBalanced(s string, start int) (string, int) {
 }
 
 // splitParams découpe un corps de template sur les '|' de premier niveau, en
-// ignorant ceux situés dans des liens [[a|b]] ou des templates imbriqués {{…}}.
+// ignorant ceux situés dans des liens [[a|b]], des templates imbriqués {{…}}
+// ou des blocs <nowiki>…</nowiki> (pipe littéral, ex. liste FH5).
 func splitParams(body string) []string {
 	var parts []string
 	var cur strings.Builder
 	link, tmpl := 0, 0
+	nowiki := false
 	for i := 0; i < len(body); i++ {
 		c := body[i]
 		switch {
+		case strings.HasPrefix(body[i:], "<nowiki>"):
+			nowiki = true
+			cur.WriteString("<nowiki>")
+			i += len("<nowiki>") - 1
+		case strings.HasPrefix(body[i:], "</nowiki>"):
+			nowiki = false
+			cur.WriteString("</nowiki>")
+			i += len("</nowiki>") - 1
+		case nowiki:
+			cur.WriteByte(c)
 		case c == '[' && i+1 < len(body) && body[i+1] == '[':
 			link++
 			cur.WriteString("[[")
