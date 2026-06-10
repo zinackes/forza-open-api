@@ -214,6 +214,46 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
+  /v1/cars/compare:
+    get:
+      operationId: compareCars
+      summary: Compare 2 à 3 voitures côte à côte.
+      description: >
+        Renvoie les voitures demandées (2 à 3, via `ids`) dans l'ordre de la
+        requête, pour un affichage côte à côte (overlays, bots Discord) : PI,
+        classe, transmission et stats (vitesse/accélération/handling/freinage)
+        sont alignés. Chaque entrée est l'objet Car complet. Comparaison
+        stricte : 400 si moins de 2 ou plus de 3 ids ; 404 si un id est
+        inconnu (contrairement au filtre `ids` de /v1/cars, aucun id n'est
+        ignoré). L'id étant la clé stable globale, pas de paramètre `game`.
+      tags: [Cars]
+      x-ogen-operation-group: Cars
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          description: >-
+            Identifiants des voitures à comparer (CSV, ex.
+            ids=fh6-mazda-rx7-1997,fh6-toyota-supra-1998), 2 à 3 valeurs.
+            L'ordre est conservé dans la réponse.
+          style: form
+          explode: false
+          schema:
+            type: array
+            minItems: 2
+            maxItems: 3
+            items: { type: string }
+      responses:
+        '200':
+          description: Les voitures demandées, alignées dans l'ordre des ids.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarComparison' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
   /v1/cars/{id}:
     get:
       operationId: getCar
@@ -1139,6 +1179,19 @@ components:
         total: { type: integer, format: int64 }
         page: { type: integer }
         pageSize: { type: integer }
+
+    CarComparison:
+      type: object
+      description: >
+        Comparaison de 2 à 3 voitures, alignées dans l'ordre des ids demandés.
+        Chaque entrée est l'objet Car complet (PI, classe, transmission, stats).
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 2
+          maxItems: 3
+          items: { $ref: '#/components/schemas/Car' }
 
     Manufacturer:
       type: object

@@ -94,6 +94,34 @@ func (h *Handler) GetCar(ctx context.Context, params oas.GetCarParams) (oas.GetC
 	return &car, nil
 }
 
+// CompareCars implémente GET /v1/cars/compare : 2 à 3 voitures alignées dans
+// l'ordre des ids demandés (les bornes 2..3 sont validées par ogen → 400).
+// Comparaison stricte : si un id est inconnu, on renvoie un 404 RFC 9457 plutôt
+// que de l'ignorer (contrairement au filtre ids de /v1/cars).
+func (h *Handler) CompareCars(ctx context.Context, params oas.CompareCarsParams) (oas.CompareCarsRes, error) {
+	cars, err := h.store.CarsByIDs(ctx, params.Ids)
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[string]store.Car, len(cars))
+	for _, c := range cars {
+		byID[c.ID] = c
+	}
+	items := make([]oas.Car, 0, len(params.Ids))
+	for _, id := range params.Ids {
+		c, ok := byID[id]
+		if !ok {
+			return &oas.CompareCarsNotFound{
+				Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
+				Status: oas.NewOptInt(http.StatusNotFound),
+				Detail: oas.NewOptString("no car with id " + id),
+			}, nil
+		}
+		items = append(items, mapCar(c))
+	}
+	return &oas.CarComparison{Items: items}, nil
+}
+
 // mapCar projette la vue DB d'une voiture sur le modèle du contrat.
 func mapCar(c store.Car) oas.Car {
 	return oas.Car{

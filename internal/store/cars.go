@@ -219,6 +219,40 @@ WHERE c.id = $1`
 	return &c, nil
 }
 
+// CarsByIDs renvoie les voitures dont l'id figure dans ids (sans filtre game :
+// l'id est la clé stable globale). Les ids inconnus n'ont simplement pas de
+// ligne — le handler compare au nombre demandé et en fait un 404 (comparaison
+// stricte). L'ordre du résultat n'est pas garanti : le handler le réaligne sur
+// l'ordre de la requête.
+func (s *Store) CarsByIDs(ctx context.Context, ids []string) ([]Car, error) {
+	const q = `
+SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
+       c.drivetrain, c.stats, c.body_type, c.category, c.rarity, c.value_cr,
+       c.obtain_method, c.image_url, c.created_at, c.updated_at
+FROM cars c
+WHERE c.id = ANY($1)`
+	rows, err := s.DB.Query(ctx, q, ids)
+	if err != nil {
+		return nil, fmt.Errorf("query cars by ids: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]Car, 0, len(ids))
+	for rows.Next() {
+		var c Car
+		if err := rows.Scan(&c.ID, &c.Game, &c.Name, &c.Make, &c.Model, &c.Year,
+			&c.Class, &c.PI, &c.Drivetrain, &c.Stats, &c.BodyType, &c.Category, &c.Rarity,
+			&c.ValueCr, &c.ObtainMethod, &c.ImageURL, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan car: %w", err)
+		}
+		out = append(out, c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate cars by ids: %w", err)
+	}
+	return out, nil
+}
+
 // UpsertCars insère ou met à jour des voitures de façon idempotente (ON CONFLICT
 // sur l'id). Rejouable sans doublon. Appelé par l'ingestion (cmd/seed), jamais un
 // handler. Stats est du JSONB brut (nil → NULL) ; les pointeurs nil → NULL.
