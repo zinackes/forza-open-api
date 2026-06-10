@@ -475,6 +475,36 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
+  /v1/me:
+    get:
+      operationId: getMe
+      summary: Informations de la clé API appelante (identité, scopes, quota).
+      description: >
+        Renvoie l'identité de la clé présentée dans X-API-Key : nom, scopes,
+        quota (rateLimit) et état courant du rate-limit (remaining, resetAt issus
+        de la fenêtre glissante, cf. en-têtes X-RateLimit-*). Contrairement aux
+        ressources de lecture publique, l'authentification est REQUISE : sans clé
+        valide → 401. Pattern GitHub /rate_limit + Stripe /v1/me. remaining et
+        resetAt sont omis si le compteur (Redis) est indisponible (rien
+        d'inventé). Réponse propre à la clé et volatile → non cacheable
+        (no-store).
+      tags: [Meta]
+      x-ogen-operation-group: Meta
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Informations de la clé API appelante.
+          headers:
+            Cache-Control:
+              description: Toujours no-store (réponse propre à la clé, volatile).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
   /v1/exports:
     get:
       operationId: listExports
@@ -1907,6 +1937,46 @@ components:
           type: string
           format: date-time
           description: Instant de calcul de la réponse (permet d'estimer l'âge des données côté client).
+
+    Me:
+      type: object
+      description: >
+        Identité et quota de la clé API présentée dans X-API-Key (endpoint /v1/me,
+        authentification requise). remaining/resetAt reflètent l'état courant de la
+        fenêtre glissante de rate-limit (cohérents avec les en-têtes X-RateLimit-*
+        de la réponse) ; tous deux omis si le compteur (Redis) est indisponible.
+      required: [name, scopes, rateLimit, createdAt]
+      examples:
+        - name: mon-bot-discord
+          scopes: [read, submit-ugc]
+          rateLimit: 1000
+          remaining: 847
+          resetAt: 2026-06-09T15:00:00Z
+          createdAt: 2026-05-20T10:00:00Z
+      properties:
+        name: { type: string, description: Nom de la clé (libellé donné à la création). }
+        scopes:
+          type: array
+          description: Permissions accordées à la clé (ex. read, submit-ugc).
+          items: { type: string }
+        rateLimit:
+          type: integer
+          description: Quota maximal de requêtes sur la fenêtre glissante.
+        remaining:
+          type: integer
+          description: >
+            Requêtes restantes sur la fenêtre courante (compteur sliding-window).
+            Omis si le compteur (Redis) est indisponible.
+        resetAt:
+          type: string
+          format: date-time
+          description: >
+            Instant où un créneau de quota se libère (fin de la fenêtre courante).
+            Omis si le compteur (Redis) est indisponible.
+        createdAt:
+          type: string
+          format: date-time
+          description: Date de création de la clé.
 
     ExportFormat:
       type: string
