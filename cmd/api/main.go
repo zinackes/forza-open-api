@@ -26,6 +26,12 @@ import (
 //go:embed llms.txt
 var llmsTxt []byte
 
+// docsHTML est la doc API interactive (Scalar) servie sur /docs. Elle ne contient
+// aucune doc écrite à la main : Scalar lit le contrat /openapi.yaml côté client.
+//
+//go:embed docs.html
+var docsHTML []byte
+
 func main() {
 	cfg := config.Load()
 
@@ -65,6 +71,7 @@ func main() {
 	mux.HandleFunc("GET /healthz", healthz(st))
 	mux.HandleFunc("GET /openapi.yaml", staticFile("application/yaml", api.OpenAPI))
 	mux.HandleFunc("GET /llms.txt", staticFile("text/plain; charset=utf-8", llmsTxt))
+	mux.HandleFunc("GET /docs", staticFile("text/html; charset=utf-8", docsHTML))
 	// Routes du contrat (/v1/...) derrière le rate-limit puis le cache conditionnel
 	// (ETag/304, calculé sur le corps final) ; /healthz et les statiques sont
 	// enregistrés à part et restent prioritaires + non limités.
