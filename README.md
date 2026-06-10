@@ -47,6 +47,7 @@ internal/store/   pools pgx + go-redis
 api/openapi.yaml  LE contrat (source de vérité)
 db/init.sql       schéma Phase 0
 docs/             référence (architecture, principes, décisions, données)
+clients/ts/       SDK TypeScript généré depuis le contrat (openapi-typescript + openapi-fetch)
 ```
 
 ## Contribuer

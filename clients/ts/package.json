@@ -1,0 +1,49 @@
+{
+  "name": "@forza-open-api/client",
+  "version": "1.0.0",
+  "description": "Typed TypeScript SDK for the Forza Open API, generated from the OpenAPI contract.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zinackes/forza-open-api.git",
+    "directory": "clients/ts"
+  },
+  "homepage": "https://github.com/zinackes/forza-open-api/tree/main/clients/ts",
+  "keywords": [
+    "forza",
+    "forza-horizon",
+    "openapi",
+    "sdk",
+    "typescript"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "generate": "openapi-typescript ../../api/openapi.yaml -o src/schema.ts",
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.check.json",
+    "sync-version": "node scripts/sync-version.mjs",
+    "prepublishOnly": "npm run sync-version && npm run generate && npm run build"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.9.3",
+    "yaml": "^2.9.0"
+  }
+}
