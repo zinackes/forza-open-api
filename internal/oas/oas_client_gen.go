@@ -2921,6 +2921,23 @@ func (c *Client) sendListCars(ctx context.Context, params ListCarsParams) (res L
 		}
 	}
 	{
+		// Encode "sort" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "sort",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Sort.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
 		// Encode "page" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
 			Name:    "page",

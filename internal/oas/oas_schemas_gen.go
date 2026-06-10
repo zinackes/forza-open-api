@@ -2455,6 +2455,89 @@ type ListCarsBadRequest Error
 
 func (*ListCarsBadRequest) listCarsRes() {}
 
+type ListCarsSort string
+
+const (
+	ListCarsSortPi         ListCarsSort = "pi"
+	ListCarsSortMinusPi    ListCarsSort = "-pi"
+	ListCarsSortName       ListCarsSort = "name"
+	ListCarsSortMinusName  ListCarsSort = "-name"
+	ListCarsSortYear       ListCarsSort = "year"
+	ListCarsSortMinusYear  ListCarsSort = "-year"
+	ListCarsSortValue      ListCarsSort = "value"
+	ListCarsSortMinusValue ListCarsSort = "-value"
+)
+
+// AllValues returns all ListCarsSort values.
+func (ListCarsSort) AllValues() []ListCarsSort {
+	return []ListCarsSort{
+		ListCarsSortPi,
+		ListCarsSortMinusPi,
+		ListCarsSortName,
+		ListCarsSortMinusName,
+		ListCarsSortYear,
+		ListCarsSortMinusYear,
+		ListCarsSortValue,
+		ListCarsSortMinusValue,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ListCarsSort) MarshalText() ([]byte, error) {
+	switch s {
+	case ListCarsSortPi:
+		return []byte(s), nil
+	case ListCarsSortMinusPi:
+		return []byte(s), nil
+	case ListCarsSortName:
+		return []byte(s), nil
+	case ListCarsSortMinusName:
+		return []byte(s), nil
+	case ListCarsSortYear:
+		return []byte(s), nil
+	case ListCarsSortMinusYear:
+		return []byte(s), nil
+	case ListCarsSortValue:
+		return []byte(s), nil
+	case ListCarsSortMinusValue:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ListCarsSort) UnmarshalText(data []byte) error {
+	switch ListCarsSort(data) {
+	case ListCarsSortPi:
+		*s = ListCarsSortPi
+		return nil
+	case ListCarsSortMinusPi:
+		*s = ListCarsSortMinusPi
+		return nil
+	case ListCarsSortName:
+		*s = ListCarsSortName
+		return nil
+	case ListCarsSortMinusName:
+		*s = ListCarsSortMinusName
+		return nil
+	case ListCarsSortYear:
+		*s = ListCarsSortYear
+		return nil
+	case ListCarsSortMinusYear:
+		*s = ListCarsSortMinusYear
+		return nil
+	case ListCarsSortValue:
+		*s = ListCarsSortValue
+		return nil
+	case ListCarsSortMinusValue:
+		*s = ListCarsSortMinusValue
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type ListCarsTooManyRequests Error
 
 func (*ListCarsTooManyRequests) listCarsRes() {}
@@ -3310,6 +3393,52 @@ func (o OptJournalTrack) Get() (v JournalTrack, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptJournalTrack) Or(d JournalTrack) JournalTrack {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptListCarsSort returns new OptListCarsSort with value set to v.
+func NewOptListCarsSort(v ListCarsSort) OptListCarsSort {
+	return OptListCarsSort{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptListCarsSort is optional ListCarsSort.
+type OptListCarsSort struct {
+	Value ListCarsSort
+	Set   bool
+}
+
+// IsSet returns true if OptListCarsSort was set.
+func (o OptListCarsSort) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptListCarsSort) Reset() {
+	var v ListCarsSort
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptListCarsSort) SetTo(v ListCarsSort) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptListCarsSort) Get() (v ListCarsSort, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptListCarsSort) Or(d ListCarsSort) ListCarsSort {
 	if v, ok := o.Get(); ok {
 		return v
 	}

@@ -1,6 +1,7 @@
 // Tests d'intégration du catalogue (cars/manufacturers) : Postgres jetable via
 // testcontainers-go, schéma db/init.sql, fixtures en SQL paramétré. Couvre les
-// filtres scalaires, la pagination, le tri (ORDER BY pi, name, id), GetCar et la
+// filtres scalaires, la pagination, le tri (param sort whitelisté, défaut pi puis
+// départage name, id), GetCar et la
 // liste des constructeurs. Partage newTestStore/mustExec avec integration_test.go.
 //
 // Nécessite Docker (cf. .claude/rules/testing.md). En CI, Docker est présent.
@@ -118,27 +119,51 @@ func TestListCarsPagination(t *testing.T) {
 	}
 }
 
-// TestListCarsSorting vérifie l'ORDER BY pi, name, id : le PI prime, puis le nom à
-// PI égal, puis l'id comme départage stable (deux voitures de même PI et même nom).
+// TestListCarsSorting vérifie le paramètre sort : chaque clé whitelistée (pi, name,
+// year, value) dans les deux sens, le défaut (pi croissant), le départage stable
+// name puis id (car-alpha-1/2 : mêmes pi, name, year, value), les NULL renvoyés en
+// dernier quel que soit le sens (year/value absents) et le repli sur le défaut pour
+// une clé inconnue (impossible via l'API — l'enum du contrat la rejette en 400 —
+// mais le store ne doit jamais interpoler une valeur non mappée).
 func TestListCarsSorting(t *testing.T) {
 	ctx := context.Background()
 	st := newTestStore(t)
 
 	// Insertion volontairement désordonnée : l'ordre attendu vient du tri SQL.
-	// z-low : PI le plus bas (prime). car-alpha-1/2 : même PI + même nom → départage id.
-	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
-		('car-beta','fh6','Beta','Make','A',780,'RWD'),
-		('car-alpha-2','fh6','Alpha','Make','A',780,'RWD'),
-		('z-low','fh6','Whatever','Make','D',500,'RWD'),
-		('car-alpha-1','fh6','Alpha','Make','A',780,'RWD')`)
+	// z-low : pi le plus bas, year le plus ancien, value NULL.
+	// car-alpha-1 : year NULL. car-alpha-1/2 : même pi/name/value → départage id.
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain, year, value_cr) VALUES
+		('car-beta','fh6','Beta','Make','A',780,'RWD',2005,50000),
+		('car-alpha-2','fh6','Alpha','Make','A',780,'RWD',2020,150000),
+		('z-low','fh6','Whatever','Make','D',500,'RWD',1998,NULL),
+		('car-alpha-1','fh6','Alpha','Make','A',780,'RWD',NULL,150000)`)
 
-	cars, _, err := st.ListCars(ctx, store.CarFilter{Game: "fh6", Limit: 50})
-	if err != nil {
-		t.Fatalf("ListCars: %v", err)
+	cases := []struct {
+		name string
+		sort string
+		want []string // IDs dans l'ordre attendu
+	}{
+		{"défaut (pi asc)", "", []string{"z-low", "car-alpha-1", "car-alpha-2", "car-beta"}},
+		{"pi", "pi", []string{"z-low", "car-alpha-1", "car-alpha-2", "car-beta"}},
+		{"-pi", "-pi", []string{"car-alpha-1", "car-alpha-2", "car-beta", "z-low"}},
+		{"name", "name", []string{"car-alpha-1", "car-alpha-2", "car-beta", "z-low"}},
+		{"-name", "-name", []string{"z-low", "car-beta", "car-alpha-1", "car-alpha-2"}},
+		{"year (NULL dernier)", "year", []string{"z-low", "car-beta", "car-alpha-2", "car-alpha-1"}},
+		{"-year (NULL dernier)", "-year", []string{"car-alpha-2", "car-beta", "z-low", "car-alpha-1"}},
+		{"value (NULL dernier)", "value", []string{"car-beta", "car-alpha-1", "car-alpha-2", "z-low"}},
+		{"-value (NULL dernier)", "-value", []string{"car-alpha-1", "car-alpha-2", "car-beta", "z-low"}},
+		{"clé inconnue → défaut", "bogus", []string{"z-low", "car-alpha-1", "car-alpha-2", "car-beta"}},
 	}
-	want := []string{"z-low", "car-alpha-1", "car-alpha-2", "car-beta"}
-	if got := carIDs(cars); !reflect.DeepEqual(got, want) {
-		t.Errorf("ordre = %v, want %v", got, want)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cars, _, err := st.ListCars(ctx, store.CarFilter{Game: "fh6", Sort: tc.sort, Limit: 50})
+			if err != nil {
+				t.Fatalf("ListCars(sort=%q): %v", tc.sort, err)
+			}
+			if got := carIDs(cars); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("sort=%q : ordre = %v, want %v", tc.sort, got, tc.want)
+			}
+		})
 	}
 }
 

@@ -26,6 +26,7 @@ func (h *Handler) ListCars(ctx context.Context, params oas.ListCarsParams) (oas.
 		Q:            optFilter(params.Q.Set, params.Q.Value),
 		Dlc:          optFilter(params.Dlc.Set, params.Dlc.Value),
 		UpdatedSince: optTimeFilter(params.UpdatedSince),
+		Sort:         string(params.Sort.Or("")),
 		Limit:        size,
 		Offset:       (page - 1) * size,
 	})
