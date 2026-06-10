@@ -1631,14 +1631,26 @@ func (s *Drivetrain) UnmarshalText(data []byte) error {
 	}
 }
 
-// Erreur au format RFC 9457 (application/problem+json).
+// Erreur au format RFC 9457 (application/problem+json). Toutes les réponses d'erreur (400, 401, 404,
+//
+//	429, 5xx) partagent ce format. Le champ `type` porte un code stable (URN, indépendant de l'host)
+//
+// :
+// - urn:forza-open-api:problem:validation — requête invalide (400) ;
+// - urn:forza-open-api:problem:unauthorized — clé API absente/invalide (401) ;
+// - urn:forza-open-api:problem:not-found — ressource introuvable (404) ;
+// - urn:forza-open-api:problem:rate-limited — quota dépassé (429) ;
+// - urn:forza-open-api:problem:internal — erreur interne (500).
 // Ref: #/components/schemas/Error
 type Error struct {
-	Type     OptURI    `json:"type"`
-	Title    OptString `json:"title"`
-	Status   OptInt    `json:"status"`
-	Detail   OptString `json:"detail"`
-	Instance OptURI    `json:"instance"`
+	// Code d'erreur stable (URN). Voir la liste dans la description du schéma. Référence stable dans
+	// le temps, dissociée du statut HTTP.
+	Type   OptURI    `json:"type"`
+	Title  OptString `json:"title"`
+	Status OptInt    `json:"status"`
+	Detail OptString `json:"detail"`
+	// Chemin de la requête à l'origine de l'erreur (ex. /v1/cars/ghost).
+	Instance OptURI `json:"instance"`
 }
 
 // GetType returns the value of Type.

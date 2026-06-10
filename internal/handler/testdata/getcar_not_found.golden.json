@@ -1,5 +1,8 @@
 {
+  "type": "urn:forza-open-api:problem:not-found",
   "title": "Not Found",
   "status": 404,
-  "detail": "no car with the given id"
+  "detail": "no car with the given id",
+  "instance": "/v1/cars/ghost"
 }
+

@@ -6,7 +6,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"time"
 
 	"github.com/go-faster/jx"
@@ -44,11 +43,7 @@ func (h *Handler) GetTrack(ctx context.Context, params oas.GetTrackParams) (oas.
 		return nil, err
 	}
 	if t == nil {
-		return &oas.GetTrackNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no track with the given id"),
-		}, nil
+		return nil, errNotFound("no track with the given id")
 	}
 	track := mapTrack(*t)
 	return &track, nil
@@ -67,11 +62,7 @@ func (h *Handler) GetRandomTrack(ctx context.Context, params oas.GetRandomTrackP
 		return nil, err
 	}
 	if t == nil {
-		return &oas.GetRandomTrackNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no track matches the given filters"),
-		}, nil
+		return nil, errNotFound("no track matches the given filters")
 	}
 	return &oas.TrackHeaders{
 		CacheControl: oas.NewOptString(randomCarCacheControl),
@@ -109,11 +100,7 @@ func (h *Handler) GetPrStunt(ctx context.Context, params oas.GetPrStuntParams) (
 		return nil, err
 	}
 	if p == nil {
-		return &oas.GetPrStuntNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no pr stunt with the given id"),
-		}, nil
+		return nil, errNotFound("no pr stunt with the given id")
 	}
 	stunt := mapPRStunt(*p)
 	return &stunt, nil
@@ -149,11 +136,7 @@ func (h *Handler) GetEvent(ctx context.Context, params oas.GetEventParams) (oas.
 		return nil, err
 	}
 	if e == nil {
-		return &oas.GetEventNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no event with the given id"),
-		}, nil
+		return nil, errNotFound("no event with the given id")
 	}
 	event := mapEvent(*e)
 	return &event, nil

@@ -5,7 +5,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"net/url"
 
 	"github.com/zinackes/forza-open-api/internal/oas"
@@ -74,11 +73,7 @@ func (h *Handler) GetRandomCar(ctx context.Context, params oas.GetRandomCarParam
 		return nil, err
 	}
 	if c == nil {
-		return &oas.GetRandomCarNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no car matches the given filters"),
-		}, nil
+		return nil, errNotFound("no car matches the given filters")
 	}
 	return &oas.CarHeaders{
 		CacheControl: oas.NewOptString(randomCarCacheControl),
@@ -94,11 +89,7 @@ func (h *Handler) GetCar(ctx context.Context, params oas.GetCarParams) (oas.GetC
 		return nil, err
 	}
 	if c == nil {
-		return &oas.GetCarNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no car with the given id"),
-		}, nil
+		return nil, errNotFound("no car with the given id")
 	}
 	return &oas.CarHeaders{
 		CacheControl: oas.NewOptString(carsCacheControl),
@@ -123,11 +114,7 @@ func (h *Handler) CompareCars(ctx context.Context, params oas.CompareCarsParams)
 	for _, id := range params.Ids {
 		c, ok := byID[id]
 		if !ok {
-			return &oas.CompareCarsNotFound{
-				Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-				Status: oas.NewOptInt(http.StatusNotFound),
-				Detail: oas.NewOptString("no car with id " + id),
-			}, nil
+			return nil, errNotFound("no car with id " + id)
 		}
 		items = append(items, mapCar(c))
 	}
