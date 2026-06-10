@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Forza Open API
-  version: 1.0.0
+  version: 1.1.0
   description: >
     API REST ouverte, gratuite et communautaire pour les données Forza Horizon
     (FH6 d'abord, FH5 en backfill). Contract-first : ce fichier est la source de

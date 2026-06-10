@@ -17,6 +17,17 @@ Les entrées `Deprecated` / `Removed` rappellent les dates `Deprecation` / `Suns
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-06-10
+
+### Added
+
+- `GET /v1/exports` : manifeste des archives téléchargeables du dataset
+  (JSON/CSV/JSONL) par jeu, régénérées périodiquement et servies depuis l'edge.
+- `GET /v1/stats` : agrégats du catalogue (compteurs par facette, histogramme
+  PI, classements top 10).
+- `GET /v1/me` : identité, scopes et quota de la clé API appelante
+  (authentification requise — seule opération non publique du contrat).
+
 ## [1.0.0] — 2026-06-09
 
 - Contrat initial publié : préfixe `/v1`, ressources `cars`, `manufacturers`,
@@ -24,5 +35,6 @@ Les entrées `Deprecated` / `Removed` rappellent les dates `Deprecation` / `Suns
   `reference`, `meta`). Erreurs RFC 9457, pagination `page`/`page_size`, champ
   `game` sur les ressources multi-jeux.
 
-[Unreleased]: https://github.com/zinackes/forza-open-api/compare/contract-v1.0.0...HEAD
+[Unreleased]: https://github.com/zinackes/forza-open-api/compare/contract-v1.1.0...HEAD
+[1.1.0]: https://github.com/zinackes/forza-open-api/compare/contract-v1.0.0...contract-v1.1.0
 [1.0.0]: https://github.com/zinackes/forza-open-api/releases/tag/contract-v1.0.0
