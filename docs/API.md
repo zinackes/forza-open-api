@@ -36,4 +36,4 @@ Sliding window par clé (Redis). Headers X-RateLimit-Limit/Remaining/Reset. 429 
 
 ## Cache
 
-cars : Cache-Control long + ETag (304). playlist : TTL court + stale-while-revalidate. Cloudflare Cache Rules par endpoint.
+cars : `Cache-Control` long + **ETag** ; revalidation conditionnelle via `If-None-Match` → **304**. playlist : TTL court + `stale-while-revalidate`. random : `no-store`. ETag/304 posés par un middleware transport (`If-None-Match` en requête, `ETag` en réponse) ; le `Cache-Control` est au contrat. Cloudflare Cache Rules + bump de version/purge au refresh → **`docs/CACHING.md`**.
