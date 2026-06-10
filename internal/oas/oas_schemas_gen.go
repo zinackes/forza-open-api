@@ -2174,6 +2174,14 @@ type GetEventUnauthorized Error
 
 func (*GetEventUnauthorized) getEventRes() {}
 
+type GetMeTooManyRequests Error
+
+func (*GetMeTooManyRequests) getMeRes() {}
+
+type GetMeUnauthorized Error
+
+func (*GetMeUnauthorized) getMeRes() {}
+
 type GetMetaTooManyRequests Error
 
 func (*GetMetaTooManyRequests) getMetaRes() {}
@@ -3006,6 +3014,116 @@ func (s *Manufacturer) SetCountry(val OptString) {
 func (s *Manufacturer) SetCarCount(val int64) {
 	s.CarCount = val
 }
+
+// Identité et quota de la clé API présentée dans X-API-Key (endpoint /v1/me, authentification
+// requise). remaining/resetAt reflètent l'état courant de la fenêtre glissante de rate-limit
+// (cohérents avec les en-têtes X-RateLimit-* de la réponse) ; tous deux omis si le compteur
+// (Redis) est indisponible.
+// Ref: #/components/schemas/Me
+type Me struct {
+	// Nom de la clé (libellé donné à la création).
+	Name string `json:"name"`
+	// Permissions accordées à la clé (ex. read, submit-ugc).
+	Scopes []string `json:"scopes"`
+	// Quota maximal de requêtes sur la fenêtre glissante.
+	RateLimit int `json:"rateLimit"`
+	// Requêtes restantes sur la fenêtre courante (compteur sliding-window). Omis si le compteur
+	// (Redis) est indisponible.
+	Remaining OptInt `json:"remaining"`
+	// Instant où un créneau de quota se libère (fin de la fenêtre courante). Omis si le compteur
+	// (Redis) est indisponible.
+	ResetAt OptDateTime `json:"resetAt"`
+	// Date de création de la clé.
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// GetName returns the value of Name.
+func (s *Me) GetName() string {
+	return s.Name
+}
+
+// GetScopes returns the value of Scopes.
+func (s *Me) GetScopes() []string {
+	return s.Scopes
+}
+
+// GetRateLimit returns the value of RateLimit.
+func (s *Me) GetRateLimit() int {
+	return s.RateLimit
+}
+
+// GetRemaining returns the value of Remaining.
+func (s *Me) GetRemaining() OptInt {
+	return s.Remaining
+}
+
+// GetResetAt returns the value of ResetAt.
+func (s *Me) GetResetAt() OptDateTime {
+	return s.ResetAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Me) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// SetName sets the value of Name.
+func (s *Me) SetName(val string) {
+	s.Name = val
+}
+
+// SetScopes sets the value of Scopes.
+func (s *Me) SetScopes(val []string) {
+	s.Scopes = val
+}
+
+// SetRateLimit sets the value of RateLimit.
+func (s *Me) SetRateLimit(val int) {
+	s.RateLimit = val
+}
+
+// SetRemaining sets the value of Remaining.
+func (s *Me) SetRemaining(val OptInt) {
+	s.Remaining = val
+}
+
+// SetResetAt sets the value of ResetAt.
+func (s *Me) SetResetAt(val OptDateTime) {
+	s.ResetAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Me) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// MeHeaders wraps Me with response headers.
+type MeHeaders struct {
+	CacheControl OptString
+	Response     Me
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *MeHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *MeHeaders) GetResponse() Me {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *MeHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *MeHeaders) SetResponse(val Me) {
+	s.Response = val
+}
+
+func (*MeHeaders) getMeRes() {}
 
 // Métadonnées du service : jeux supportés, volumes et fraîcheur des données. Pensé pour les
 // consommateurs (sélecteur de jeu, indicateur « data à jour ? ») et le dogfooding. games liste

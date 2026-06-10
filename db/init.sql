@@ -343,6 +343,9 @@ CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,
     name       TEXT,
     rate_limit INT NOT NULL DEFAULT 1000,
+    -- Scopes accordés à la clé (ex. read, submit-ugc). Toute clé peut lire ;
+    -- les scopes d'écriture (submit-ugc…) seront exigés par la feature writes.
+    scopes     TEXT[] NOT NULL DEFAULT '{read}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     revoked_at TIMESTAMPTZ
 );

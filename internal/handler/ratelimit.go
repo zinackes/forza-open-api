@@ -7,6 +7,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -26,6 +27,20 @@ const rateLimitKeyPrefix = "ratelimit:v1:"
 // rateLimitPolicyName nomme la politique unique exposée dans les en-têtes IETF
 // RateLimit / RateLimit-Policy.
 const rateLimitPolicyName = "default"
+
+// rateLimitResultCtxKey est la clé de context (type privé) sous laquelle le
+// middleware dépose le RateLimitResult de la requête courante, à destination des
+// handlers qui exposent l'état du quota (GET /v1/me). Posé uniquement quand le
+// compteur a effectivement tourné (clé valide + Redis joignable).
+type rateLimitResultCtxKey struct{}
+
+// RateLimitResultFromContext renvoie l'état du quota calculé par le middleware
+// pour la requête courante. ok=false si aucun quota n'a été appliqué (requête
+// anonyme, ou Redis indisponible → fail-open) : l'appelant omet alors les champs.
+func RateLimitResultFromContext(ctx context.Context) (store.RateLimitResult, bool) {
+	res, ok := ctx.Value(rateLimitResultCtxKey{}).(store.RateLimitResult)
+	return res, ok
+}
 
 // RateLimiter applique un quota par clé API en fenêtre glissante (Redis).
 type RateLimiter struct {
@@ -82,7 +97,10 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 			writeRateLimited(w, r, res)
 			return
 		}
-		next.ServeHTTP(w, r)
+		// On expose l'état du quota au handler aval (GET /v1/me) via le context :
+		// même calcul que les en-têtes X-RateLimit-*, donc corps et en-têtes
+		// restent cohérents, sans second appel Redis.
+		next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, rateLimitResultCtxKey{}, res)))
 	})
 }
 

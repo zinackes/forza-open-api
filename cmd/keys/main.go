@@ -6,9 +6,11 @@
 //
 // Usage :
 //
-//	keys create <name> [rate_limit]   génère une clé, affiche la clé en clair 1x.
-//	keys list                         liste les clés (hash, jamais la clé).
-//	keys revoke <key_hash>            révoque une clé par son hash (cf. list).
+//	keys create <name> [rate_limit] [scopes]   génère une clé, affiche la clé en clair 1x.
+//	keys list                                  liste les clés (hash, jamais la clé).
+//	keys revoke <key_hash>                      révoque une clé par son hash (cf. list).
+//
+// scopes : liste CSV (ex. "read,submit-ugc"). Omis → DEFAULT du schéma ({read}).
 package main
 
 import (
@@ -17,6 +19,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -50,12 +53,12 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: keys create <name> [rate_limit] | keys list | keys revoke <key_hash>")
+	fmt.Fprintln(os.Stderr, "usage: keys create <name> [rate_limit] [scopes] | keys list | keys revoke <key_hash>")
 }
 
 func createKey(ctx context.Context, logger *slog.Logger) {
 	if len(os.Args) < 3 {
-		fmt.Fprintln(os.Stderr, "usage: keys create <name> [rate_limit]")
+		fmt.Fprintln(os.Stderr, "usage: keys create <name> [rate_limit] [scopes]")
 		os.Exit(2)
 	}
 	name := os.Args[2]
@@ -70,6 +73,16 @@ func createKey(ctx context.Context, logger *slog.Logger) {
 		rateLimit = n
 	}
 
+	// scopes : CSV optionnel (ex. "read,submit-ugc"). Vide → DEFAULT du schéma ({read}).
+	var scopes []string
+	if len(os.Args) >= 5 {
+		for _, s := range strings.Split(os.Args[4], ",") {
+			if s = strings.TrimSpace(s); s != "" {
+				scopes = append(scopes, s)
+			}
+		}
+	}
+
 	plain, err := apikey.Generate()
 	if err != nil {
 		logger.Error("génération de clé", "err", err)
@@ -80,7 +93,7 @@ func createKey(ctx context.Context, logger *slog.Logger) {
 	st := mustStore(ctx, logger)
 	defer st.Close()
 
-	if err := st.CreateAPIKey(ctx, hash, name, rateLimit); err != nil {
+	if err := st.CreateAPIKey(ctx, hash, name, rateLimit, scopes); err != nil {
 		logger.Error("création de clé", "name", name, "err", err)
 		os.Exit(1)
 	}
@@ -102,14 +115,14 @@ func listKeys(ctx context.Context, logger *slog.Logger) {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	_, _ = fmt.Fprintln(w, "KEY_HASH\tNAME\tRATE_LIMIT\tCREATED_AT\tSTATUS")
+	_, _ = fmt.Fprintln(w, "KEY_HASH\tNAME\tRATE_LIMIT\tSCOPES\tCREATED_AT\tSTATUS")
 	for _, k := range keys {
 		status := "active"
 		if k.RevokedAt != nil {
 			status = "revoked " + k.RevokedAt.UTC().Format(time.RFC3339)
 		}
-		_, _ = fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\n",
-			k.Hash, k.Name, k.RateLimit, k.CreatedAt.UTC().Format(time.RFC3339), status)
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\t%s\n",
+			k.Hash, k.Name, k.RateLimit, strings.Join(k.Scopes, ","), k.CreatedAt.UTC().Format(time.RFC3339), status)
 	}
 	_ = w.Flush()
 }
