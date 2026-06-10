@@ -52,6 +52,8 @@ Header `X-API-Key` (SecurityHandler ogen). Clés opaques hashées. Lecture publi
 
 Sliding window par clé (Redis). Headers X-RateLimit-Limit/Remaining/Reset. 429 + Retry-After au dépassement.
 
+Trafic **sans clé** : quota par IP source à l'origin (`ANON_RATE_LIMIT`, défaut 60/fenêtre ; IP hashée dans Redis, expirée avec la fenêtre). Protection intérimaire tant que le bord (Cloudflare) n'est pas devant — poser `ANON_RATE_LIMIT=0` une fois derrière le bord (le trafic tunnelé partage une même IP locale et le bord assume cette protection).
+
 ## CORS
 
 L'API est consommable **depuis le navigateur** (overlays, apps web via le SDK TS). Middleware transport enveloppant tout le mux, **avant** le rate-limit et le cache.

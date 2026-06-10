@@ -136,7 +136,7 @@ func TestGetMeRateLimitState(t *testing.T) {
 	if err != nil {
 		t.Fatalf("oas.NewServer: %v", err)
 	}
-	h := handler.NewRateLimiter(sec, time.Minute).Middleware(oasSrv)
+	h := handler.NewRateLimiter(sec, time.Minute, 0).Middleware(oasSrv)
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/me", nil)
 	req.Header.Set("X-API-Key", plain)
