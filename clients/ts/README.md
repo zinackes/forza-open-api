@@ -58,17 +58,17 @@ contract version and publishes to npm.
 
 > **Maintainers — one-time setup:** create the npm org `forza-open-api` and add
 > an `NPM_TOKEN` repository secret (automation token with publish rights) before
-> the first release.
+> the first release. Full checklist: [RELEASE.md](./RELEASE.md).
 
 ## Development
 
 ```bash
 npm install
-npm run generate   # regenerate src/schema.d.ts from ../../api/openapi.yaml
+npm run generate   # regenerate src/schema.ts from ../../api/openapi.yaml
 npm run build      # emit dist/ (ESM + .d.ts)
 npm run check      # type-check src + the typed-call compile test
 ```
 
-`src/schema.d.ts` is generated and committed; CI fails if it drifts from the
+`src/schema.ts` is generated and committed; CI fails if it drifts from the
 contract (`task client:generate` + clean working tree). Never edit it by hand —
 change `api/openapi.yaml` and regenerate.
