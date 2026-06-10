@@ -24,10 +24,14 @@ import (
 	"github.com/zinackes/forza-open-api/internal/store"
 )
 
-// forumData est le détail extrait du 1er post forum (Discourse).
+// forumData est le détail extrait d'un topic forum (Discourse). Title/Identity
+// portent l'identité de la série lue dans le TITRE (source secondaire croisée avec
+// forza.net, cf. reconcile.go) ; Season/Saga/Rewards/Challenges viennent du 1er post.
 type forumData struct {
-	Season     string // ex. « Autumn »
-	Saga       string // nom de la série, ex. « Welcome to Japan »
+	Title      string        // titre brut du topic
+	Identity   forumIdentity // identité parsée du titre (jeu, série, semaine, dates)
+	Season     string        // ex. « Autumn »
+	Saga       string        // nom de la série, ex. « Welcome to Japan »
 	Rewards    []parsedReward
 	Challenges []parsedChallenge
 }
@@ -66,7 +70,7 @@ func ParseForum(raw []byte) (forumData, error) {
 	}
 	cooked := t.PostStream.Posts[0].Cooked
 
-	fd := forumData{}
+	fd := forumData{Title: t.Title, Identity: parseForumTitle(t.Title)}
 	fd.Season, fd.Saga = parseHeading(cooked)
 	fd.Rewards = parseRewards(cooked)
 	fd.Challenges = parseChallenges(cooked)

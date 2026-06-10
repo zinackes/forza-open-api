@@ -204,6 +204,12 @@ func seedPlaylist(logger *slog.Logger) {
 		os.Exit(1)
 	}
 
+	// Validation croisée forza.net (primaire) ↔ titre forum (secondaire) : logue
+	// toute divergence (filet si forza.net change de structure) et complète les
+	// champs d'identité que forza.net ne fournirait plus.
+	ev, div := playlist.Reconcile(ev, fd)
+	div.Log(logger)
+
 	// Auto-discovery → c'est la série courante (rollover géré par l'upsert).
 	// Override d'une semaine précise → courante seulement si la fenêtre couvre now
 	// (un re-seed d'historique ne vole pas le flag « courante »).
@@ -233,6 +239,7 @@ func seedPlaylist(logger *slog.Logger) {
 		"is_current", ser.IsCurrent,
 		"rewards", len(rewards),
 		"challenges", len(challenges),
+		"divergences", len(div.Divergences),
 		"new", added,
 	)
 }
