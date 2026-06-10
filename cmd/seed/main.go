@@ -177,6 +177,14 @@ func seedCars(logger *slog.Logger) {
 		failRun(ctx, monitor, "cars", game, started, fmt.Errorf("upsert cars: %w", err))
 	}
 
+	// Constructeurs dérivés de la même page liste (make + code pays, champ 14) :
+	// alimente GET /v1/manufacturers dans la même passe, même idempotence.
+	mans := cars.Manufacturers(rows, infoboxes, game)
+	if err := st.UpsertManufacturers(ctx, mans); err != nil {
+		failRun(ctx, monitor, "cars", game, started, fmt.Errorf("upsert manufacturers: %w", err))
+	}
+	logger.Info("seed cars: manufacturers upserted", "count", len(mans))
+
 	// Contrôle de santé : counts dans la fourchette attendue, taux de parse, 0
 	// anomalie bloquante (rupture de structure wiki = anomaly silencieuse).
 	monitor.Observe(ctx, health.Report{

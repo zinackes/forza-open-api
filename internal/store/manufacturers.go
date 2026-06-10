@@ -1,10 +1,14 @@
-// Constructeurs : lecture pour GET /v1/manufacturers. car_count est un agrégat
-// (GROUP BY) sur cars joint par make. Requêtes paramétrées only.
+// Constructeurs : lecture pour GET /v1/manufacturers ; écriture (upsert) par
+// l'ingestion cars (cmd/seed), qui dérive make + code pays de la page liste du
+// wiki. car_count est un agrégat (GROUP BY) sur cars joint par make. Requêtes
+// paramétrées only.
 package store
 
 import (
 	"context"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 )
 
 // Manufacturer est la vue DB d'un constructeur (snake_case). Country absent → nil.
@@ -61,4 +65,48 @@ ORDER BY m.name`
 		return nil, fmt.Errorf("iterate manufacturers: %w", err)
 	}
 	return out, nil
+}
+
+// UpsertManufacturers insère ou met à jour des constructeurs de façon
+// idempotente (ON CONFLICT sur la clé naturelle game+name). Rejouable sans
+// doublon. Appelé par l'ingestion (cmd/seed cars), jamais un handler. COALESCE :
+// un re-run dont la source a perdu le code pays ne détruit pas la valeur déjà
+// acquise (précision > exhaustivité) ; le garde IS DISTINCT FROM évite de
+// toucher une ligne inchangée. pgx.Batch dans une transaction, comme UpsertCars.
+func (s *Store) UpsertManufacturers(ctx context.Context, mans []Manufacturer) error {
+	if len(mans) == 0 {
+		return nil
+	}
+	const q = `
+INSERT INTO manufacturers (game, name, country)
+VALUES ($1, $2, $3)
+ON CONFLICT (game, name) DO UPDATE SET
+    country = COALESCE(EXCLUDED.country, manufacturers.country)
+WHERE COALESCE(EXCLUDED.country, manufacturers.country)
+      IS DISTINCT FROM manufacturers.country`
+	batch := &pgx.Batch{}
+	for _, m := range mans {
+		batch.Queue(q, m.Game, m.Name, m.Country)
+	}
+
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin upsert manufacturers: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }() // no-op après Commit
+
+	br := tx.SendBatch(ctx, batch)
+	for _, m := range mans {
+		if _, err := br.Exec(); err != nil {
+			_ = br.Close()
+			return fmt.Errorf("upsert manufacturer %s/%s: %w", m.Game, m.Name, err)
+		}
+	}
+	if err := br.Close(); err != nil {
+		return fmt.Errorf("close upsert manufacturers batch: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit upsert manufacturers: %w", err)
+	}
+	return nil
 }
