@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "id": "mazda-rx7",
+      "game": "fh6",
+      "name": "RX-7",
+      "make": "Mazda",
+      "model": "FD",
+      "year": 1998,
+      "class": "A",
+      "pi": 780,
+      "drivetrain": "RWD",
+      "bodyType": "coupe",
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
+    },
+    {
+      "id": "audi-r8",
+      "game": "fh6",
+      "name": "R8",
+      "make": "Audi",
+      "class": "S1",
+      "pi": 850,
+      "drivetrain": "AWD",
+      "bodyType": "coupe",
+      "category": "Modern Supercars",
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
+    }
+  ],
+  "total": 5,
+  "page": 2,
+  "pageSize": 2
+}

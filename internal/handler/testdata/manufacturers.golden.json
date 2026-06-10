@@ -1,0 +1,43 @@
+[
+  {
+    "game": "fh6",
+    "name": "Audi",
+    "country": "Germany",
+    "carCount": 1
+  },
+  {
+    "game": "fh6",
+    "name": "Ford",
+    "country": "USA",
+    "carCount": 1
+  },
+  {
+    "game": "fh6",
+    "name": "Honda",
+    "country": "Japan",
+    "carCount": 1
+  },
+  {
+    "game": "fh6",
+    "name": "Koenigsegg",
+    "country": "Sweden",
+    "carCount": 0
+  },
+  {
+    "game": "fh6",
+    "name": "Mazda",
+    "country": "Japan",
+    "carCount": 1
+  },
+  {
+    "game": "fh6",
+    "name": "Mystery",
+    "carCount": 0
+  },
+  {
+    "game": "fh6",
+    "name": "Toyota",
+    "country": "Japan",
+    "carCount": 1
+  }
+]

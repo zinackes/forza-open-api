@@ -1,0 +1,40 @@
+{
+  "carId": "hidden",
+  "game": "fh6",
+  "obtainMethod": "reward",
+  "dlcPacks": [
+    {
+      "id": "pack",
+      "game": "fh6",
+      "name": "Legends Car Pack",
+      "kind": "car_pass",
+      "releasedAt": "<ts>"
+    }
+  ],
+  "barnFind": {
+    "id": "bf1",
+    "game": "fh6",
+    "carId": "hidden",
+    "region": "Hakone",
+    "prerequisiteStampLevel": 3
+  },
+  "journalTiers": [
+    {
+      "id": "jt1",
+      "game": "fh6",
+      "track": "horizon_festival",
+      "level": 7,
+      "color": "gold",
+      "name": "Gold",
+      "pointsRequired": 12000,
+      "rewardCarId": "hidden"
+    }
+  ],
+  "masteryUnlocks": [
+    {
+      "perkId": "perk1",
+      "ownerCarId": "owner",
+      "perkName": "Hidden unlock"
+    }
+  ]
+}

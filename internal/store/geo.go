@@ -5,17 +5,33 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 // GeoFilter porte les filtres partagés par tracks / pr_stunts / events.
+// UpdatedSince n'est appliqué que par ListTracks (seule table avec updated_at).
 type GeoFilter struct {
-	Game   string
-	Type   *string // nil = pas de filtre
-	Region *string // nil = pas de filtre
-	Limit  int
-	Offset int
+	Game         string
+	Type         *string // nil = pas de filtre
+	Region       *string // nil = pas de filtre
+	Q            *string // recherche de sous-chaîne sur name (escapeLike appliqué)
+	UpdatedSince *time.Time
+	Limit        int
+	Offset       int
+}
+
+// qLit neutralise les métacaractères LIKE du filtre Q (sous-chaîne littérale,
+// même règle que ListCars).
+func (f GeoFilter) qLit() *string {
+	if f.Q == nil {
+		return nil
+	}
+	esc := escapeLike(*f.Q)
+	return &esc
 }
 
 // Track est la vue DB d'un tracé (snake_case). Champs absents → pointeur nil.
@@ -63,31 +79,42 @@ type Event struct {
 	LengthM             *int
 }
 
-// ListTracks renvoie une page de tracés filtrés + le total (count fenêtré).
+// ListTracks renvoie une page de tracés filtrés + le total (COUNT séparé : total
+// exact même quand la page dépasse les données). fromWhere est partagé COUNT/SELECT.
 func (s *Store) ListTracks(ctx context.Context, f GeoFilter) ([]Track, int64, error) {
-	const q = `
-SELECT id, game, name, type, region, length_m, surface_mix,
-       start_lat::float8, start_lng::float8, source, last_verified,
-       created_at, updated_at, count(*) OVER() AS total
+	const fromWhere = `
 FROM tracks
 WHERE game = $1
   AND ($2::text IS NULL OR type = $2)
   AND ($3::text IS NULL OR region = $3)
+  AND ($4::text IS NULL OR name ILIKE '%' || $4 || '%')
+  AND ($5::timestamptz IS NULL OR updated_at > $5)`
+
+	var total int64
+	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
+		f.Game, f.Type, f.Region, f.qLit(), f.UpdatedSince).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count tracks: %w", err)
+	}
+
+	const q = `
+SELECT id, game, name, type, region, length_m, surface_mix,
+       start_lat::float8, start_lng::float8, source, last_verified,
+       created_at, updated_at` + fromWhere + `
 ORDER BY name
-LIMIT $4 OFFSET $5`
-	rows, err := s.DB.Query(ctx, q, f.Game, f.Type, f.Region, f.Limit, f.Offset)
+LIMIT $6 OFFSET $7`
+	rows, err := s.DB.Query(ctx, q, f.Game, f.Type, f.Region, f.qLit(),
+		f.UpdatedSince, f.Limit, f.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("query tracks: %w", err)
 	}
 	defer rows.Close()
 
 	out := make([]Track, 0, f.Limit)
-	var total int64
 	for rows.Next() {
 		var t Track
 		if err := rows.Scan(&t.ID, &t.Game, &t.Name, &t.Type, &t.Region,
 			&t.LengthM, &t.SurfaceMix, &t.StartLat, &t.StartLng, &t.Source,
-			&t.LastVerified, &t.CreatedAt, &t.UpdatedAt, &total); err != nil {
+			&t.LastVerified, &t.CreatedAt, &t.UpdatedAt); err != nil {
 			return nil, 0, fmt.Errorf("scan track: %w", err)
 		}
 		out = append(out, t)
@@ -98,29 +125,37 @@ LIMIT $4 OFFSET $5`
 	return out, total, nil
 }
 
-// ListPRStunts renvoie une page de PR stunts filtrés + le total.
+// ListPRStunts renvoie une page de PR stunts filtrés + le total (COUNT séparé :
+// total exact même hors borne). fromWhere est partagé COUNT/SELECT.
 func (s *Store) ListPRStunts(ctx context.Context, f GeoFilter) ([]PRStunt, int64, error) {
-	const q = `
-SELECT id, game, type, name, region, lat::float8, lng::float8, target_score,
-       count(*) OVER() AS total
+	const fromWhere = `
 FROM pr_stunts
 WHERE game = $1
   AND ($2::text IS NULL OR type = $2)
   AND ($3::text IS NULL OR region = $3)
+  AND ($4::text IS NULL OR name ILIKE '%' || $4 || '%')`
+
+	var total int64
+	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
+		f.Game, f.Type, f.Region, f.qLit()).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count pr_stunts: %w", err)
+	}
+
+	const q = `
+SELECT id, game, type, name, region, lat::float8, lng::float8, target_score` + fromWhere + `
 ORDER BY name
-LIMIT $4 OFFSET $5`
-	rows, err := s.DB.Query(ctx, q, f.Game, f.Type, f.Region, f.Limit, f.Offset)
+LIMIT $5 OFFSET $6`
+	rows, err := s.DB.Query(ctx, q, f.Game, f.Type, f.Region, f.qLit(), f.Limit, f.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("query pr_stunts: %w", err)
 	}
 	defer rows.Close()
 
 	out := make([]PRStunt, 0, f.Limit)
-	var total int64
 	for rows.Next() {
 		var p PRStunt
 		if err := rows.Scan(&p.ID, &p.Game, &p.Type, &p.Name, &p.Region,
-			&p.Lat, &p.Lng, &p.TargetScore, &total); err != nil {
+			&p.Lat, &p.Lng, &p.TargetScore); err != nil {
 			return nil, 0, fmt.Errorf("scan pr_stunt: %w", err)
 		}
 		out = append(out, p)
@@ -131,31 +166,40 @@ LIMIT $4 OFFSET $5`
 	return out, total, nil
 }
 
-// ListEvents renvoie une page d'événements filtrés + le total.
+// ListEvents renvoie une page d'événements filtrés + le total (COUNT séparé :
+// total exact même hors borne). fromWhere est partagé COUNT/SELECT.
 func (s *Store) ListEvents(ctx context.Context, f GeoFilter) ([]Event, int64, error) {
-	const q = `
-SELECT id, game, name, type, region,
-       start_lat::float8, start_lng::float8, end_lat::float8, end_lng::float8,
-       route_geojson, car_class_restriction, length_m, count(*) OVER() AS total
+	const fromWhere = `
 FROM events
 WHERE game = $1
   AND ($2::text IS NULL OR type = $2)
   AND ($3::text IS NULL OR region = $3)
+  AND ($4::text IS NULL OR name ILIKE '%' || $4 || '%')`
+
+	var total int64
+	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
+		f.Game, f.Type, f.Region, f.qLit()).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count events: %w", err)
+	}
+
+	const q = `
+SELECT id, game, name, type, region,
+       start_lat::float8, start_lng::float8, end_lat::float8, end_lng::float8,
+       route_geojson, car_class_restriction, length_m` + fromWhere + `
 ORDER BY name
-LIMIT $4 OFFSET $5`
-	rows, err := s.DB.Query(ctx, q, f.Game, f.Type, f.Region, f.Limit, f.Offset)
+LIMIT $5 OFFSET $6`
+	rows, err := s.DB.Query(ctx, q, f.Game, f.Type, f.Region, f.qLit(), f.Limit, f.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("query events: %w", err)
 	}
 	defer rows.Close()
 
 	out := make([]Event, 0, f.Limit)
-	var total int64
 	for rows.Next() {
 		var e Event
 		if err := rows.Scan(&e.ID, &e.Game, &e.Name, &e.Type, &e.Region,
 			&e.StartLat, &e.StartLng, &e.EndLat, &e.EndLng,
-			&e.RouteGeojson, &e.CarClassRestriction, &e.LengthM, &total); err != nil {
+			&e.RouteGeojson, &e.CarClassRestriction, &e.LengthM); err != nil {
 			return nil, 0, fmt.Errorf("scan event: %w", err)
 		}
 		out = append(out, e)
@@ -164,6 +208,96 @@ LIMIT $4 OFFSET $5`
 		return nil, 0, fmt.Errorf("iterate events: %w", err)
 	}
 	return out, total, nil
+}
+
+// GetTrack renvoie un tracé par son identifiant stable. (nil, nil) si inconnu —
+// le handler en fait un 404.
+func (s *Store) GetTrack(ctx context.Context, id string) (*Track, error) {
+	const q = `
+SELECT id, game, name, type, region, length_m, surface_mix,
+       start_lat::float8, start_lng::float8, source, last_verified,
+       created_at, updated_at
+FROM tracks
+WHERE id = $1`
+	var t Track
+	err := s.DB.QueryRow(ctx, q, id).Scan(&t.ID, &t.Game, &t.Name, &t.Type,
+		&t.Region, &t.LengthM, &t.SurfaceMix, &t.StartLat, &t.StartLng, &t.Source,
+		&t.LastVerified, &t.CreatedAt, &t.UpdatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query track %s: %w", id, err)
+	}
+	return &t, nil
+}
+
+// RandomTrack tire un tracé au hasard parmi ceux satisfaisant les filtres
+// (type/region, hors q/pagination). (nil, nil) si aucun — le handler en fait un
+// 404. ORDER BY random() suffit au volume (quelques centaines de tracés par jeu).
+func (s *Store) RandomTrack(ctx context.Context, f GeoFilter) (*Track, error) {
+	const q = `
+SELECT id, game, name, type, region, length_m, surface_mix,
+       start_lat::float8, start_lng::float8, source, last_verified,
+       created_at, updated_at
+FROM tracks
+WHERE game = $1
+  AND ($2::text IS NULL OR type = $2)
+  AND ($3::text IS NULL OR region = $3)
+ORDER BY random()
+LIMIT 1`
+	var t Track
+	err := s.DB.QueryRow(ctx, q, f.Game, f.Type, f.Region).Scan(&t.ID, &t.Game,
+		&t.Name, &t.Type, &t.Region, &t.LengthM, &t.SurfaceMix, &t.StartLat,
+		&t.StartLng, &t.Source, &t.LastVerified, &t.CreatedAt, &t.UpdatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query random track: %w", err)
+	}
+	return &t, nil
+}
+
+// GetPRStunt renvoie un PR Stunt par son identifiant stable. (nil, nil) si
+// inconnu — le handler en fait un 404.
+func (s *Store) GetPRStunt(ctx context.Context, id string) (*PRStunt, error) {
+	const q = `
+SELECT id, game, type, name, region, lat::float8, lng::float8, target_score
+FROM pr_stunts
+WHERE id = $1`
+	var p PRStunt
+	err := s.DB.QueryRow(ctx, q, id).Scan(&p.ID, &p.Game, &p.Type, &p.Name,
+		&p.Region, &p.Lat, &p.Lng, &p.TargetScore)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query pr_stunt %s: %w", id, err)
+	}
+	return &p, nil
+}
+
+// GetEvent renvoie un événement par son identifiant stable. (nil, nil) si
+// inconnu — le handler en fait un 404.
+func (s *Store) GetEvent(ctx context.Context, id string) (*Event, error) {
+	const q = `
+SELECT id, game, name, type, region,
+       start_lat::float8, start_lng::float8, end_lat::float8, end_lng::float8,
+       route_geojson, car_class_restriction, length_m
+FROM events
+WHERE id = $1`
+	var e Event
+	err := s.DB.QueryRow(ctx, q, id).Scan(&e.ID, &e.Game, &e.Name, &e.Type,
+		&e.Region, &e.StartLat, &e.StartLng, &e.EndLat, &e.EndLng,
+		&e.RouteGeojson, &e.CarClassRestriction, &e.LengthM)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query event %s: %w", id, err)
+	}
+	return &e, nil
 }
 
 // UpsertTracks insère ou met à jour des tracés de façon idempotente (ON CONFLICT

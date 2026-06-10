@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "id": "story1",
+      "game": "fh6",
+      "name": "Taxi Tales",
+      "region": "Tokyo",
+      "chaptersCount": 8,
+      "rewardDescription": "Hidden Legend"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 50
+}

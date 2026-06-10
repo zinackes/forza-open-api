@@ -28,12 +28,41 @@ func trimTrailingSlashes(u *url.URL) {
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
+	BarnFindsInvoker
 	CarsInvoker
+	ChangesInvoker
+	DLCInvoker
 	EventsInvoker
+	JournalInvoker
 	ManufacturersInvoker
+	MasteryInvoker
 	PRStuntsInvoker
 	PlaylistInvoker
+	ReferenceInvoker
+	SearchInvoker
+	StoriesInvoker
+	ToursInvoker
 	TracksInvoker
+	TreasureCarsInvoker
+	UpgradesInvoker
+}
+
+// BarnFindsInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: BarnFinds
+type BarnFindsInvoker interface {
+	// GetBarnFind invokes getBarnFind operation.
+	//
+	// Récupère un Barn Find par identifiant.
+	//
+	// GET /v1/barn-finds/{id}
+	GetBarnFind(ctx context.Context, params GetBarnFindParams) (GetBarnFindRes, error)
+	// ListBarnFinds invokes listBarnFinds operation.
+	//
+	// Liste les Barn Finds (épaves cachées à trouver puis restaurer).
+	//
+	// GET /v1/barn-finds
+	ListBarnFinds(ctx context.Context, params ListBarnFindsParams) (ListBarnFindsRes, error)
 }
 
 // CarsInvoker invokes operations described by OpenAPI v3 specification.
@@ -46,6 +75,24 @@ type CarsInvoker interface {
 	//
 	// GET /v1/cars/{id}
 	GetCar(ctx context.Context, params GetCarParams) (GetCarRes, error)
+	// GetCarObtain invokes getCarObtain operation.
+	//
+	// Agrège toutes les voies d'obtention connues d'une voiture : méthode du catalogue (autoshow,
+	// wheelspin…) + prix, packs DLC qui la contiennent, Barn Find, Treasure Car, paliers du Collection
+	// Journal qui la récompensent et perks Car Mastery (car_unlock) qui la débloquent. Sources
+	// absentes → listes vides / champs omis (rien d'inventé). 404 si la voiture est inconnue.
+	//
+	// GET /v1/cars/{id}/obtain
+	GetCarObtain(ctx context.Context, params GetCarObtainParams) (GetCarObtainRes, error)
+	// GetRandomCar invokes getRandomCar operation.
+	//
+	// Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
+	// que /v1/cars, hors q/dlc et pagination). Pensé pour les bots Discord ("bagnole random du jour"),
+	// défis communautaires et easter-eggs sur la landing. Réponse non cacheable (Cache-Control:
+	// no-store) : chaque appel re-tire. 404 si aucune voiture ne correspond.
+	//
+	// GET /v1/cars/random
+	GetRandomCar(ctx context.Context, params GetRandomCarParams) (GetRandomCarRes, error)
 	// ListCars invokes listCars operation.
 	//
 	// Liste les voitures du catalogue.
@@ -54,16 +101,70 @@ type CarsInvoker interface {
 	ListCars(ctx context.Context, params ListCarsParams) (ListCarsRes, error)
 }
 
+// ChangesInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Changes
+type ChangesInvoker interface {
+	// ListChanges invokes listChanges operation.
+	//
+	// Flux des changements du jeu de données (voiture ajoutée/modifiée, pack sorti, série
+	// publiée…), alimenté par les jobs d'ingestion. Donne aux clients un « what's new » et la base
+	// d'une synchro incrémentale. Plus récents d'abord.
+	//
+	// GET /v1/changes
+	ListChanges(ctx context.Context, params ListChangesParams) (ListChangesRes, error)
+}
+
+// DLCInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: DLC
+type DLCInvoker interface {
+	// GetDlcPack invokes getDlcPack operation.
+	//
+	// Récupère un pack DLC par identifiant.
+	//
+	// GET /v1/dlc-packs/{id}
+	GetDlcPack(ctx context.Context, params GetDlcPackParams) (GetDlcPackRes, error)
+	// ListDlcPacks invokes listDlcPacks operation.
+	//
+	// Liste les packs DLC / extensions d'un jeu.
+	//
+	// GET /v1/dlc-packs
+	ListDlcPacks(ctx context.Context, params ListDlcPacksParams) (ListDlcPacksRes, error)
+}
+
 // EventsInvoker invokes operations described by OpenAPI v3 specification.
 //
 // x-gen-operation-group: Events
 type EventsInvoker interface {
+	// GetEvent invokes getEvent operation.
+	//
+	// Récupère un événement par identifiant.
+	//
+	// GET /v1/events/{id}
+	GetEvent(ctx context.Context, params GetEventParams) (GetEventRes, error)
 	// ListEvents invokes listEvents operation.
 	//
 	// Liste les événements / courses.
 	//
 	// GET /v1/events
 	ListEvents(ctx context.Context, params ListEventsParams) (ListEventsRes, error)
+}
+
+// JournalInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Journal
+type JournalInvoker interface {
+	// ListJournalTiers invokes listJournalTiers operation.
+	//
+	// Paliers de progression du Collection Journal FH6 : 7 Wristbands (track horizon_festival, Yellow
+	// → Gold ; Gold débloque Legend Island + The Goliath) et 7 Stamps (track discover_japan, Visitor
+	// → Master Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que via les
+	// rewardCarId de ces paliers. Remplace les Accolades de FH5. Ensemble borné (≤ 14 par jeu) →
+	// pas de pagination.
+	//
+	// GET /v1/journal
+	ListJournalTiers(ctx context.Context, params ListJournalTiersParams) (ListJournalTiersRes, error)
 }
 
 // ManufacturersInvoker invokes operations described by OpenAPI v3 specification.
@@ -78,10 +179,31 @@ type ManufacturersInvoker interface {
 	ListManufacturers(ctx context.Context, params ListManufacturersParams) (ListManufacturersRes, error)
 }
 
+// MasteryInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Mastery
+type MasteryInvoker interface {
+	// GetCarMastery invokes getCarMastery operation.
+	//
+	// Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une case (row, col) de la
+	// grille 4×4, coûte des Skill Points (spCost), peut dépendre d'une autre (prereqPerkId) et
+	// certaines débloquent une voiture cachée (effectType car_unlock → unlockedCarId). Le jeu est
+	// déterminé par la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+	//
+	// GET /v1/cars/{id}/mastery
+	GetCarMastery(ctx context.Context, params GetCarMasteryParams) (GetCarMasteryRes, error)
+}
+
 // PRStuntsInvoker invokes operations described by OpenAPI v3 specification.
 //
 // x-gen-operation-group: PRStunts
 type PRStuntsInvoker interface {
+	// GetPrStunt invokes getPrStunt operation.
+	//
+	// Récupère un PR Stunt par identifiant.
+	//
+	// GET /v1/pr-stunts/{id}
+	GetPrStunt(ctx context.Context, params GetPrStuntParams) (GetPrStuntRes, error)
 	// ListPrStunts invokes listPrStunts operation.
 	//
 	// Liste les PR Stunts (speed trap, speed zone, drift zone, danger sign).
@@ -114,16 +236,125 @@ type PlaylistInvoker interface {
 	ListSeries(ctx context.Context, params ListSeriesParams) (ListSeriesRes, error)
 }
 
+// ReferenceInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Reference
+type ReferenceInvoker interface {
+	// GetReference invokes getReference operation.
+	//
+	// Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI
+	// (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories
+	// (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes
+	// par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement
+	// cacheable, invalidée par les jobs d'ingestion.
+	//
+	// GET /v1/reference
+	GetReference(ctx context.Context, params GetReferenceParams) (GetReferenceRes, error)
+}
+
+// SearchInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Search
+type SearchInvoker interface {
+	// Search invokes search operation.
+	//
+	// Recherche plein texte sur les ressources nommées (voitures, tracés, événements, PR stunts,
+	// constructeurs, packs DLC) en un seul appel. Pensé pour l'autocomplete d'un site ou d'un bot.
+	// Résultats bornés par limit (pas de pagination) ; kinds restreint les types cherchés.
+	//
+	// GET /v1/search
+	Search(ctx context.Context, params SearchParams) (SearchRes, error)
+}
+
+// StoriesInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Stories
+type StoriesInvoker interface {
+	// ListStories invokes listStories operation.
+	//
+	// Stories FH6 : missions narratives de Discover Japan, qui rapportent des stamps au Collection
+	// Journal. Sources propres (wiki Fandom) ; champs non sourcés → omis.
+	//
+	// GET /v1/stories
+	ListStories(ctx context.Context, params ListStoriesParams) (ListStoriesRes, error)
+}
+
+// ToursInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Tours
+type ToursInvoker interface {
+	// ListTours invokes listTours operation.
+	//
+	// Tours of Japan FH6 : visites guidées de l'activité Discovery, qui rapportent des stamps au
+	// Collection Journal. Sources propres (wiki Fandom) ; champs non sourcés → omis.
+	//
+	// GET /v1/tours
+	ListTours(ctx context.Context, params ListToursParams) (ListToursRes, error)
+}
+
 // TracksInvoker invokes operations described by OpenAPI v3 specification.
 //
 // x-gen-operation-group: Tracks
 type TracksInvoker interface {
+	// GetRandomTrack invokes getRandomTrack operation.
+	//
+	// Tire un seul tracé au hasard parmi ceux qui satisfont les filtres (mêmes filtres optionnels que
+	// /v1/tracks, hors q et pagination). Pensé pour les bots Discord et défis communautaires («
+	// course aléatoire du jour »). Réponse non cacheable (Cache-Control: no-store) : chaque appel
+	// re-tire. 404 si aucun tracé ne correspond.
+	//
+	// GET /v1/tracks/random
+	GetRandomTrack(ctx context.Context, params GetRandomTrackParams) (GetRandomTrackRes, error)
+	// GetTrack invokes getTrack operation.
+	//
+	// Récupère un tracé par identifiant.
+	//
+	// GET /v1/tracks/{id}
+	GetTrack(ctx context.Context, params GetTrackParams) (GetTrackRes, error)
 	// ListTracks invokes listTracks operation.
 	//
 	// Liste les tracés / circuits indexés.
 	//
 	// GET /v1/tracks
 	ListTracks(ctx context.Context, params ListTracksParams) (ListTracksRes, error)
+}
+
+// TreasureCarsInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: TreasureCars
+type TreasureCarsInvoker interface {
+	// GetTreasureCar invokes getTreasureCar operation.
+	//
+	// Récupère une Treasure Car par identifiant.
+	//
+	// GET /v1/treasure-cars/{id}
+	GetTreasureCar(ctx context.Context, params GetTreasureCarParams) (GetTreasureCarRes, error)
+	// ListTreasureCars invokes listTreasureCars operation.
+	//
+	// Liste les Treasure Cars (voitures liées aux postcards).
+	//
+	// GET /v1/treasure-cars
+	ListTreasureCars(ctx context.Context, params ListTreasureCarsParams) (ListTreasureCarsRes, error)
+}
+
+// UpgradesInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Upgrades
+type UpgradesInvoker interface {
+	// ListCarUpgrades invokes listCarUpgrades operation.
+	//
+	// Pièces d'upgrade montables sur la voiture, avec leurs contraintes d'installation (prérequis,
+	// groupe exclusif). Le jeu est déterminé par la voiture (pas de paramètre game). Voiture inconnue
+	// ou sans upgrade sourcé → page vide.
+	//
+	// GET /v1/cars/{id}/upgrades
+	ListCarUpgrades(ctx context.Context, params ListCarUpgradesParams) (ListCarUpgradesRes, error)
+	// ListUpgradeParts invokes listUpgradeParts operation.
+	//
+	// Catalogue global des pièces d'upgrade.
+	//
+	// GET /v1/upgrade-parts
+	ListUpgradeParts(ctx context.Context, params ListUpgradePartsParams) (ListUpgradePartsRes, error)
 }
 
 // Client implements OAS client.
@@ -165,6 +396,132 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 		return c.serverURL
 	}
 	return u
+}
+
+// GetBarnFind invokes getBarnFind operation.
+//
+// Récupère un Barn Find par identifiant.
+//
+// GET /v1/barn-finds/{id}
+func (c *Client) GetBarnFind(ctx context.Context, params GetBarnFindParams) (GetBarnFindRes, error) {
+	res, err := c.sendGetBarnFind(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetBarnFind(ctx context.Context, params GetBarnFindParams) (res GetBarnFindRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getBarnFind"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/barn-finds/{id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetBarnFindOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/v1/barn-finds/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetBarnFindOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetBarnFindResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
 }
 
 // GetCar invokes getCar operation.
@@ -286,6 +643,266 @@ func (c *Client) sendGetCar(ctx context.Context, params GetCarParams) (res GetCa
 
 	stage = "DecodeResponse"
 	result, err := decodeGetCarResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetCarMastery invokes getCarMastery operation.
+//
+// Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une case (row, col) de la
+// grille 4×4, coûte des Skill Points (spCost), peut dépendre d'une autre (prereqPerkId) et
+// certaines débloquent une voiture cachée (effectType car_unlock → unlockedCarId). Le jeu est
+// déterminé par la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+//
+// GET /v1/cars/{id}/mastery
+func (c *Client) GetCarMastery(ctx context.Context, params GetCarMasteryParams) (GetCarMasteryRes, error) {
+	res, err := c.sendGetCarMastery(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetCarMastery(ctx context.Context, params GetCarMasteryParams) (res GetCarMasteryRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getCarMastery"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/cars/{id}/mastery"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetCarMasteryOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/v1/cars/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/mastery"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetCarMasteryOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetCarMasteryResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetCarObtain invokes getCarObtain operation.
+//
+// Agrège toutes les voies d'obtention connues d'une voiture : méthode du catalogue (autoshow,
+// wheelspin…) + prix, packs DLC qui la contiennent, Barn Find, Treasure Car, paliers du Collection
+// Journal qui la récompensent et perks Car Mastery (car_unlock) qui la débloquent. Sources
+// absentes → listes vides / champs omis (rien d'inventé). 404 si la voiture est inconnue.
+//
+// GET /v1/cars/{id}/obtain
+func (c *Client) GetCarObtain(ctx context.Context, params GetCarObtainParams) (GetCarObtainRes, error) {
+	res, err := c.sendGetCarObtain(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetCarObtain(ctx context.Context, params GetCarObtainParams) (res GetCarObtainRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getCarObtain"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/cars/{id}/obtain"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetCarObtainOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/v1/cars/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/obtain"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetCarObtainOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetCarObtainResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -419,6 +1036,911 @@ func (c *Client) sendGetCurrentPlaylist(ctx context.Context, params GetCurrentPl
 	return result, nil
 }
 
+// GetDlcPack invokes getDlcPack operation.
+//
+// Récupère un pack DLC par identifiant.
+//
+// GET /v1/dlc-packs/{id}
+func (c *Client) GetDlcPack(ctx context.Context, params GetDlcPackParams) (GetDlcPackRes, error) {
+	res, err := c.sendGetDlcPack(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetDlcPack(ctx context.Context, params GetDlcPackParams) (res GetDlcPackRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getDlcPack"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/dlc-packs/{id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetDlcPackOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/v1/dlc-packs/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetDlcPackOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetDlcPackResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetEvent invokes getEvent operation.
+//
+// Récupère un événement par identifiant.
+//
+// GET /v1/events/{id}
+func (c *Client) GetEvent(ctx context.Context, params GetEventParams) (GetEventRes, error) {
+	res, err := c.sendGetEvent(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetEvent(ctx context.Context, params GetEventParams) (res GetEventRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getEvent"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/events/{id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetEventOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/v1/events/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetEventOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetEventResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetPrStunt invokes getPrStunt operation.
+//
+// Récupère un PR Stunt par identifiant.
+//
+// GET /v1/pr-stunts/{id}
+func (c *Client) GetPrStunt(ctx context.Context, params GetPrStuntParams) (GetPrStuntRes, error) {
+	res, err := c.sendGetPrStunt(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetPrStunt(ctx context.Context, params GetPrStuntParams) (res GetPrStuntRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getPrStunt"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/pr-stunts/{id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetPrStuntOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/v1/pr-stunts/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetPrStuntOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetPrStuntResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetRandomCar invokes getRandomCar operation.
+//
+// Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
+// que /v1/cars, hors q/dlc et pagination). Pensé pour les bots Discord ("bagnole random du jour"),
+// défis communautaires et easter-eggs sur la landing. Réponse non cacheable (Cache-Control:
+// no-store) : chaque appel re-tire. 404 si aucune voiture ne correspond.
+//
+// GET /v1/cars/random
+func (c *Client) GetRandomCar(ctx context.Context, params GetRandomCarParams) (GetRandomCarRes, error) {
+	res, err := c.sendGetRandomCar(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetRandomCar(ctx context.Context, params GetRandomCarParams) (res GetRandomCarRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getRandomCar"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/cars/random"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetRandomCarOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/cars/random"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "make" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "make",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Make.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "class" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "class",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Class.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "pi_min" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "pi_min",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.PiMin.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "pi_max" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "pi_max",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.PiMax.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "drivetrain" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "drivetrain",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Drivetrain.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "category" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Category.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetRandomCarOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetRandomCarResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetRandomTrack invokes getRandomTrack operation.
+//
+// Tire un seul tracé au hasard parmi ceux qui satisfont les filtres (mêmes filtres optionnels que
+// /v1/tracks, hors q et pagination). Pensé pour les bots Discord et défis communautaires («
+// course aléatoire du jour »). Réponse non cacheable (Cache-Control: no-store) : chaque appel
+// re-tire. 404 si aucun tracé ne correspond.
+//
+// GET /v1/tracks/random
+func (c *Client) GetRandomTrack(ctx context.Context, params GetRandomTrackParams) (GetRandomTrackRes, error) {
+	res, err := c.sendGetRandomTrack(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetRandomTrack(ctx context.Context, params GetRandomTrackParams) (res GetRandomTrackRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getRandomTrack"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/tracks/random"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetRandomTrackOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/tracks/random"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "type" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "type",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Type.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "region" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Region.Get(); ok {
+				if unwrapped := string(val); true {
+					return e.EncodeValue(conv.StringToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetRandomTrackOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetRandomTrackResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetReference invokes getReference operation.
+//
+// Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI
+// (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories
+// (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes
+// par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement
+// cacheable, invalidée par les jobs d'ingestion.
+//
+// GET /v1/reference
+func (c *Client) GetReference(ctx context.Context, params GetReferenceParams) (GetReferenceRes, error) {
+	res, err := c.sendGetReference(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetReference(ctx context.Context, params GetReferenceParams) (res GetReferenceRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getReference"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/reference"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetReferenceOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/reference"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetReferenceOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetReferenceResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // GetSeries invokes getSeries operation.
 //
 // Récupère une série par identifiant.
@@ -538,6 +2060,639 @@ func (c *Client) sendGetSeries(ctx context.Context, params GetSeriesParams) (res
 
 	stage = "DecodeResponse"
 	result, err := decodeGetSeriesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetTrack invokes getTrack operation.
+//
+// Récupère un tracé par identifiant.
+//
+// GET /v1/tracks/{id}
+func (c *Client) GetTrack(ctx context.Context, params GetTrackParams) (GetTrackRes, error) {
+	res, err := c.sendGetTrack(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetTrack(ctx context.Context, params GetTrackParams) (res GetTrackRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTrack"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/tracks/{id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetTrackOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/v1/tracks/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetTrackOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetTrackResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetTreasureCar invokes getTreasureCar operation.
+//
+// Récupère une Treasure Car par identifiant.
+//
+// GET /v1/treasure-cars/{id}
+func (c *Client) GetTreasureCar(ctx context.Context, params GetTreasureCarParams) (GetTreasureCarRes, error) {
+	res, err := c.sendGetTreasureCar(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetTreasureCar(ctx context.Context, params GetTreasureCarParams) (res GetTreasureCarRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTreasureCar"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/treasure-cars/{id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetTreasureCarOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/v1/treasure-cars/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, GetTreasureCarOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetTreasureCarResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListBarnFinds invokes listBarnFinds operation.
+//
+// Liste les Barn Finds (épaves cachées à trouver puis restaurer).
+//
+// GET /v1/barn-finds
+func (c *Client) ListBarnFinds(ctx context.Context, params ListBarnFindsParams) (ListBarnFindsRes, error) {
+	res, err := c.sendListBarnFinds(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListBarnFinds(ctx context.Context, params ListBarnFindsParams) (res ListBarnFindsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listBarnFinds"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/barn-finds"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListBarnFindsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/barn-finds"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "region" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Region.Get(); ok {
+				if unwrapped := string(val); true {
+					return e.EncodeValue(conv.StringToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "car_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "car_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.CarID.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Page.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page_size" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.PageSize.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListBarnFindsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListBarnFindsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListCarUpgrades invokes listCarUpgrades operation.
+//
+// Pièces d'upgrade montables sur la voiture, avec leurs contraintes d'installation (prérequis,
+// groupe exclusif). Le jeu est déterminé par la voiture (pas de paramètre game). Voiture inconnue
+// ou sans upgrade sourcé → page vide.
+//
+// GET /v1/cars/{id}/upgrades
+func (c *Client) ListCarUpgrades(ctx context.Context, params ListCarUpgradesParams) (ListCarUpgradesRes, error) {
+	res, err := c.sendListCarUpgrades(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListCarUpgrades(ctx context.Context, params ListCarUpgradesParams) (res ListCarUpgradesRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listCarUpgrades"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/cars/{id}/upgrades"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListCarUpgradesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/v1/cars/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/upgrades"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "category" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Category.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Page.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page_size" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.PageSize.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListCarUpgradesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListCarUpgradesResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -698,6 +2853,23 @@ func (c *Client) sendListCars(ctx context.Context, params ListCarsParams) (res L
 		}
 	}
 	{
+		// Encode "category" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Category.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
 		// Encode "q" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
 			Name:    "q",
@@ -708,6 +2880,40 @@ func (c *Client) sendListCars(ctx context.Context, params ListCarsParams) (res L
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
 			if val, ok := params.Q.Get(); ok {
 				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "dlc" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "dlc",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Dlc.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "updated_since" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "updated_since",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.UpdatedSince.Get(); ok {
+				return e.EncodeValue(conv.DateTimeToString(val))
 			}
 			return nil
 		}); err != nil {
@@ -800,6 +3006,362 @@ func (c *Client) sendListCars(ctx context.Context, params ListCarsParams) (res L
 
 	stage = "DecodeResponse"
 	result, err := decodeListCarsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListChanges invokes listChanges operation.
+//
+// Flux des changements du jeu de données (voiture ajoutée/modifiée, pack sorti, série
+// publiée…), alimenté par les jobs d'ingestion. Donne aux clients un « what's new » et la base
+// d'une synchro incrémentale. Plus récents d'abord.
+//
+// GET /v1/changes
+func (c *Client) ListChanges(ctx context.Context, params ListChangesParams) (ListChangesRes, error) {
+	res, err := c.sendListChanges(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListChanges(ctx context.Context, params ListChangesParams) (res ListChangesRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listChanges"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/changes"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListChangesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/changes"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "resource" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "resource",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Resource.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "action" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "action",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Action.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "since" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "since",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Since.Get(); ok {
+				return e.EncodeValue(conv.DateTimeToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Page.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page_size" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.PageSize.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListChangesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListChangesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListDlcPacks invokes listDlcPacks operation.
+//
+// Liste les packs DLC / extensions d'un jeu.
+//
+// GET /v1/dlc-packs
+func (c *Client) ListDlcPacks(ctx context.Context, params ListDlcPacksParams) (ListDlcPacksRes, error) {
+	res, err := c.sendListDlcPacks(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListDlcPacks(ctx context.Context, params ListDlcPacksParams) (res ListDlcPacksRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listDlcPacks"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/dlc-packs"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListDlcPacksOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/dlc-packs"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "kind" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "kind",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Kind.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListDlcPacksOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListDlcPacksResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -912,6 +3474,23 @@ func (c *Client) sendListEvents(ctx context.Context, params ListEventsParams) (r
 		}
 	}
 	{
+		// Encode "q" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Q.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
 		// Encode "page" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
 			Name:    "page",
@@ -1004,6 +3583,153 @@ func (c *Client) sendListEvents(ctx context.Context, params ListEventsParams) (r
 	return result, nil
 }
 
+// ListJournalTiers invokes listJournalTiers operation.
+//
+// Paliers de progression du Collection Journal FH6 : 7 Wristbands (track horizon_festival, Yellow
+// → Gold ; Gold débloque Legend Island + The Goliath) et 7 Stamps (track discover_japan, Visitor
+// → Master Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que via les
+// rewardCarId de ces paliers. Remplace les Accolades de FH5. Ensemble borné (≤ 14 par jeu) →
+// pas de pagination.
+//
+// GET /v1/journal
+func (c *Client) ListJournalTiers(ctx context.Context, params ListJournalTiersParams) (ListJournalTiersRes, error) {
+	res, err := c.sendListJournalTiers(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListJournalTiers(ctx context.Context, params ListJournalTiersParams) (res ListJournalTiersRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listJournalTiers"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/journal"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListJournalTiersOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/journal"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "track" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "track",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Track.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListJournalTiersOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListJournalTiersResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // ListManufacturers invokes listManufacturers operation.
 //
 // Liste les constructeurs.
@@ -1067,6 +3793,40 @@ func (c *Client) sendListManufacturers(ctx context.Context, params ListManufactu
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "country" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "country",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Country.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "q" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Q.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode query")
 		}
@@ -1228,6 +3988,23 @@ func (c *Client) sendListPrStunts(ctx context.Context, params ListPrStuntsParams
 					return e.EncodeValue(conv.StringToString(unwrapped))
 				}
 				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "q" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Q.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
 			}
 			return nil
 		}); err != nil {
@@ -1453,6 +4230,368 @@ func (c *Client) sendListSeries(ctx context.Context, params ListSeriesParams) (r
 	return result, nil
 }
 
+// ListStories invokes listStories operation.
+//
+// Stories FH6 : missions narratives de Discover Japan, qui rapportent des stamps au Collection
+// Journal. Sources propres (wiki Fandom) ; champs non sourcés → omis.
+//
+// GET /v1/stories
+func (c *Client) ListStories(ctx context.Context, params ListStoriesParams) (ListStoriesRes, error) {
+	res, err := c.sendListStories(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListStories(ctx context.Context, params ListStoriesParams) (res ListStoriesRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listStories"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/stories"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListStoriesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/stories"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "region" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Region.Get(); ok {
+				if unwrapped := string(val); true {
+					return e.EncodeValue(conv.StringToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Page.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page_size" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.PageSize.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListStoriesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListStoriesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListTours invokes listTours operation.
+//
+// Tours of Japan FH6 : visites guidées de l'activité Discovery, qui rapportent des stamps au
+// Collection Journal. Sources propres (wiki Fandom) ; champs non sourcés → omis.
+//
+// GET /v1/tours
+func (c *Client) ListTours(ctx context.Context, params ListToursParams) (ListToursRes, error) {
+	res, err := c.sendListTours(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListTours(ctx context.Context, params ListToursParams) (res ListToursRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listTours"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/tours"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListToursOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/tours"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "region" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Region.Get(); ok {
+				if unwrapped := string(val); true {
+					return e.EncodeValue(conv.StringToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Page.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page_size" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.PageSize.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListToursOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListToursResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // ListTracks invokes listTracks operation.
 //
 // Liste les tracés / circuits indexés.
@@ -1558,6 +4697,40 @@ func (c *Client) sendListTracks(ctx context.Context, params ListTracksParams) (r
 		}
 	}
 	{
+		// Encode "q" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Q.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "updated_since" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "updated_since",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.UpdatedSince.Get(); ok {
+				return e.EncodeValue(conv.DateTimeToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
 		// Encode "page" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
 			Name:    "page",
@@ -1643,6 +4816,565 @@ func (c *Client) sendListTracks(ctx context.Context, params ListTracksParams) (r
 
 	stage = "DecodeResponse"
 	result, err := decodeListTracksResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListTreasureCars invokes listTreasureCars operation.
+//
+// Liste les Treasure Cars (voitures liées aux postcards).
+//
+// GET /v1/treasure-cars
+func (c *Client) ListTreasureCars(ctx context.Context, params ListTreasureCarsParams) (ListTreasureCarsRes, error) {
+	res, err := c.sendListTreasureCars(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListTreasureCars(ctx context.Context, params ListTreasureCarsParams) (res ListTreasureCarsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listTreasureCars"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/treasure-cars"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListTreasureCarsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/treasure-cars"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "region" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Region.Get(); ok {
+				if unwrapped := string(val); true {
+					return e.EncodeValue(conv.StringToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "car_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "car_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.CarID.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Page.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page_size" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.PageSize.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListTreasureCarsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListTreasureCarsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListUpgradeParts invokes listUpgradeParts operation.
+//
+// Catalogue global des pièces d'upgrade.
+//
+// GET /v1/upgrade-parts
+func (c *Client) ListUpgradeParts(ctx context.Context, params ListUpgradePartsParams) (ListUpgradePartsRes, error) {
+	res, err := c.sendListUpgradeParts(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListUpgradeParts(ctx context.Context, params ListUpgradePartsParams) (res ListUpgradePartsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listUpgradeParts"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/upgrade-parts"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListUpgradePartsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/upgrade-parts"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "category" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Category.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Page.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "page_size" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.PageSize.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListUpgradePartsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListUpgradePartsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// Search invokes search operation.
+//
+// Recherche plein texte sur les ressources nommées (voitures, tracés, événements, PR stunts,
+// constructeurs, packs DLC) en un seul appel. Pensé pour l'autocomplete d'un site ou d'un bot.
+// Résultats bornés par limit (pas de pagination) ; kinds restreint les types cherchés.
+//
+// GET /v1/search
+func (c *Client) Search(ctx context.Context, params SearchParams) (SearchRes, error) {
+	res, err := c.sendSearch(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendSearch(ctx context.Context, params SearchParams) (res SearchRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("search"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/search"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SearchOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/search"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(string(params.Game)))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "q" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.Q))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "kinds" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "kinds",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if params.Kinds != nil {
+				return e.EncodeArray(func(e uri.Encoder) error {
+					for i, item := range params.Kinds {
+						if err := func() error {
+							return e.EncodeValue(conv.StringToString(string(item)))
+						}(); err != nil {
+							return errors.Wrapf(err, "[%d]", i)
+						}
+					}
+					return nil
+				})
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "limit" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Limit.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SearchOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeSearchResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

@@ -3,8 +3,10 @@
 package oas
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/ogen-go/ogen/conv"
@@ -13,6 +15,72 @@ import (
 	"github.com/ogen-go/ogen/uri"
 	"github.com/ogen-go/ogen/validate"
 )
+
+// GetBarnFindParams is parameters of getBarnFind operation.
+type GetBarnFindParams struct {
+	// Identifiant stable du Barn Find.
+	ID string
+}
+
+func unpackGetBarnFindParams(packed middleware.Parameters) (params GetBarnFindParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetBarnFindParams(args [1]string, argsEscaped bool, r *http.Request) (params GetBarnFindParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
 
 // GetCarParams is parameters of getCar operation.
 type GetCarParams struct {
@@ -32,6 +100,138 @@ func unpackGetCarParams(packed middleware.Parameters) (params GetCarParams) {
 }
 
 func decodeGetCarParams(args [1]string, argsEscaped bool, r *http.Request) (params GetCarParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetCarMasteryParams is parameters of getCarMastery operation.
+type GetCarMasteryParams struct {
+	// Identifiant stable de la voiture.
+	ID string
+}
+
+func unpackGetCarMasteryParams(packed middleware.Parameters) (params GetCarMasteryParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetCarMasteryParams(args [1]string, argsEscaped bool, r *http.Request) (params GetCarMasteryParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetCarObtainParams is parameters of getCarObtain operation.
+type GetCarObtainParams struct {
+	// Identifiant stable de la voiture.
+	ID string
+}
+
+func unpackGetCarObtainParams(packed middleware.Parameters) (params GetCarObtainParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetCarObtainParams(args [1]string, argsEscaped bool, r *http.Request) (params GetCarObtainParams, _ error) {
 	// Decode path: id.
 	if err := func() error {
 		param := args[0]
@@ -146,6 +346,920 @@ func decodeGetCurrentPlaylistParams(args [0]string, argsEscaped bool, r *http.Re
 	return params, nil
 }
 
+// GetDlcPackParams is parameters of getDlcPack operation.
+type GetDlcPackParams struct {
+	// Identifiant stable du pack.
+	ID string
+}
+
+func unpackGetDlcPackParams(packed middleware.Parameters) (params GetDlcPackParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetDlcPackParams(args [1]string, argsEscaped bool, r *http.Request) (params GetDlcPackParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetEventParams is parameters of getEvent operation.
+type GetEventParams struct {
+	// Identifiant stable de l'événement.
+	ID string
+}
+
+func unpackGetEventParams(packed middleware.Parameters) (params GetEventParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetEventParams(args [1]string, argsEscaped bool, r *http.Request) (params GetEventParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetPrStuntParams is parameters of getPrStunt operation.
+type GetPrStuntParams struct {
+	// Identifiant stable du PR Stunt.
+	ID string
+}
+
+func unpackGetPrStuntParams(packed middleware.Parameters) (params GetPrStuntParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetPrStuntParams(args [1]string, argsEscaped bool, r *http.Request) (params GetPrStuntParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetRandomCarParams is parameters of getRandomCar operation.
+type GetRandomCarParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par constructeur (ex. "Ford").
+	Make OptString `json:",omitempty,omitzero"`
+	// Filtre par classe PI.
+	Class OptCarClass `json:",omitempty,omitzero"`
+	// Performance Index minimum (inclus).
+	PiMin OptInt `json:",omitempty,omitzero"`
+	// Performance Index maximum (inclus).
+	PiMax OptInt `json:",omitempty,omitzero"`
+	// Filtre par transmission.
+	Drivetrain OptDrivetrain `json:",omitempty,omitzero"`
+	// Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+	Category OptString `json:",omitempty,omitzero"`
+}
+
+func unpackGetRandomCarParams(packed middleware.Parameters) (params GetRandomCarParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "make",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Make = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "class",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Class = v.(OptCarClass)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "pi_min",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PiMin = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "pi_max",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PiMax = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "drivetrain",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Drivetrain = v.(OptDrivetrain)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "category",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Category = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeGetRandomCarParams(args [0]string, argsEscaped bool, r *http.Request) (params GetRandomCarParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: make.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "make",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotMakeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotMakeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Make.SetTo(paramsDotMakeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "make",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: class.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "class",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotClassVal CarClass
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotClassVal = CarClass(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Class.SetTo(paramsDotClassVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Class.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "class",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: pi_min.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "pi_min",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPiMinVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPiMinVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PiMin.SetTo(paramsDotPiMinVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PiMin.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           100,
+							MaxSet:        true,
+							Max:           999,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pi_min",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: pi_max.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "pi_max",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPiMaxVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPiMaxVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PiMax.SetTo(paramsDotPiMaxVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PiMax.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           100,
+							MaxSet:        true,
+							Max:           999,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pi_max",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: drivetrain.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "drivetrain",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotDrivetrainVal Drivetrain
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotDrivetrainVal = Drivetrain(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Drivetrain.SetTo(paramsDotDrivetrainVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Drivetrain.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "drivetrain",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: category.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCategoryVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCategoryVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Category.SetTo(paramsDotCategoryVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "category",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetRandomTrackParams is parameters of getRandomTrack operation.
+type GetRandomTrackParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par catégorie de tracé.
+	Type OptTrackType `json:",omitempty,omitzero"`
+	// Filtre par région.
+	Region OptRegion `json:",omitempty,omitzero"`
+}
+
+func unpackGetRandomTrackParams(packed middleware.Parameters) (params GetRandomTrackParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "type",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Type = v.(OptTrackType)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "region",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Region = v.(OptRegion)
+		}
+	}
+	return params
+}
+
+func decodeGetRandomTrackParams(args [0]string, argsEscaped bool, r *http.Request) (params GetRandomTrackParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: type.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "type",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTypeVal TrackType
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTypeVal = TrackType(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Type.SetTo(paramsDotTypeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Type.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "type",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: region.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRegionVal Region
+				if err := func() error {
+					var paramsDotRegionValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotRegionValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotRegionVal = Region(paramsDotRegionValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Region.SetTo(paramsDotRegionVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "region",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetReferenceParams is parameters of getReference operation.
+type GetReferenceParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+}
+
+func unpackGetReferenceParams(packed middleware.Parameters) (params GetReferenceParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	return params
+}
+
+func decodeGetReferenceParams(args [0]string, argsEscaped bool, r *http.Request) (params GetReferenceParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetSeriesParams is parameters of getSeries operation.
 type GetSeriesParams struct {
 	// Identifiant stable de la série.
@@ -212,6 +1326,777 @@ func decodeGetSeriesParams(args [1]string, argsEscaped bool, r *http.Request) (p
 	return params, nil
 }
 
+// GetTrackParams is parameters of getTrack operation.
+type GetTrackParams struct {
+	// Identifiant stable du tracé.
+	ID string
+}
+
+func unpackGetTrackParams(packed middleware.Parameters) (params GetTrackParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetTrackParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTrackParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetTreasureCarParams is parameters of getTreasureCar operation.
+type GetTreasureCarParams struct {
+	// Identifiant stable de la Treasure Car.
+	ID string
+}
+
+func unpackGetTreasureCarParams(packed middleware.Parameters) (params GetTreasureCarParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetTreasureCarParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTreasureCarParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListBarnFindsParams is parameters of listBarnFinds operation.
+type ListBarnFindsParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par région.
+	Region OptRegion `json:",omitempty,omitzero"`
+	// Filtre par voiture obtenue (lookup inverse « cette voiture est-elle un Barn Find ? »).
+	CarID OptString `json:",omitempty,omitzero"`
+	// Numéro de page (1-based).
+	Page OptInt `json:",omitempty,omitzero"`
+	// Taille de page.
+	PageSize OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListBarnFindsParams(packed middleware.Parameters) (params ListBarnFindsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "region",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Region = v.(OptRegion)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "car_id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.CarID = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListBarnFindsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListBarnFindsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: region.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRegionVal Region
+				if err := func() error {
+					var paramsDotRegionValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotRegionValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotRegionVal = Region(paramsDotRegionValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Region.SetTo(paramsDotRegionVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "region",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: car_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "car_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCarIDVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCarIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.CarID.SetTo(paramsDotCarIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "car_id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Page.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page_size.
+	{
+		val := int(50)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListCarUpgradesParams is parameters of listCarUpgrades operation.
+type ListCarUpgradesParams struct {
+	// Identifiant stable de la voiture.
+	ID string
+	// Filtre par catégorie de pièce.
+	Category OptUpgradePartCategory `json:",omitempty,omitzero"`
+	// Numéro de page (1-based).
+	Page OptInt `json:",omitempty,omitzero"`
+	// Taille de page.
+	PageSize OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListCarUpgradesParams(packed middleware.Parameters) (params ListCarUpgradesParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "category",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Category = v.(OptUpgradePartCategory)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListCarUpgradesParams(args [1]string, argsEscaped bool, r *http.Request) (params ListCarUpgradesParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: category.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCategoryVal UpgradePartCategory
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCategoryVal = UpgradePartCategory(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Category.SetTo(paramsDotCategoryVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Category.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "category",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Page.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page_size.
+	{
+		val := int(50)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ListCarsParams is parameters of listCars operation.
 type ListCarsParams struct {
 	// Jeu cible (obligatoire sur les ressources multi-jeux).
@@ -226,8 +2111,15 @@ type ListCarsParams struct {
 	PiMax OptInt `json:",omitempty,omitzero"`
 	// Filtre par transmission.
 	Drivetrain OptDrivetrain `json:",omitempty,omitzero"`
+	// Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+	Category OptString `json:",omitempty,omitzero"`
 	// Recherche plein texte sur name/model.
 	Q OptString `json:",omitempty,omitzero"`
+	// Filtre par pack DLC (identifiant d'un dlc_packs) ; liste les voitures du pack.
+	Dlc OptString `json:",omitempty,omitzero"`
+	// Ne renvoie que les éléments modifiés après cet instant (synchro incrémentale : un client ne
+	// re-télécharge que le delta).
+	UpdatedSince OptDateTime `json:",omitempty,omitzero"`
 	// Numéro de page (1-based).
 	Page OptInt `json:",omitempty,omitzero"`
 	// Taille de page.
@@ -289,11 +2181,38 @@ func unpackListCarsParams(packed middleware.Parameters) (params ListCarsParams) 
 	}
 	{
 		key := middleware.ParameterKey{
+			Name: "category",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Category = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
 			Name: "q",
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
 			params.Q = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "dlc",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Dlc = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "updated_since",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.UpdatedSince = v.(OptDateTime)
 		}
 	}
 	{
@@ -648,6 +2567,1071 @@ func decodeListCarsParams(args [0]string, argsEscaped bool, r *http.Request) (pa
 			Err:  err,
 		}
 	}
+	// Decode query: category.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCategoryVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCategoryVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Category.SetTo(paramsDotCategoryVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "category",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: q.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotQVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotQVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Q.SetTo(paramsDotQVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "q",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: dlc.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "dlc",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotDlcVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotDlcVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Dlc.SetTo(paramsDotDlcVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "dlc",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: updated_since.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "updated_since",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotUpdatedSinceVal time.Time
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToDateTime(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotUpdatedSinceVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.UpdatedSince.SetTo(paramsDotUpdatedSinceVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "updated_since",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Page.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page_size.
+	{
+		val := int(50)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListChangesParams is parameters of listChanges operation.
+type ListChangesParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par type de ressource (car, dlc_pack, series…). Valeur libre, non figée au contrat.
+	Resource OptString `json:",omitempty,omitzero"`
+	// Filtre par action.
+	Action OptChangeAction `json:",omitempty,omitzero"`
+	// Ne renvoie que les changements postérieurs à cet instant.
+	Since OptDateTime `json:",omitempty,omitzero"`
+	// Numéro de page (1-based).
+	Page OptInt `json:",omitempty,omitzero"`
+	// Taille de page.
+	PageSize OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListChangesParams(packed middleware.Parameters) (params ListChangesParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "resource",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Resource = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "action",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Action = v.(OptChangeAction)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "since",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Since = v.(OptDateTime)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListChangesParams(args [0]string, argsEscaped bool, r *http.Request) (params ListChangesParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: resource.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "resource",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotResourceVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotResourceVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Resource.SetTo(paramsDotResourceVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "resource",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: action.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "action",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotActionVal ChangeAction
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotActionVal = ChangeAction(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Action.SetTo(paramsDotActionVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Action.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "action",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: since.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "since",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotSinceVal time.Time
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToDateTime(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotSinceVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Since.SetTo(paramsDotSinceVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "since",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Page.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page_size.
+	{
+		val := int(50)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListDlcPacksParams is parameters of listDlcPacks operation.
+type ListDlcPacksParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par type de pack.
+	Kind OptDlcKind `json:",omitempty,omitzero"`
+}
+
+func unpackListDlcPacksParams(packed middleware.Parameters) (params ListDlcPacksParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "kind",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Kind = v.(OptDlcKind)
+		}
+	}
+	return params
+}
+
+func decodeListDlcPacksParams(args [0]string, argsEscaped bool, r *http.Request) (params ListDlcPacksParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: kind.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "kind",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotKindVal DlcKind
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotKindVal = DlcKind(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Kind.SetTo(paramsDotKindVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Kind.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "kind",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListEventsParams is parameters of listEvents operation.
+type ListEventsParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par type d'événement.
+	Type OptEventType `json:",omitempty,omitzero"`
+	// Filtre par région.
+	Region OptRegion `json:",omitempty,omitzero"`
+	// Recherche plein texte sur le nom de l'événement.
+	Q OptString `json:",omitempty,omitzero"`
+	// Numéro de page (1-based).
+	Page OptInt `json:",omitempty,omitzero"`
+	// Taille de page.
+	PageSize OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListEventsParams(packed middleware.Parameters) (params ListEventsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "type",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Type = v.(OptEventType)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "region",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Region = v.(OptRegion)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "q",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Q = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListEventsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListEventsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: type.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "type",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTypeVal EventType
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTypeVal = EventType(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Type.SetTo(paramsDotTypeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Type.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "type",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: region.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRegionVal Region
+				if err := func() error {
+					var paramsDotRegionValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotRegionValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotRegionVal = Region(paramsDotRegionValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Region.SetTo(paramsDotRegionVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "region",
+			In:   "query",
+			Err:  err,
+		}
+	}
 	// Decode query: q.
 	if err := func() error {
 		cfg := uri.QueryParameterDecodingConfig{
@@ -834,21 +3818,15 @@ func decodeListCarsParams(args [0]string, argsEscaped bool, r *http.Request) (pa
 	return params, nil
 }
 
-// ListEventsParams is parameters of listEvents operation.
-type ListEventsParams struct {
+// ListJournalTiersParams is parameters of listJournalTiers operation.
+type ListJournalTiersParams struct {
 	// Jeu cible (obligatoire sur les ressources multi-jeux).
 	Game Game
-	// Filtre par type d'événement.
-	Type OptEventType `json:",omitempty,omitzero"`
-	// Filtre par région.
-	Region OptRegion `json:",omitempty,omitzero"`
-	// Numéro de page (1-based).
-	Page OptInt `json:",omitempty,omitzero"`
-	// Taille de page.
-	PageSize OptInt `json:",omitempty,omitzero"`
+	// Filtre par piste de progression.
+	Track OptJournalTrack `json:",omitempty,omitzero"`
 }
 
-func unpackListEventsParams(packed middleware.Parameters) (params ListEventsParams) {
+func unpackListJournalTiersParams(packed middleware.Parameters) (params ListJournalTiersParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "game",
@@ -858,44 +3836,17 @@ func unpackListEventsParams(packed middleware.Parameters) (params ListEventsPara
 	}
 	{
 		key := middleware.ParameterKey{
-			Name: "type",
+			Name: "track",
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Type = v.(OptEventType)
-		}
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "region",
-			In:   "query",
-		}
-		if v, ok := packed[key]; ok {
-			params.Region = v.(OptRegion)
-		}
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "page",
-			In:   "query",
-		}
-		if v, ok := packed[key]; ok {
-			params.Page = v.(OptInt)
-		}
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "page_size",
-			In:   "query",
-		}
-		if v, ok := packed[key]; ok {
-			params.PageSize = v.(OptInt)
+			params.Track = v.(OptJournalTrack)
 		}
 	}
 	return params
 }
 
-func decodeListEventsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListEventsParams, _ error) {
+func decodeListJournalTiersParams(args [0]string, argsEscaped bool, r *http.Request) (params ListJournalTiersParams, _ error) {
 	q := uri.NewQueryDecoder(r.URL.Query())
 	// Decode query: game.
 	if err := func() error {
@@ -941,17 +3892,17 @@ func decodeListEventsParams(args [0]string, argsEscaped bool, r *http.Request) (
 			Err:  err,
 		}
 	}
-	// Decode query: type.
+	// Decode query: track.
 	if err := func() error {
 		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "type",
+			Name:    "track",
 			Style:   uri.QueryStyleForm,
 			Explode: true,
 		}
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotTypeVal EventType
+				var paramsDotTrackVal JournalTrack
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
@@ -963,18 +3914,18 @@ func decodeListEventsParams(args [0]string, argsEscaped bool, r *http.Request) (
 						return err
 					}
 
-					paramsDotTypeVal = EventType(c)
+					paramsDotTrackVal = JournalTrack(c)
 					return nil
 				}(); err != nil {
 					return err
 				}
-				params.Type.SetTo(paramsDotTypeVal)
+				params.Track.SetTo(paramsDotTrackVal)
 				return nil
 			}); err != nil {
 				return err
 			}
 			if err := func() error {
-				if value, ok := params.Type.Get(); ok {
+				if value, ok := params.Track.Get(); ok {
 					if err := func() error {
 						if err := value.Validate(); err != nil {
 							return err
@@ -992,197 +3943,7 @@ func decodeListEventsParams(args [0]string, argsEscaped bool, r *http.Request) (
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "type",
-			In:   "query",
-			Err:  err,
-		}
-	}
-	// Decode query: region.
-	if err := func() error {
-		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "region",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.HasParam(cfg); err == nil {
-			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotRegionVal Region
-				if err := func() error {
-					var paramsDotRegionValVal string
-					if err := func() error {
-						val, err := d.DecodeValue()
-						if err != nil {
-							return err
-						}
-
-						c, err := conv.ToString(val)
-						if err != nil {
-							return err
-						}
-
-						paramsDotRegionValVal = c
-						return nil
-					}(); err != nil {
-						return err
-					}
-					paramsDotRegionVal = Region(paramsDotRegionValVal)
-					return nil
-				}(); err != nil {
-					return err
-				}
-				params.Region.SetTo(paramsDotRegionVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "region",
-			In:   "query",
-			Err:  err,
-		}
-	}
-	// Set default value for query: page.
-	{
-		val := int(1)
-		params.Page.SetTo(val)
-	}
-	// Decode query: page.
-	if err := func() error {
-		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "page",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.HasParam(cfg); err == nil {
-			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotPageVal int
-				if err := func() error {
-					val, err := d.DecodeValue()
-					if err != nil {
-						return err
-					}
-
-					c, err := conv.ToInt(val)
-					if err != nil {
-						return err
-					}
-
-					paramsDotPageVal = c
-					return nil
-				}(); err != nil {
-					return err
-				}
-				params.Page.SetTo(paramsDotPageVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				if value, ok := params.Page.Get(); ok {
-					if err := func() error {
-						if err := (validate.Int{
-							MinSet:        true,
-							Min:           1,
-							MaxSet:        false,
-							Max:           0,
-							MinExclusive:  false,
-							MaxExclusive:  false,
-							MultipleOfSet: false,
-							MultipleOf:    0,
-							Pattern:       nil,
-						}).Validate(int64(value)); err != nil {
-							return errors.Wrap(err, "int")
-						}
-						return nil
-					}(); err != nil {
-						return err
-					}
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "page",
-			In:   "query",
-			Err:  err,
-		}
-	}
-	// Set default value for query: page_size.
-	{
-		val := int(50)
-		params.PageSize.SetTo(val)
-	}
-	// Decode query: page_size.
-	if err := func() error {
-		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "page_size",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.HasParam(cfg); err == nil {
-			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotPageSizeVal int
-				if err := func() error {
-					val, err := d.DecodeValue()
-					if err != nil {
-						return err
-					}
-
-					c, err := conv.ToInt(val)
-					if err != nil {
-						return err
-					}
-
-					paramsDotPageSizeVal = c
-					return nil
-				}(); err != nil {
-					return err
-				}
-				params.PageSize.SetTo(paramsDotPageSizeVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				if value, ok := params.PageSize.Get(); ok {
-					if err := func() error {
-						if err := (validate.Int{
-							MinSet:        true,
-							Min:           1,
-							MaxSet:        true,
-							Max:           100,
-							MinExclusive:  false,
-							MaxExclusive:  false,
-							MultipleOfSet: false,
-							MultipleOf:    0,
-							Pattern:       nil,
-						}).Validate(int64(value)); err != nil {
-							return errors.Wrap(err, "int")
-						}
-						return nil
-					}(); err != nil {
-						return err
-					}
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "page_size",
+			Name: "track",
 			In:   "query",
 			Err:  err,
 		}
@@ -1194,6 +3955,10 @@ func decodeListEventsParams(args [0]string, argsEscaped bool, r *http.Request) (
 type ListManufacturersParams struct {
 	// Jeu cible (obligatoire sur les ressources multi-jeux).
 	Game Game
+	// Filtre par pays du constructeur. Correspondance exacte.
+	Country OptString `json:",omitempty,omitzero"`
+	// Recherche plein texte sur le nom du constructeur.
+	Q OptString `json:",omitempty,omitzero"`
 }
 
 func unpackListManufacturersParams(packed middleware.Parameters) (params ListManufacturersParams) {
@@ -1203,6 +3968,24 @@ func unpackListManufacturersParams(packed middleware.Parameters) (params ListMan
 			In:   "query",
 		}
 		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "country",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Country = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "q",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Q = v.(OptString)
+		}
 	}
 	return params
 }
@@ -1253,6 +4036,88 @@ func decodeListManufacturersParams(args [0]string, argsEscaped bool, r *http.Req
 			Err:  err,
 		}
 	}
+	// Decode query: country.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "country",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCountryVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCountryVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Country.SetTo(paramsDotCountryVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "country",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: q.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotQVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotQVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Q.SetTo(paramsDotQVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "q",
+			In:   "query",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
@@ -1264,6 +4129,8 @@ type ListPrStuntsParams struct {
 	Type OptPRStuntType `json:",omitempty,omitzero"`
 	// Filtre par région.
 	Region OptRegion `json:",omitempty,omitzero"`
+	// Recherche plein texte sur le nom du PR Stunt.
+	Q OptString `json:",omitempty,omitzero"`
 	// Numéro de page (1-based).
 	Page OptInt `json:",omitempty,omitzero"`
 	// Taille de page.
@@ -1294,6 +4161,15 @@ func unpackListPrStuntsParams(packed middleware.Parameters) (params ListPrStunts
 		}
 		if v, ok := packed[key]; ok {
 			params.Region = v.(OptRegion)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "q",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Q = v.(OptString)
 		}
 	}
 	{
@@ -1463,6 +4339,47 @@ func decodeListPrStuntsParams(args [0]string, argsEscaped bool, r *http.Request)
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "region",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: q.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotQVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotQVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Q.SetTo(paramsDotQVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "q",
 			In:   "query",
 			Err:  err,
 		}
@@ -1678,12 +4595,10 @@ func decodeListSeriesParams(args [0]string, argsEscaped bool, r *http.Request) (
 	return params, nil
 }
 
-// ListTracksParams is parameters of listTracks operation.
-type ListTracksParams struct {
+// ListStoriesParams is parameters of listStories operation.
+type ListStoriesParams struct {
 	// Jeu cible (obligatoire sur les ressources multi-jeux).
 	Game Game
-	// Filtre par catégorie de tracé.
-	Type OptTrackType `json:",omitempty,omitzero"`
 	// Filtre par région.
 	Region OptRegion `json:",omitempty,omitzero"`
 	// Numéro de page (1-based).
@@ -1692,22 +4607,13 @@ type ListTracksParams struct {
 	PageSize OptInt `json:",omitempty,omitzero"`
 }
 
-func unpackListTracksParams(packed middleware.Parameters) (params ListTracksParams) {
+func unpackListStoriesParams(packed middleware.Parameters) (params ListStoriesParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "game",
 			In:   "query",
 		}
 		params.Game = packed[key].(Game)
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "type",
-			In:   "query",
-		}
-		if v, ok := packed[key]; ok {
-			params.Type = v.(OptTrackType)
-		}
 	}
 	{
 		key := middleware.ParameterKey{
@@ -1739,7 +4645,7 @@ func unpackListTracksParams(packed middleware.Parameters) (params ListTracksPara
 	return params
 }
 
-func decodeListTracksParams(args [0]string, argsEscaped bool, r *http.Request) (params ListTracksParams, _ error) {
+func decodeListStoriesParams(args [0]string, argsEscaped bool, r *http.Request) (params ListStoriesParams, _ error) {
 	q := uri.NewQueryDecoder(r.URL.Query())
 	// Decode query: game.
 	if err := func() error {
@@ -1781,62 +4687,6 @@ func decodeListTracksParams(args [0]string, argsEscaped bool, r *http.Request) (
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "game",
-			In:   "query",
-			Err:  err,
-		}
-	}
-	// Decode query: type.
-	if err := func() error {
-		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "type",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.HasParam(cfg); err == nil {
-			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotTypeVal TrackType
-				if err := func() error {
-					val, err := d.DecodeValue()
-					if err != nil {
-						return err
-					}
-
-					c, err := conv.ToString(val)
-					if err != nil {
-						return err
-					}
-
-					paramsDotTypeVal = TrackType(c)
-					return nil
-				}(); err != nil {
-					return err
-				}
-				params.Type.SetTo(paramsDotTypeVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				if value, ok := params.Type.Get(); ok {
-					if err := func() error {
-						if err := value.Validate(); err != nil {
-							return err
-						}
-						return nil
-					}(); err != nil {
-						return err
-					}
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "type",
 			In:   "query",
 			Err:  err,
 		}
@@ -2027,6 +4877,1683 @@ func decodeListTracksParams(args [0]string, argsEscaped bool, r *http.Request) (
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListToursParams is parameters of listTours operation.
+type ListToursParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par région.
+	Region OptRegion `json:",omitempty,omitzero"`
+	// Numéro de page (1-based).
+	Page OptInt `json:",omitempty,omitzero"`
+	// Taille de page.
+	PageSize OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListToursParams(packed middleware.Parameters) (params ListToursParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "region",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Region = v.(OptRegion)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListToursParams(args [0]string, argsEscaped bool, r *http.Request) (params ListToursParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: region.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRegionVal Region
+				if err := func() error {
+					var paramsDotRegionValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotRegionValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotRegionVal = Region(paramsDotRegionValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Region.SetTo(paramsDotRegionVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "region",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Page.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page_size.
+	{
+		val := int(50)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListTracksParams is parameters of listTracks operation.
+type ListTracksParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par catégorie de tracé.
+	Type OptTrackType `json:",omitempty,omitzero"`
+	// Filtre par région.
+	Region OptRegion `json:",omitempty,omitzero"`
+	// Recherche plein texte sur le nom du tracé.
+	Q OptString `json:",omitempty,omitzero"`
+	// Ne renvoie que les éléments modifiés après cet instant (synchro incrémentale : un client ne
+	// re-télécharge que le delta).
+	UpdatedSince OptDateTime `json:",omitempty,omitzero"`
+	// Numéro de page (1-based).
+	Page OptInt `json:",omitempty,omitzero"`
+	// Taille de page.
+	PageSize OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListTracksParams(packed middleware.Parameters) (params ListTracksParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "type",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Type = v.(OptTrackType)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "region",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Region = v.(OptRegion)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "q",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Q = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "updated_since",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.UpdatedSince = v.(OptDateTime)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListTracksParams(args [0]string, argsEscaped bool, r *http.Request) (params ListTracksParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: type.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "type",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTypeVal TrackType
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTypeVal = TrackType(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Type.SetTo(paramsDotTypeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Type.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "type",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: region.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRegionVal Region
+				if err := func() error {
+					var paramsDotRegionValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotRegionValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotRegionVal = Region(paramsDotRegionValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Region.SetTo(paramsDotRegionVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "region",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: q.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotQVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotQVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Q.SetTo(paramsDotQVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "q",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: updated_since.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "updated_since",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotUpdatedSinceVal time.Time
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToDateTime(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotUpdatedSinceVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.UpdatedSince.SetTo(paramsDotUpdatedSinceVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "updated_since",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Page.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page_size.
+	{
+		val := int(50)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListTreasureCarsParams is parameters of listTreasureCars operation.
+type ListTreasureCarsParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par région.
+	Region OptRegion `json:",omitempty,omitzero"`
+	// Filtre par voiture obtenue (lookup inverse « cette voiture est-elle une Treasure Car ? »).
+	CarID OptString `json:",omitempty,omitzero"`
+	// Numéro de page (1-based).
+	Page OptInt `json:",omitempty,omitzero"`
+	// Taille de page.
+	PageSize OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListTreasureCarsParams(packed middleware.Parameters) (params ListTreasureCarsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "region",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Region = v.(OptRegion)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "car_id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.CarID = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListTreasureCarsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListTreasureCarsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: region.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "region",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRegionVal Region
+				if err := func() error {
+					var paramsDotRegionValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotRegionValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotRegionVal = Region(paramsDotRegionValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Region.SetTo(paramsDotRegionVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "region",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: car_id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "car_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCarIDVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCarIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.CarID.SetTo(paramsDotCarIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "car_id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Page.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page_size.
+	{
+		val := int(50)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListUpgradePartsParams is parameters of listUpgradeParts operation.
+type ListUpgradePartsParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Filtre par catégorie de pièce.
+	Category OptUpgradePartCategory `json:",omitempty,omitzero"`
+	// Numéro de page (1-based).
+	Page OptInt `json:",omitempty,omitzero"`
+	// Taille de page.
+	PageSize OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListUpgradePartsParams(packed middleware.Parameters) (params ListUpgradePartsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "category",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Category = v.(OptUpgradePartCategory)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListUpgradePartsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListUpgradePartsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: category.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "category",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCategoryVal UpgradePartCategory
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCategoryVal = UpgradePartCategory(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Category.SetTo(paramsDotCategoryVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Category.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "category",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Page.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page_size.
+	{
+		val := int(50)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SearchParams is parameters of search operation.
+type SearchParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Terme de recherche (sous-chaîne, insensible à la casse).
+	Q string
+	// Types de ressources à chercher (tous si absent).
+	Kinds []SearchResultKind `json:",omitempty"`
+	// Nombre maximal de résultats.
+	Limit OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackSearchParams(packed middleware.Parameters) (params SearchParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "q",
+			In:   "query",
+		}
+		params.Q = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "kinds",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Kinds = v.([]SearchResultKind)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "limit",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Limit = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeSearchParams(args [0]string, argsEscaped bool, r *http.Request) (params SearchParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: q.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "q",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Q = c
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:     2,
+					MinLengthSet:  true,
+					MaxLength:     100,
+					MaxLengthSet:  true,
+					Email:         false,
+					Hostname:      false,
+					Regex:         nil,
+					MinNumeric:    0,
+					MinNumericSet: false,
+					MaxNumeric:    0,
+					MaxNumericSet: false,
+				}).Validate(string(params.Q)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "q",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: kinds.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "kinds",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				return d.DecodeArray(func(d uri.Decoder) error {
+					var paramsDotKindsVal SearchResultKind
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotKindsVal = SearchResultKind(c)
+						return nil
+					}(); err != nil {
+						return err
+					}
+					params.Kinds = append(params.Kinds, paramsDotKindsVal)
+					return nil
+				})
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				var failures []validate.FieldError
+				for i, elem := range params.Kinds {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "kinds",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: limit.
+	{
+		val := int(10)
+		params.Limit.SetTo(val)
+	}
+	// Decode query: limit.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotLimitVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotLimitVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Limit.SetTo(paramsDotLimitVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Limit.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           50,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "limit",
 			In:   "query",
 			Err:  err,
 		}

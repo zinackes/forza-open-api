@@ -1,0 +1,10 @@
+{
+  "id": "shibuya",
+  "game": "fh6",
+  "name": "Shibuya Circuit",
+  "type": "street",
+  "region": "Tokyo",
+  "lengthM": 2400,
+  "createdAt": "<ts>",
+  "updatedAt": "<ts>"
+}

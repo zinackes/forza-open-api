@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -12,11 +13,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zinackes/forza-open-api/api"
 	"github.com/zinackes/forza-open-api/internal/config"
 	"github.com/zinackes/forza-open-api/internal/handler"
 	"github.com/zinackes/forza-open-api/internal/oas"
 	"github.com/zinackes/forza-open-api/internal/store"
 )
+
+// llmsTxt décrit l'API pour les assistants IA (convention llms.txt) ; servi en
+// statique comme /openapi.yaml — DX sans coût, aucune donnée dynamique.
+//
+//go:embed llms.txt
+var llmsTxt []byte
 
 func main() {
 	cfg := config.Load()
@@ -50,12 +58,19 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthz(st))
-	mux.Handle("/", oasSrv) // routes du contrat (/v1/...) ; /healthz reste prioritaire
+	mux.HandleFunc("GET /openapi.yaml", staticFile("application/yaml", api.OpenAPI))
+	mux.HandleFunc("GET /llms.txt", staticFile("text/plain; charset=utf-8", llmsTxt))
+	mux.Handle("/", oasSrv) // routes du contrat (/v1/...) ; les statiques restent prioritaires
 
 	srv := &http.Server{
-		Addr:              cfg.Addr,
-		Handler:           mux,
+		Addr:    cfg.Addr,
+		Handler: accessLog(mux),
+		// Timeouts complets : sans eux une connexion lente (slowloris) retient
+		// goroutine + FD indéfiniment. API GET-only → bornes courtes.
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	go func() {
@@ -73,6 +88,45 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("shutdown", "err", err)
 	}
+}
+
+// staticFile sert un contenu embarqué immuable (contrat, llms.txt) avec un
+// cache long : le contenu ne change qu'au déploiement.
+func staticFile(contentType string, body []byte) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		_, _ = w.Write(body)
+	}
+}
+
+// statusRecorder capture le code de statut écrit par le handler aval.
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *statusRecorder) WriteHeader(code int) {
+	r.status = code
+	r.ResponseWriter.WriteHeader(code)
+}
+
+// accessLog logue chaque requête (méthode, path, statut, durée) en slog
+// structuré. /healthz est exclu : sondé toutes les 5 s par Docker, il noierait
+// les logs sans valeur.
+func accessLog(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/healthz" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		start := time.Now()
+		next.ServeHTTP(rec, r)
+		slog.InfoContext(r.Context(), "request",
+			"method", r.Method, "path", r.URL.Path,
+			"status", rec.status, "duration_ms", time.Since(start).Milliseconds())
+	})
 }
 
 // runHealthcheck interroge /healthz en local et renvoie un code de sortie

@@ -30,6 +30,28 @@ tags:
     description: PR Stunts (speed trap, speed zone, drift zone, danger sign).
   - name: Events
     description: Événements / courses (routes fixes, circuits, drag meets…).
+  - name: DLC
+    description: Packs DLC / extensions (Car Pass, expansions, standalone).
+  - name: BarnFinds
+    description: Barn Finds (épaves cachées débloquées via les stamps Discover Japan, puis restaurées).
+  - name: TreasureCars
+    description: Treasure Cars (voitures liées aux postcards, conduisibles après la cutscene de lavage).
+  - name: Upgrades
+    description: Catalogue des pièces d'upgrade et upgrades disponibles par voiture.
+  - name: Mastery
+    description: Arbres Car Mastery (grille de perks par voiture).
+  - name: Journal
+    description: Collection Journal FH6 (Wristbands Horizon Festival + Stamps Discover Japan ; remplace les Accolades de FH5).
+  - name: Reference
+    description: Énumérations et compteurs agrégés (facettes) pour construire les filtres côté client.
+  - name: Stories
+    description: Stories FH6 (missions narratives Discover Japan ; rapportent des stamps au Collection Journal).
+  - name: Tours
+    description: Tours guidés (Tours of Japan) — activité Discovery FH6.
+  - name: Search
+    description: Recherche globale multi-ressources (autocomplete).
+  - name: Changes
+    description: Journal des changements de données (nouvelles voitures, packs, séries…).
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -65,10 +87,19 @@ paths:
           in: query
           description: Filtre par transmission.
           schema: { $ref: '#/components/schemas/Drivetrain' }
+        - name: category
+          in: query
+          description: Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+          schema: { type: string }
         - name: q
           in: query
           description: Recherche plein texte sur name/model.
           schema: { type: string }
+        - name: dlc
+          in: query
+          description: Filtre par pack DLC (identifiant d'un dlc_packs) ; liste les voitures du pack.
+          schema: { type: string }
+        - $ref: '#/components/parameters/UpdatedSince'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -79,6 +110,60 @@ paths:
               schema: { $ref: '#/components/schemas/CarList' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/cars/random:
+    get:
+      operationId: getRandomCar
+      summary: Renvoie une voiture aléatoire satisfaisant les filtres.
+      description: >
+        Tire une seule voiture au hasard parmi celles qui satisfont les filtres
+        (mêmes filtres optionnels que /v1/cars, hors q/dlc et pagination).
+        Pensé pour les bots Discord
+        ("bagnole random du jour"), défis communautaires et easter-eggs sur la
+        landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
+        re-tire. 404 si aucune voiture ne correspond.
+      tags: [Cars]
+      x-ogen-operation-group: Cars
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: make
+          in: query
+          description: Filtre par constructeur (ex. "Ford").
+          schema: { type: string }
+        - name: class
+          in: query
+          description: Filtre par classe PI.
+          schema: { $ref: '#/components/schemas/CarClass' }
+        - name: pi_min
+          in: query
+          description: Performance Index minimum (inclus).
+          schema: { type: integer, minimum: 100, maximum: 999 }
+        - name: pi_max
+          in: query
+          description: Performance Index maximum (inclus).
+          schema: { type: integer, minimum: 100, maximum: 999 }
+        - name: drivetrain
+          in: query
+          description: Filtre par transmission.
+          schema: { $ref: '#/components/schemas/Drivetrain' }
+        - name: category
+          in: query
+          description: Filtre par catégorie / division in-game (ex. "Modern Supercars"). Correspondance exacte.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Une voiture tirée au hasard parmi les correspondances.
+          headers:
+            Cache-Control:
+              description: Toujours no-store (tirage aléatoire, jamais mis en cache).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Car' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /v1/cars/{id}:
@@ -103,6 +188,97 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
+  /v1/cars/{id}/upgrades:
+    get:
+      operationId: listCarUpgrades
+      summary: Liste les upgrades disponibles pour une voiture.
+      description: >
+        Pièces d'upgrade montables sur la voiture, avec leurs contraintes
+        d'installation (prérequis, groupe exclusif). Le jeu est déterminé par la
+        voiture (pas de paramètre game). Voiture inconnue ou sans upgrade
+        sourcé → page vide.
+      tags: [Upgrades]
+      x-ogen-operation-group: Upgrades
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la voiture.
+          schema: { type: string }
+        - name: category
+          in: query
+          description: Filtre par catégorie de pièce.
+          schema: { $ref: '#/components/schemas/UpgradePartCategory' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page d'upgrades disponibles pour la voiture.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarUpgradeList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/cars/{id}/mastery:
+    get:
+      operationId: getCarMastery
+      summary: Arbre Car Mastery d'une voiture (grille de perks 4×4).
+      description: >
+        Perks de l'arbre Car Mastery FH6 de la voiture. Chaque perk occupe une
+        case (row, col) de la grille 4×4, coûte des Skill Points (spCost), peut
+        dépendre d'une autre (prereqPerkId) et certaines débloquent une voiture
+        cachée (effectType car_unlock → unlockedCarId). Le jeu est déterminé par
+        la voiture. Voiture inconnue ou arbre non sourcé → liste vide.
+      tags: [Mastery]
+      x-ogen-operation-group: Mastery
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la voiture.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Les perks de l'arbre Car Mastery de la voiture.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CarMasteryPerk' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/cars/{id}/obtain:
+    get:
+      operationId: getCarObtain
+      summary: Vue agrégée « comment obtenir cette voiture ».
+      description: >
+        Agrège toutes les voies d'obtention connues d'une voiture : méthode du
+        catalogue (autoshow, wheelspin…) + prix, packs DLC qui la contiennent,
+        Barn Find, Treasure Car, paliers du Collection Journal qui la
+        récompensent et perks Car Mastery (car_unlock) qui la débloquent.
+        Sources absentes → listes vides / champs omis (rien d'inventé).
+        404 si la voiture est inconnue.
+      tags: [Cars]
+      x-ogen-operation-group: Cars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la voiture.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Les voies d'obtention de la voiture.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarObtain' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
   /v1/manufacturers:
     get:
       operationId: listManufacturers
@@ -111,6 +287,14 @@ paths:
       x-ogen-operation-group: Manufacturers
       parameters:
         - $ref: '#/components/parameters/Game'
+        - name: country
+          in: query
+          description: Filtre par pays du constructeur. Correspondance exacte.
+          schema: { type: string }
+        - name: q
+          in: query
+          description: Recherche plein texte sur le nom du constructeur.
+          schema: { type: string }
       responses:
         '200':
           description: Liste des constructeurs pour le jeu.
@@ -121,6 +305,81 @@ paths:
                 items: { $ref: '#/components/schemas/Manufacturer' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/reference:
+    get:
+      operationId: getReference
+      summary: Énumérations et compteurs (facettes) pour les filtres clients.
+      description: >
+        Facettes agrégées pour construire les filtres d'un client en un seul
+        appel : classes PI (incluant R en FH6), transmissions, types de
+        carrosserie, pays des constructeurs et catégories (divisions in-game)
+        — comptées pour le `game` demandé. La liste `games` est globale (volumes
+        par jeu, indépendante du paramètre game) pour amorcer un sélecteur de
+        jeu. Réponse fortement cacheable, invalidée par les jobs d'ingestion.
+      tags: [Reference]
+      x-ogen-operation-group: Reference
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Facettes de référence pour le jeu.
+          headers:
+            Cache-Control:
+              description: Politique de cache (réponse fortement cacheable, purgée à l'ingestion).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reference' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/dlc-packs:
+    get:
+      operationId: listDlcPacks
+      summary: Liste les packs DLC / extensions d'un jeu.
+      tags: [DLC]
+      x-ogen-operation-group: DLC
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: kind
+          in: query
+          description: Filtre par type de pack.
+          schema: { $ref: '#/components/schemas/DlcKind' }
+      responses:
+        '200':
+          description: Les packs DLC connus pour le jeu (plus récents d'abord).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DlcPack' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/dlc-packs/{id}:
+    get:
+      operationId: getDlcPack
+      summary: Récupère un pack DLC par identifiant.
+      tags: [DLC]
+      x-ogen-operation-group: DLC
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable du pack.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Le pack demandé.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DlcPack' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /v1/playlist/current:
@@ -200,6 +459,11 @@ paths:
           in: query
           description: Filtre par région.
           schema: { $ref: '#/components/schemas/Region' }
+        - name: q
+          in: query
+          description: Recherche plein texte sur le nom du tracé.
+          schema: { type: string }
+        - $ref: '#/components/parameters/UpdatedSince'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -210,6 +474,65 @@ paths:
               schema: { $ref: '#/components/schemas/TrackList' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/tracks/random:
+    get:
+      operationId: getRandomTrack
+      summary: Renvoie un tracé aléatoire satisfaisant les filtres.
+      description: >
+        Tire un seul tracé au hasard parmi ceux qui satisfont les filtres
+        (mêmes filtres optionnels que /v1/tracks, hors q et pagination).
+        Pensé pour les bots Discord et défis communautaires (« course aléatoire
+        du jour »). Réponse non cacheable (Cache-Control: no-store) : chaque
+        appel re-tire. 404 si aucun tracé ne correspond.
+      tags: [Tracks]
+      x-ogen-operation-group: Tracks
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: type
+          in: query
+          description: Filtre par catégorie de tracé.
+          schema: { $ref: '#/components/schemas/TrackType' }
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+      responses:
+        '200':
+          description: Un tracé tiré au hasard parmi les correspondances.
+          headers:
+            Cache-Control:
+              description: Toujours no-store (tirage aléatoire, jamais mis en cache).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Track' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/tracks/{id}:
+    get:
+      operationId: getTrack
+      summary: Récupère un tracé par identifiant.
+      tags: [Tracks]
+      x-ogen-operation-group: Tracks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable du tracé.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Le tracé demandé.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Track' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /v1/pr-stunts:
@@ -228,6 +551,10 @@ paths:
           in: query
           description: Filtre par région.
           schema: { $ref: '#/components/schemas/Region' }
+        - name: q
+          in: query
+          description: Recherche plein texte sur le nom du PR Stunt.
+          schema: { type: string }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -238,6 +565,28 @@ paths:
               schema: { $ref: '#/components/schemas/PRStuntList' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/pr-stunts/{id}:
+    get:
+      operationId: getPrStunt
+      summary: Récupère un PR Stunt par identifiant.
+      tags: [PRStunts]
+      x-ogen-operation-group: PRStunts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable du PR Stunt.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Le PR Stunt demandé.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PRStunt' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /v1/events:
@@ -256,6 +605,10 @@ paths:
           in: query
           description: Filtre par région.
           schema: { $ref: '#/components/schemas/Region' }
+        - name: q
+          in: query
+          description: Recherche plein texte sur le nom de l'événement.
+          schema: { type: string }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -264,6 +617,316 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/EventList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/events/{id}:
+    get:
+      operationId: getEvent
+      summary: Récupère un événement par identifiant.
+      tags: [Events]
+      x-ogen-operation-group: Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de l'événement.
+          schema: { type: string }
+      responses:
+        '200':
+          description: L'événement demandé.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Event' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/barn-finds:
+    get:
+      operationId: listBarnFinds
+      summary: Liste les Barn Finds (épaves cachées à trouver puis restaurer).
+      tags: [BarnFinds]
+      x-ogen-operation-group: BarnFinds
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - name: car_id
+          in: query
+          description: Filtre par voiture obtenue (lookup inverse « cette voiture est-elle un Barn Find ? »).
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de Barn Finds.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BarnFindList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/barn-finds/{id}:
+    get:
+      operationId: getBarnFind
+      summary: Récupère un Barn Find par identifiant.
+      tags: [BarnFinds]
+      x-ogen-operation-group: BarnFinds
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable du Barn Find.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Le Barn Find demandé.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BarnFind' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/treasure-cars:
+    get:
+      operationId: listTreasureCars
+      summary: Liste les Treasure Cars (voitures liées aux postcards).
+      tags: [TreasureCars]
+      x-ogen-operation-group: TreasureCars
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - name: car_id
+          in: query
+          description: Filtre par voiture obtenue (lookup inverse « cette voiture est-elle une Treasure Car ? »).
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de Treasure Cars.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreasureCarList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/treasure-cars/{id}:
+    get:
+      operationId: getTreasureCar
+      summary: Récupère une Treasure Car par identifiant.
+      tags: [TreasureCars]
+      x-ogen-operation-group: TreasureCars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant stable de la Treasure Car.
+          schema: { type: string }
+      responses:
+        '200':
+          description: La Treasure Car demandée.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreasureCar' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/upgrade-parts:
+    get:
+      operationId: listUpgradeParts
+      summary: Catalogue global des pièces d'upgrade.
+      tags: [Upgrades]
+      x-ogen-operation-group: Upgrades
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: category
+          in: query
+          description: Filtre par catégorie de pièce.
+          schema: { $ref: '#/components/schemas/UpgradePartCategory' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de pièces d'upgrade.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UpgradePartList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/journal:
+    get:
+      operationId: listJournalTiers
+      summary: Liste les paliers du Collection Journal (wristbands + stamps).
+      description: >
+        Paliers de progression du Collection Journal FH6 : 7 Wristbands
+        (track horizon_festival, Yellow → Gold ; Gold débloque Legend Island +
+        The Goliath) et 7 Stamps (track discover_japan, Visitor → Master
+        Explorer ; poussent les Barn Finds). 17 voitures ne sont débloquables que
+        via les rewardCarId de ces paliers. Remplace les Accolades de FH5.
+        Ensemble borné (≤ 14 par jeu) → pas de pagination.
+      tags: [Journal]
+      x-ogen-operation-group: Journal
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: track
+          in: query
+          description: Filtre par piste de progression.
+          schema: { $ref: '#/components/schemas/JournalTrack' }
+      responses:
+        '200':
+          description: Les paliers du Collection Journal du jeu (par piste, puis niveau croissant).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/JournalTier' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/stories:
+    get:
+      operationId: listStories
+      summary: Liste les Stories (missions narratives).
+      description: >
+        Stories FH6 : missions narratives de Discover Japan, qui rapportent des
+        stamps au Collection Journal. Sources propres (wiki Fandom) ; champs non
+        sourcés → omis.
+      tags: [Stories]
+      x-ogen-operation-group: Stories
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de Stories.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoryList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/tours:
+    get:
+      operationId: listTours
+      summary: Liste les Tours (visites guidées Discovery).
+      description: >
+        Tours of Japan FH6 : visites guidées de l'activité Discovery, qui
+        rapportent des stamps au Collection Journal. Sources propres (wiki
+        Fandom) ; champs non sourcés → omis.
+      tags: [Tours]
+      x-ogen-operation-group: Tours
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: region
+          in: query
+          description: Filtre par région.
+          schema: { $ref: '#/components/schemas/Region' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de Tours.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TourList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/search:
+    get:
+      operationId: search
+      summary: Recherche globale multi-ressources (autocomplete).
+      description: >
+        Recherche plein texte sur les ressources nommées (voitures, tracés,
+        événements, PR stunts, constructeurs, packs DLC) en un seul appel.
+        Pensé pour l'autocomplete d'un site ou d'un bot. Résultats bornés par
+        limit (pas de pagination) ; kinds restreint les types cherchés.
+      tags: [Search]
+      x-ogen-operation-group: Search
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: q
+          in: query
+          required: true
+          description: Terme de recherche (sous-chaîne, insensible à la casse).
+          schema: { type: string, minLength: 2, maxLength: 100 }
+        - name: kinds
+          in: query
+          description: Types de ressources à chercher (tous si absent).
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/SearchResultKind' }
+        - name: limit
+          in: query
+          description: Nombre maximal de résultats.
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        '200':
+          description: Les résultats correspondants (groupés par type, nom croissant).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SearchResultList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/changes:
+    get:
+      operationId: listChanges
+      summary: Journal des changements de données.
+      description: >
+        Flux des changements du jeu de données (voiture ajoutée/modifiée, pack
+        sorti, série publiée…), alimenté par les jobs d'ingestion. Donne aux
+        clients un « what's new » et la base d'une synchro incrémentale.
+        Plus récents d'abord.
+      tags: [Changes]
+      x-ogen-operation-group: Changes
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - name: resource
+          in: query
+          description: Filtre par type de ressource (car, dlc_pack, series…). Valeur libre, non figée au contrat.
+          schema: { type: string }
+        - name: action
+          in: query
+          description: Filtre par action.
+          schema: { $ref: '#/components/schemas/ChangeAction' }
+        - name: since
+          in: query
+          description: Ne renvoie que les changements postérieurs à cet instant.
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page de changements (plus récents d'abord).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChangeList' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -292,6 +955,13 @@ components:
       in: query
       description: Taille de page.
       schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+    UpdatedSince:
+      name: updated_since
+      in: query
+      description: >
+        Ne renvoie que les éléments modifiés après cet instant (synchro
+        incrémentale : un client ne re-télécharge que le delta).
+      schema: { type: string, format: date-time }
 
   responses:
     BadRequest:
@@ -323,8 +993,10 @@ components:
 
     CarClass:
       type: string
-      description: Classe Performance Index.
-      enum: [D, C, B, A, S1, S2, X]
+      description: >
+        Classe Performance Index. R (voitures track-focused) introduite en FH6 ;
+        absente de FH5.
+      enum: [D, C, B, A, S1, S2, X, R]
 
     Drivetrain:
       type: string
@@ -340,11 +1012,26 @@ components:
         acceleration: { type: number }
         launch: { type: number }
         braking: { type: number }
+        offroad: { type: number }
       additionalProperties: { type: number }
 
     Car:
       type: object
       required: [id, game, name, make, class, pi, drivetrain]
+      examples:
+        - id: fh6-mazda-rx7-1997
+          game: fh6
+          name: "1997 Mazda RX-7"
+          make: Mazda
+          model: RX-7
+          year: 1997
+          class: A
+          pi: 800
+          drivetrain: RWD
+          bodyType: Coupe
+          category: Retro Sports Cars
+          valueCr: 45000
+          obtainMethod: autoshow
       properties:
         id: { type: string }
         game: { $ref: '#/components/schemas/Game' }
@@ -357,11 +1044,13 @@ components:
         drivetrain: { $ref: '#/components/schemas/Drivetrain' }
         stats: { $ref: '#/components/schemas/CarStats' }
         bodyType: { type: string }
+        category: { type: string, description: Catégorie / division in-game (ex. "Modern Supercars"). Absente si non sourcée. }
         rarity: { type: string }
         valueCr: { type: integer, format: int64 }
         obtainMethod: { type: string }
         imageUrl: { type: string, format: uri }
         createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
 
     CarList:
       type: object
@@ -376,11 +1065,37 @@ components:
 
     Manufacturer:
       type: object
-      required: [game, name]
+      required: [game, name, carCount]
       properties:
         game: { $ref: '#/components/schemas/Game' }
         name: { type: string }
         country: { type: string }
+        carCount:
+          type: integer
+          format: int64
+          description: Nombre de voitures du constructeur pour le jeu (agrégat GROUP BY ; 0 si aucune).
+
+    DlcKind:
+      type: string
+      description: Type de pack DLC.
+      enum: [car_pass, expansion, standalone]
+
+    DlcPack:
+      type: object
+      description: Pack DLC / extension (Car Pass, expansion, standalone).
+      required: [id, game, name, kind]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        kind: { $ref: '#/components/schemas/DlcKind' }
+        releasedAt:
+          type: string
+          format: date-time
+          description: Date de sortie. Absente si pack annoncé mais pas encore sorti.
+        description: { type: string }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
 
     Reward:
       type: object
@@ -437,6 +1152,13 @@ components:
       type: object
       description: Tracé indexé (fonde les leaderboards et la carte).
       required: [id, game, name, type]
+      examples:
+        - id: fh6-shibuya-circuit
+          game: fh6
+          name: Shibuya Circuit
+          type: street
+          region: Tokyo
+          lengthM: 2400
       properties:
         id: { type: string }
         game: { $ref: '#/components/schemas/Game' }
@@ -495,8 +1217,10 @@ components:
 
     EventType:
       type: string
-      description: Type d'événement / course.
-      enum: [circuit, road, dirt, cross, street, touge_battle, horizon_rush, drag_meet, time_attack]
+      description: >
+        Type d'événement / course. showcase = Horizon Showcase (événement
+        scénarisé one-shot, voiture imposée).
+      enum: [circuit, road, dirt, cross, street, touge_battle, horizon_rush, drag_meet, time_attack, showcase]
 
     Event:
       type: object
@@ -526,6 +1250,477 @@ components:
         items:
           type: array
           items: { $ref: '#/components/schemas/Event' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    BarnFind:
+      type: object
+      description: >
+        Barn Find FH6 : épave cachée à localiser dans une zone de recherche, puis
+        à restaurer. Déblocage progressif via les stamps Discover Japan
+        (prerequisiteStampLevel 1-7 : Visitor, Sightseer, Traveller, Pathfinder,
+        Navigator, Adventurer, Master Explorer). Mécanique distincte des
+        Treasure Cars. Coordonnées NULL si non sourcées (datasets communautaires).
+      required: [id, game, carId]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        carId: { type: string, description: Identifiant de la voiture obtenue (réf. /v1/cars). }
+        region: { $ref: '#/components/schemas/Region' }
+        searchZoneCenterLat: { type: number, format: double, description: Latitude du centre de la zone de recherche. }
+        searchZoneCenterLng: { type: number, format: double, description: Longitude du centre de la zone de recherche. }
+        searchZoneRadiusM: { type: integer, description: Rayon de la zone de recherche (mètres). }
+        prerequisiteStampLevel:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: >
+            Niveau de stamp Discover Japan requis pour débloquer ce Barn Find
+            (1=Visitor, 2=Sightseer, 3=Traveller, 4=Pathfinder, 5=Navigator,
+            6=Adventurer, 7=Master Explorer).
+        restorationTimeH: { type: integer, description: Durée de restauration (heures de jeu). }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    BarnFindList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/BarnFind' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    TreasureCar:
+      type: object
+      description: >
+        Treasure Car FH6 : voiture associée à une postcard, conduisible
+        immédiatement après la cutscene de lavage. Mécanique distincte des
+        Barn Finds (pas de stamp ni de restauration). Coordonnées NULL si non
+        sourcées (l'indice de la postcard suffit à localiser in-game).
+      required: [id, game, carId]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        carId: { type: string, description: Identifiant de la voiture obtenue (réf. /v1/cars). }
+        region: { $ref: '#/components/schemas/Region' }
+        postcardClue: { type: string, description: Texte de l'indice (postcard) menant à la voiture. }
+        locationLat: { type: number, format: double, description: Latitude de l'emplacement si sourcée. }
+        locationLng: { type: number, format: double, description: Longitude de l'emplacement si sourcée. }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    TreasureCarList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/TreasureCar' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    UpgradePartCategory:
+      type: string
+      description: Catégorie de pièce d'upgrade.
+      enum: [engine, drivetrain, aspiration, tires, weight, aero, brakes, transmission, intake, exhaust, cooling, fuel_system]
+
+    UpgradePart:
+      type: object
+      description: >
+        Pièce du catalogue d'upgrade (générique, indépendante d'une voiture).
+        Les deltas sont relatifs au palier inférieur ; NULL si non sourcés
+        (précision > exhaustivité). Sourcing progressif : voitures populaires
+        d'abord, extension par séries ensuite.
+      required: [id, game, category, name]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        category: { $ref: '#/components/schemas/UpgradePartCategory' }
+        name: { type: string }
+        level:
+          type: integer
+          minimum: 1
+          description: Palier de la pièce (1 = premier niveau). Omis si non applicable.
+        piDelta: { type: integer, description: Variation de Performance Index apportée par la pièce. }
+        weightDeltaKg: { type: integer, description: Variation de poids (kg). Négatif = allègement. }
+        powerDeltaHp: { type: integer, description: Variation de puissance (ch). }
+        torqueDeltaNm: { type: integer, description: Variation de couple (Nm). }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    UpgradePartList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/UpgradePart' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    CarUpgrade:
+      type: object
+      description: >
+        Upgrade disponible pour une voiture : une pièce du catalogue assortie de
+        ses contraintes d'installation (prérequis, groupe exclusif).
+      required: [part]
+      properties:
+        part: { $ref: '#/components/schemas/UpgradePart' }
+        requiresPartId:
+          type: string
+          description: Pièce prérequise (réf. upgrade-parts) à monter avant celle-ci. Absent si aucune.
+        exclusiveGroup:
+          type: string
+          description: >
+            Groupe exclusif : une seule pièce d'un même groupe peut être montée
+            à la fois (ex. compounds de pneus). Absent si non concerné.
+
+    CarUpgradeList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CarUpgrade' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    CarMasteryPerk:
+      type: object
+      description: >
+        Perk de l'arbre Car Mastery FH6 : une case (row, col) de la grille 4×4 de
+        la voiture, débloquée contre des Skill Points. Champs non sourcés → NULL
+        (sourcing progressif : dataset forzagarage.com + wiki Fandom).
+      required: [id, carId]
+      properties:
+        id: { type: string }
+        carId: { type: string, description: Voiture propriétaire de l'arbre (réf. /v1/cars). }
+        row: { type: integer, minimum: 1, maximum: 4, description: Ligne dans la grille (1-4). }
+        col: { type: integer, minimum: 1, maximum: 4, description: Colonne dans la grille (1-4). }
+        name: { type: string }
+        spCost: { type: integer, description: Coût en Skill Points. }
+        effectDescription: { type: string }
+        effectType:
+          type: string
+          description: >
+            Type d'effet (valeur libre). Courants : credits, xp_boost, wheelspin,
+            super_wheelspin, skill_score, car_unlock.
+        effectValue:
+          type: integer
+          description: Valeur de l'effet (montant de crédits ou pourcentage de boost selon le type).
+        prereqPerkId: { type: string, description: Perk prérequise dans la grille. Absent si point d'entrée. }
+        unlockedCarId:
+          type: string
+          description: >
+            Voiture cachée débloquée par cette perk (effectType car_unlock ;
+            réf. /v1/cars). Absent sinon.
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    JournalTrack:
+      type: string
+      description: Piste de progression du Collection Journal.
+      enum: [horizon_festival, discover_japan]
+
+    JournalTierColor:
+      type: string
+      description: >
+        Couleur du wristband (track horizon_festival : Yellow → Gold sur 7
+        niveaux). Absente pour les stamps Discover Japan.
+      enum: [yellow, green, blue, pink, orange, purple, gold]
+
+    JournalTier:
+      type: object
+      description: >
+        Palier du Collection Journal FH6 : un niveau (1-7) d'une piste
+        (horizon_festival = wristbands colorés Yellow → Gold ; discover_japan =
+        stamps Visitor → Master Explorer). Atteint à pointsRequired points de
+        collection. Peut débloquer une voiture (rewardCarId) et/ou du contenu
+        (unlocksDescription : Legend Island + The Goliath, poussée des Barn
+        Finds…). Remplace les Accolades de FH5. Champs non sourcés → omis.
+      required: [id, game, track, level, name]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        track: { $ref: '#/components/schemas/JournalTrack' }
+        level:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: Niveau du palier dans la piste (1-7).
+        color: { $ref: '#/components/schemas/JournalTierColor' }
+        name:
+          type: string
+          description: Nom du palier (couleur du wristband ou rang de stamp, ex. "Gold", "Master Explorer").
+        pointsRequired:
+          type: integer
+          description: Points de collection requis pour atteindre le palier.
+        rewardCarId:
+          type: string
+          description: Voiture débloquée par ce palier (réf. /v1/cars). Absent si le palier ne donne pas de voiture.
+        unlocksDescription:
+          type: string
+          description: >
+            Contenu débloqué par le palier (ex. "Legend Island + The Goliath",
+            poussée des Barn Finds). Absent si non sourcé.
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    RefCount:
+      type: object
+      description: >
+        Valeur d'une facette (code) et son nombre d'occurrences pour le jeu
+        demandé. Pour les facettes énumérées (classes, drivetrains), tous les
+        codes valides sont renvoyés, count compris à 0. Pour les facettes libres
+        (bodyTypes, countries, categories), seules les valeurs présentes le sont.
+      required: [code, count]
+      properties:
+        code: { type: string }
+        count: { type: integer, format: int64 }
+
+    GameCount:
+      type: object
+      description: Jeu disponible et ses volumes (voitures, séries de playlist).
+      required: [code, countCars, countSeries]
+      properties:
+        code: { $ref: '#/components/schemas/Game' }
+        countCars: { type: integer, format: int64 }
+        countSeries: { type: integer, format: int64 }
+
+    Reference:
+      type: object
+      description: >
+        Facettes de référence pour amorcer les filtres d'un client. Les compteurs
+        classes/drivetrains/bodyTypes/countries/categories sont scopés au `game`
+        demandé ; games est global.
+      required: [game, classes, drivetrains, bodyTypes, countries, categories, regions, trackTypes, eventTypes, prStuntTypes, games]
+      properties:
+        game: { $ref: '#/components/schemas/Game' }
+        classes:
+          type: array
+          description: Classes PI et leurs compteurs (ordre PI, R en dernier ; count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        drivetrains:
+          type: array
+          description: Transmissions et leurs compteurs (count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        bodyTypes:
+          type: array
+          description: Types de carrosserie présents (plus fréquents d'abord).
+          items: { $ref: '#/components/schemas/RefCount' }
+        countries:
+          type: array
+          description: Pays des constructeurs présents (plus fréquents d'abord).
+          items: { $ref: '#/components/schemas/RefCount' }
+        categories:
+          type: array
+          description: Catégories / divisions in-game présentes (plus fréquentes d'abord).
+          items: { $ref: '#/components/schemas/RefCount' }
+        regions:
+          type: array
+          description: >
+            Régions présentes sur les ressources carte (count = tracés +
+            événements + PR stunts de la région ; plus fréquentes d'abord).
+            Évite aux clients carte de hardcoder la liste des régions.
+          items: { $ref: '#/components/schemas/RefCount' }
+        trackTypes:
+          type: array
+          description: Types de tracé et leurs compteurs (ordre canonique, count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        eventTypes:
+          type: array
+          description: Types d'événement et leurs compteurs (ordre canonique, count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        prStuntTypes:
+          type: array
+          description: Types de PR Stunt et leurs compteurs (ordre canonique, count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        games:
+          type: array
+          description: Jeux disponibles et leurs volumes (global, indépendant du paramètre game).
+          items: { $ref: '#/components/schemas/GameCount' }
+
+    CarObtainMasteryUnlock:
+      type: object
+      description: >
+        Perk Car Mastery d'une autre voiture qui débloque cette voiture
+        (effectType car_unlock).
+      required: [perkId, ownerCarId]
+      properties:
+        perkId: { type: string, description: "Identifiant de la perk (réf. /v1/cars/{id}/mastery)." }
+        ownerCarId: { type: string, description: Voiture dont l'arbre contient la perk (réf. /v1/cars). }
+        perkName: { type: string }
+
+    CarObtain:
+      type: object
+      description: >
+        Vue agrégée « comment obtenir cette voiture » : méthode du catalogue,
+        prix, packs DLC, Barn Find, Treasure Car, paliers Journal et perks
+        Car Mastery qui la débloquent. Listes vides / champs omis si la voie
+        n'existe pas ou n'est pas sourcée (rien d'inventé).
+      required: [carId, game, dlcPacks, journalTiers, masteryUnlocks]
+      properties:
+        carId: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        obtainMethod: { type: string, description: Méthode d'obtention du catalogue (ex. autoshow, wheelspin). Absente si non sourcée. }
+        valueCr: { type: integer, format: int64, description: Prix autoshow en crédits. Absent si non sourcé. }
+        dlcPacks:
+          type: array
+          description: Packs DLC contenant la voiture (vide si aucun).
+          items: { $ref: '#/components/schemas/DlcPack' }
+        barnFind:
+          $ref: '#/components/schemas/BarnFind'
+          description: Barn Find donnant la voiture. Absent si la voiture n'en est pas un.
+        treasureCar:
+          $ref: '#/components/schemas/TreasureCar'
+          description: Treasure Car donnant la voiture. Absente si la voiture n'en est pas une.
+        journalTiers:
+          type: array
+          description: Paliers du Collection Journal qui récompensent la voiture (vide si aucun).
+          items: { $ref: '#/components/schemas/JournalTier' }
+        masteryUnlocks:
+          type: array
+          description: Perks Car Mastery (car_unlock) qui débloquent la voiture (vide si aucune).
+          items: { $ref: '#/components/schemas/CarObtainMasteryUnlock' }
+
+    SearchResultKind:
+      type: string
+      description: Type de ressource d'un résultat de recherche.
+      enum: [car, track, event, pr_stunt, manufacturer, dlc_pack]
+
+    SearchResult:
+      type: object
+      description: >
+        Résultat de la recherche globale. id permet le lookup détaillé sur la
+        ressource correspondante (pour manufacturer, id = nom du constructeur).
+      required: [kind, id, game, name]
+      examples:
+        - kind: car
+          id: fh6-mazda-rx7-1997
+          game: fh6
+          name: "1997 Mazda RX-7"
+          detail: "Mazda · A 800"
+      properties:
+        kind: { $ref: '#/components/schemas/SearchResultKind' }
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        detail:
+          type: string
+          description: >
+            Contexte court d'affichage (ex. "Ford · A 800" pour une voiture,
+            "circuit" pour un tracé). Absent si rien à ajouter.
+
+    SearchResultList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SearchResult' }
+
+    ChangeAction:
+      type: string
+      description: Action d'un changement de données.
+      enum: [added, updated, removed]
+
+    Change:
+      type: object
+      description: >
+        Changement du jeu de données, enregistré par les jobs d'ingestion
+        (ex. voiture ajoutée par le seed du catalogue).
+      required: [id, game, resource, resourceId, action, occurredAt]
+      examples:
+        - id: 0196fdb2-aa11-7000-8000-000000000001
+          game: fh6
+          resource: car
+          resourceId: fh6-mazda-rx7-1997
+          action: added
+          summary: "1997 Mazda RX-7"
+          occurredAt: 2026-06-10T12:00:00Z
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        resource: { type: string, description: Type de ressource (car, dlc_pack, series…). Valeur libre, non figée au contrat. }
+        resourceId: { type: string, description: Identifiant de la ressource changée. }
+        action: { $ref: '#/components/schemas/ChangeAction' }
+        summary: { type: string, description: Description courte lisible (ex. nom de la voiture ajoutée). }
+        occurredAt: { type: string, format: date-time }
+
+    ChangeList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Change' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    Story:
+      type: object
+      description: >
+        Story FH6 : mission narrative de Discover Japan, rapporte des stamps au
+        Collection Journal. Champs non sourcés → omis.
+      required: [id, game, name]
+      examples:
+        - id: fh6-story-taxi-tales
+          game: fh6
+          name: Taxi Tales
+          region: Tokyo
+          chaptersCount: 8
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        region: { $ref: '#/components/schemas/Region' }
+        description: { type: string }
+        chaptersCount: { type: integer, minimum: 1, description: Nombre de chapitres. Absent si non sourcé. }
+        rewardDescription: { type: string, description: Récompense de complétion (voiture, crédits…). Absente si non sourcée. }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    StoryList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Story' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    Tour:
+      type: object
+      description: >
+        Tour FH6 (Tours of Japan) : visite guidée de l'activité Discovery,
+        rapporte des stamps au Collection Journal. Champs non sourcés → omis.
+      required: [id, game, name]
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        name: { type: string }
+        region: { $ref: '#/components/schemas/Region' }
+        description: { type: string }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    TourList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Tour' }
         total: { type: integer, format: int64 }
         page: { type: integer }
         pageSize: { type: integer }
