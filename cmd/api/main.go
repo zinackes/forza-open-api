@@ -49,18 +49,24 @@ func main() {
 	}
 	defer st.Close()
 
-	oasSrv, err := oas.NewServer(handler.New(st, cfg.DataVersion), handler.SecurityHandler{},
+	// SecurityHandler partagé : ogen valide la clé (401), le rate-limiter
+	// réutilise sa résolution (même cache) pour le quota par clé.
+	sec := handler.NewSecurityHandler(st)
+	oasSrv, err := oas.NewServer(handler.New(st, cfg.DataVersion), sec,
 		oas.WithErrorHandler(handler.ProblemErrorHandler))
 	if err != nil {
 		logger.Error("oas server", "err", err)
 		os.Exit(1)
 	}
+	rateLimiter := handler.NewRateLimiter(sec, cfg.RateLimitWindow)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthz(st))
 	mux.HandleFunc("GET /openapi.yaml", staticFile("application/yaml", api.OpenAPI))
 	mux.HandleFunc("GET /llms.txt", staticFile("text/plain; charset=utf-8", llmsTxt))
-	mux.Handle("/", oasSrv) // routes du contrat (/v1/...) ; les statiques restent prioritaires
+	// Routes du contrat (/v1/...) derrière le rate-limit ; /healthz et les
+	// statiques sont enregistrés à part et restent prioritaires + non limités.
+	mux.Handle("/", rateLimiter.Middleware(oasSrv))
 
 	srv := &http.Server{
 		Addr:    cfg.Addr,
