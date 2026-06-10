@@ -5,9 +5,12 @@
 //
 // Usage :
 //
-//	seed tracks <dataset.json | https://…>   ingère un dataset de tracés.
-//	seed cars   [game]                       ingère le catalogue voitures (déf. fh6)
-//	                                          depuis l'API MediaWiki du wiki Forza.
+//	seed tracks   <dataset.json | https://…>  ingère un dataset de tracés.
+//	seed cars     [game]                      ingère le catalogue voitures (déf. fh6)
+//	                                           depuis l'API MediaWiki du wiki Forza.
+//	seed playlist [game] [SxxWx]              ingère la série/saison courante de la
+//	                                           Festival Playlist depuis forza.net +
+//	                                           forums.forza.net (déf. fh6, courante).
 package main
 
 import (
@@ -18,6 +21,7 @@ import (
 
 	"github.com/zinackes/forza-open-api/internal/config"
 	"github.com/zinackes/forza-open-api/internal/ingest/cars"
+	"github.com/zinackes/forza-open-api/internal/ingest/playlist"
 	"github.com/zinackes/forza-open-api/internal/ingest/tracks"
 	"github.com/zinackes/forza-open-api/internal/store"
 )
@@ -34,13 +38,15 @@ func main() {
 		seedTracks(logger)
 	case "cars":
 		seedCars(logger)
+	case "playlist":
+		seedPlaylist(logger)
 	default:
 		usage(logger)
 	}
 }
 
 func usage(logger *slog.Logger) {
-	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game]")
+	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game] | seed playlist [game] [SxxWx]")
 }
 
 func seedTracks(logger *slog.Logger) {
@@ -171,6 +177,72 @@ func seedCars(logger *slog.Logger) {
 	if len(rep.UnknownCodes) > 0 {
 		logger.Warn("seed cars: codes non mappés (anomalies)", "codes", cars.SortedReport(rep.UnknownCodes))
 	}
+}
+
+// seedPlaylist ingère la série Festival Playlist visée : « seed playlist [game]
+// [SxxWx] ». Sans SxxWx, la série courante est découverte depuis forza.net/events ;
+// avec, une semaine précise est ciblée (ex. S01W2). Upsert idempotent.
+func seedPlaylist(logger *slog.Logger) {
+	game := "fh6"
+	if len(os.Args) >= 3 {
+		game = os.Args[2]
+	}
+	override := ""
+	if len(os.Args) >= 4 {
+		override = os.Args[3]
+	}
+
+	// Réseau borné (deux sources + délai poli) : l'ingestion ne pend pas.
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	now := time.Now().UTC()
+
+	logger.Info("seed playlist: fetch", "game", game, "override", override)
+	ev, fd, err := playlist.FetchCurrent(ctx, game, override, now)
+	if err != nil {
+		logger.Error("fetch playlist", "err", err)
+		os.Exit(1)
+	}
+
+	// Auto-discovery → c'est la série courante (rollover géré par l'upsert).
+	// Override d'une semaine précise → courante seulement si la fenêtre couvre now
+	// (un re-seed d'historique ne vole pas le flag « courante »).
+	isCurrent := override == "" ||
+		(!ev.Start.IsZero() && !ev.End.IsZero() && !ev.Start.After(now) && !ev.End.Before(now))
+
+	ser, rewards, challenges := playlist.Normalize(ev, fd, isCurrent)
+
+	st := mustStore(ctx, logger)
+	defer st.Close()
+
+	added, err := st.UpsertSeries(ctx, ser, rewards, challenges)
+	if err != nil {
+		logger.Error("upsert series", "err", err)
+		os.Exit(1)
+	}
+
+	logger.Info("seed playlist ok",
+		"game", ser.Game,
+		"id", ser.ID,
+		"series", ser.Series,
+		"week", ser.Week,
+		"season", deref(ser.Season),
+		"name", deref(ser.Name),
+		"starts_at", ser.StartsAt,
+		"ends_at", ser.EndsAt,
+		"is_current", ser.IsCurrent,
+		"rewards", len(rewards),
+		"challenges", len(challenges),
+		"new", added,
+	)
+}
+
+// deref rend la valeur d'un *string pour le log (vide si nil).
+func deref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 func mustStore(ctx context.Context, logger *slog.Logger) *store.Store {
