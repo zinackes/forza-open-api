@@ -427,8 +427,6 @@ func (s *Car) SetUpdatedAt(val OptDateTime) {
 	s.UpdatedAt = val
 }
 
-func (*Car) getCarRes() {}
-
 // Classe Performance Index. R (voitures track-focused) introduite en FH6 ; absente de FH5.
 // Ref: #/components/schemas/CarClass
 type CarClass string
@@ -531,7 +529,33 @@ func (s *CarComparison) SetItems(val []Car) {
 	s.Items = val
 }
 
-func (*CarComparison) compareCarsRes() {}
+// CarComparisonHeaders wraps CarComparison with response headers.
+type CarComparisonHeaders struct {
+	CacheControl OptString
+	Response     CarComparison
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *CarComparisonHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *CarComparisonHeaders) GetResponse() CarComparison {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *CarComparisonHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *CarComparisonHeaders) SetResponse(val CarComparison) {
+	s.Response = val
+}
+
+func (*CarComparisonHeaders) compareCarsRes() {}
 
 // CarHeaders wraps Car with response headers.
 type CarHeaders struct {
@@ -559,6 +583,7 @@ func (s *CarHeaders) SetResponse(val Car) {
 	s.Response = val
 }
 
+func (*CarHeaders) getCarRes()       {}
 func (*CarHeaders) getRandomCarRes() {}
 
 // Ref: #/components/schemas/CarList
@@ -609,7 +634,33 @@ func (s *CarList) SetPageSize(val int) {
 	s.PageSize = val
 }
 
-func (*CarList) listCarsRes() {}
+// CarListHeaders wraps CarList with response headers.
+type CarListHeaders struct {
+	CacheControl OptString
+	Response     CarList
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *CarListHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *CarListHeaders) GetResponse() CarList {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *CarListHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *CarListHeaders) SetResponse(val CarList) {
+	s.Response = val
+}
+
+func (*CarListHeaders) listCarsRes() {}
 
 // Perk de l'arbre Car Mastery FH6 : une case (row, col) de la grille 4×4 de la voiture, débloquée
 // contre des Skill Points. Champs non sourcés → NULL (sourcing progressif : dataset forzagarage.

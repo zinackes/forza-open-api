@@ -59,14 +59,16 @@ func main() {
 		os.Exit(1)
 	}
 	rateLimiter := handler.NewRateLimiter(sec, cfg.RateLimitWindow)
+	conditional := handler.ConditionalGet(cfg.DataVersion)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthz(st))
 	mux.HandleFunc("GET /openapi.yaml", staticFile("application/yaml", api.OpenAPI))
 	mux.HandleFunc("GET /llms.txt", staticFile("text/plain; charset=utf-8", llmsTxt))
-	// Routes du contrat (/v1/...) derrière le rate-limit ; /healthz et les
-	// statiques sont enregistrés à part et restent prioritaires + non limités.
-	mux.Handle("/", rateLimiter.Middleware(oasSrv))
+	// Routes du contrat (/v1/...) derrière le rate-limit puis le cache conditionnel
+	// (ETag/304, calculé sur le corps final) ; /healthz et les statiques sont
+	// enregistrés à part et restent prioritaires + non limités.
+	mux.Handle("/", rateLimiter.Middleware(conditional(oasSrv)))
 
 	srv := &http.Server{
 		Addr:    cfg.Addr,

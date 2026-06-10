@@ -152,6 +152,12 @@ paths:
       responses:
         '200':
           description: Page de voitures.
+          headers:
+            Cache-Control:
+              description: >-
+                Cache long (catalogue quasi-statique). Revalidation conditionnelle
+                via ETag / If-None-Match (304).
+              schema: { type: string }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CarList' }
@@ -246,6 +252,12 @@ paths:
       responses:
         '200':
           description: Les voitures demandées, alignées dans l'ordre des ids.
+          headers:
+            Cache-Control:
+              description: >-
+                Cache long (catalogue quasi-statique). Revalidation conditionnelle
+                via ETag / If-None-Match (304).
+              schema: { type: string }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CarComparison' }
@@ -269,6 +281,12 @@ paths:
       responses:
         '200':
           description: La voiture demandée.
+          headers:
+            Cache-Control:
+              description: >-
+                Cache long (catalogue quasi-statique). Revalidation conditionnelle
+                via ETag / If-None-Match (304).
+              schema: { type: string }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Car' }
