@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "id": "bf1",
+      "game": "fh6",
+      "carId": "hidden",
+      "region": "Hakone",
+      "prerequisiteStampLevel": 3
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 50
+}

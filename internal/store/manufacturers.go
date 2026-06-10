@@ -16,19 +16,34 @@ type Manufacturer struct {
 	CarCount int64
 }
 
+// ManufacturerFilter porte les filtres de GET /v1/manufacturers.
+type ManufacturerFilter struct {
+	Game    string
+	Country *string // correspondance exacte
+	Q       *string // sous-chaîne sur le nom (escapeLike appliqué)
+}
+
 // ListManufacturers renvoie les constructeurs d'un jeu avec leur nombre de
 // voitures, par ordre alphabétique. La table manufacturers est la source des noms
 // et pays ; le compte vient d'un LEFT JOIN sur cars (par game + make) agrégé en
 // GROUP BY, si bien qu'un constructeur sans voiture sourcée remonte avec count 0.
-func (s *Store) ListManufacturers(ctx context.Context, game string) ([]Manufacturer, error) {
+func (s *Store) ListManufacturers(ctx context.Context, f ManufacturerFilter) ([]Manufacturer, error) {
+	qLit := f.Q
+	if f.Q != nil {
+		esc := escapeLike(*f.Q)
+		qLit = &esc
+	}
+
 	const q = `
 SELECT m.game, m.name, m.country, count(c.id) AS car_count
 FROM manufacturers m
 LEFT JOIN cars c ON c.game = m.game AND c.make = m.name
 WHERE m.game = $1
+  AND ($2::text IS NULL OR m.country = $2)
+  AND ($3::text IS NULL OR m.name ILIKE '%' || $3 || '%')
 GROUP BY m.game, m.name, m.country
 ORDER BY m.name`
-	rows, err := s.DB.Query(ctx, q, game)
+	rows, err := s.DB.Query(ctx, q, f.Game, f.Country, qLit)
 	if err != nil {
 		return nil, fmt.Errorf("query manufacturers: %w", err)
 	}

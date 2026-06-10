@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "kind": "car",
+      "id": "hidden",
+      "game": "fh6",
+      "name": "Hidden Legend",
+      "detail": "Cindra · S1 880"
+    },
+    {
+      "kind": "dlc_pack",
+      "id": "pack",
+      "game": "fh6",
+      "name": "Legends Car Pack",
+      "detail": "car_pass"
+    }
+  ]
+}

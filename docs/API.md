@@ -12,7 +12,15 @@ Préfixe `/v1`. Semver du contrat. Breaking change → /v2 + dépréciation anno
 
 ## Filtres
 
-`game` **obligatoire** sur les ressources multi-jeux. cars : make, class, pi_min/pi_max, drivetrain, q (recherche name/model).
+`game` **obligatoire** sur les ressources multi-jeux. cars : make, class, pi_min/pi_max, drivetrain, category, q (recherche name/model), dlc, updated_since. tracks/events/pr-stunts : type, region, q. barn-finds/treasure-cars : region, car_id (lookup inverse). manufacturers : country, q. dlc-packs : kind. `updated_since` (RFC 3339, cars + tracks) = sync incrémentale.
+
+## Découverte & transverse
+
+- `GET /openapi.yaml` : le contrat servi par l'API. `GET /llms.txt` : description pour assistants IA.
+- `GET /v1/search` : recherche multi-ressources (autocomplete), bornée par `limit` (pas de pagination).
+- `GET /v1/changes` : journal des changements de données (alimenté par l'ingestion) — base du « what's new », des futurs RSS/webhooks.
+- `GET /v1/cars/{id}/obtain` : agrégat des voies d'obtention (autoshow, DLC, barn find, treasure, journal, mastery).
+- Détail par id sur toutes les ressources listées (tracks, events, pr-stunts, barn-finds, treasure-cars, dlc-packs).
 
 ## Auth
 

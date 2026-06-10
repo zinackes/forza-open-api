@@ -9,7 +9,8 @@
       "pi": 600,
       "drivetrain": "RWD",
       "bodyType": "coupe",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     },
     {
       "id": "honda-civic",
@@ -21,7 +22,8 @@
       "drivetrain": "FWD",
       "bodyType": "hatchback",
       "category": "Hot Hatch",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     },
     {
       "id": "mazda-rx7",
@@ -34,7 +36,8 @@
       "pi": 780,
       "drivetrain": "RWD",
       "bodyType": "coupe",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     },
     {
       "id": "audi-r8",
@@ -46,7 +49,8 @@
       "drivetrain": "AWD",
       "bodyType": "coupe",
       "category": "Modern Supercars",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     },
     {
       "id": "ford-gt",
@@ -58,7 +62,8 @@
       "drivetrain": "RWD",
       "bodyType": "coupe",
       "category": "Modern Supercars",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     }
   ],
   "total": 5,

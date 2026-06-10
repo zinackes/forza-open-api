@@ -10,7 +10,8 @@
       "drivetrain": "FWD",
       "bodyType": "hatchback",
       "category": "Hot Hatch",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     },
     {
       "id": "mazda-rx7",
@@ -23,7 +24,8 @@
       "pi": 780,
       "drivetrain": "RWD",
       "bodyType": "coupe",
-      "createdAt": "<ts>"
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
     }
   ],
   "total": 2,

@@ -21,14 +21,23 @@ CREATE TABLE IF NOT EXISTS cars (
     value_cr      BIGINT,
     obtain_method TEXT,
     image_url     TEXT,
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Bases créées avant l'ajout de updated_at : CREATE TABLE IF NOT EXISTS ne
+-- complète pas les colonnes → ALTER idempotent pour les upgrades en place.
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
 CREATE INDEX IF NOT EXISTS cars_game_idx          ON cars (game);
 CREATE INDEX IF NOT EXISTS cars_game_class_idx    ON cars (game, class);
 CREATE INDEX IF NOT EXISTS cars_game_pi_idx       ON cars (game, pi);
 CREATE INDEX IF NOT EXISTS cars_game_make_idx     ON cars (game, make);
 -- Facette categories de GET /v1/reference (GROUP BY category scopé au jeu).
 CREATE INDEX IF NOT EXISTS cars_game_category_idx ON cars (game, category);
+-- Recherche q (ILIKE '%…%') : un pattern à wildcard de tête ne peut pas user
+-- d'un btree → index trigram GIN sur name/model pour éviter le seq scan.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX IF NOT EXISTS cars_name_trgm_idx  ON cars USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS cars_model_trgm_idx ON cars USING gin (model gin_trgm_ops);
 
 -- Constructeurs ---------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS manufacturers (
@@ -94,6 +103,8 @@ CREATE TABLE IF NOT EXISTS tracks (
 );
 CREATE INDEX IF NOT EXISTS tracks_game_type_idx   ON tracks (game, type);
 CREATE INDEX IF NOT EXISTS tracks_game_region_idx ON tracks (game, region);
+-- q (ILIKE '%…%') et /v1/search : trigram, même raison que cars_name_trgm_idx.
+CREATE INDEX IF NOT EXISTS tracks_name_trgm_idx   ON tracks USING gin (name gin_trgm_ops);
 
 CREATE TABLE IF NOT EXISTS pr_stunts (
     id           TEXT PRIMARY KEY,
@@ -107,12 +118,13 @@ CREATE TABLE IF NOT EXISTS pr_stunts (
 );
 CREATE INDEX IF NOT EXISTS pr_stunts_game_type_idx   ON pr_stunts (game, type);
 CREATE INDEX IF NOT EXISTS pr_stunts_game_region_idx ON pr_stunts (game, region);
+CREATE INDEX IF NOT EXISTS pr_stunts_name_trgm_idx   ON pr_stunts USING gin (name gin_trgm_ops);
 
 CREATE TABLE IF NOT EXISTS events (
     id                    TEXT PRIMARY KEY,
     game                  TEXT NOT NULL,
     name                  TEXT NOT NULL,
-    type                  TEXT NOT NULL CHECK (type IN ('circuit','road','dirt','cross','street','touge_battle','horizon_rush','drag_meet','time_attack')),
+    type                  TEXT NOT NULL CHECK (type IN ('circuit','road','dirt','cross','street','touge_battle','horizon_rush','drag_meet','time_attack','showcase')),
     region                TEXT,
     start_lat             NUMERIC,
     start_lng             NUMERIC,
@@ -124,6 +136,7 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS events_game_type_idx   ON events (game, type);
 CREATE INDEX IF NOT EXISTS events_game_region_idx ON events (game, region);
+CREATE INDEX IF NOT EXISTS events_name_trgm_idx   ON events USING gin (name gin_trgm_ops);
 
 -- DLC / extensions : Car Pass, expansions, standalone ------------------------
 -- Référence des packs (sources propres : annonces forza.net + wiki Fandom).
@@ -277,6 +290,53 @@ CREATE UNIQUE INDEX IF NOT EXISTS journal_tiers_game_track_level_key
     ON journal_tiers (game, track, level);
 -- Lookup inverse « quel palier débloque la voiture X ».
 CREATE INDEX IF NOT EXISTS journal_tiers_reward_car_idx ON journal_tiers (reward_car_id);
+
+-- Stories & Tours FH6 : contenus Discovery ------------------------------------
+-- Stories = missions narratives (Discover Japan), Tours = visites guidées.
+-- Les deux rapportent des stamps au Collection Journal. Sources propres (wiki
+-- Fandom). Champs non sourcés → NULL. Tout porte game.
+CREATE TABLE IF NOT EXISTS stories (
+    id                 TEXT PRIMARY KEY,
+    game               TEXT NOT NULL,
+    name               TEXT NOT NULL,
+    region             TEXT,
+    description        TEXT,
+    chapters_count     INT CHECK (chapters_count >= 1),
+    reward_description TEXT,
+    source             TEXT,
+    last_verified      TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS stories_game_idx        ON stories (game);
+CREATE INDEX IF NOT EXISTS stories_game_region_idx ON stories (game, region);
+
+CREATE TABLE IF NOT EXISTS tours (
+    id            TEXT PRIMARY KEY,
+    game          TEXT NOT NULL,
+    name          TEXT NOT NULL,
+    region        TEXT,
+    description   TEXT,
+    source        TEXT,
+    last_verified TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS tours_game_idx        ON tours (game);
+CREATE INDEX IF NOT EXISTS tours_game_region_idx ON tours (game, region);
+
+-- Journal des changements de données (GET /v1/changes) -------------------------
+-- Alimenté par les jobs d'ingestion (jamais par les handlers de lecture).
+-- resource est LIBRE (car, dlc_pack, series…) : pas de CHECK pour ne pas figer
+-- l'ensemble au schéma. Nourrit le « what's new » des clients + futurs RSS/webhooks.
+CREATE TABLE IF NOT EXISTS data_changes (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    game        TEXT NOT NULL,
+    resource    TEXT NOT NULL,
+    resource_id TEXT NOT NULL,
+    action      TEXT NOT NULL CHECK (action IN ('added','updated','removed')),
+    summary     TEXT,
+    occurred_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- Liste paginée « plus récents d'abord » filtrée par jeu (+ resource/action en
+-- résiduel) : l'index (game, occurred_at DESC) porte le tri.
+CREATE INDEX IF NOT EXISTS data_changes_game_occurred_idx ON data_changes (game, occurred_at DESC);
 
 -- Clés API (jamais la clé en clair : seul le hash sha256 est stocké) -----------
 CREATE TABLE IF NOT EXISTS api_keys (

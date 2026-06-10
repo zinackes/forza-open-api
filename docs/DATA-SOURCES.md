@@ -2,9 +2,10 @@ Pour chaque type : la source PROPRE et la méthode. Off-limits en bas.
 
 ## Catalogue voitures
 
-- Datasets communautaires (Kaggle Forza), listes car-ID sur GitHub, **wiki Fandom** (API MediaWiki).
-- Normalisation → table `cars`. Réconciliation des ids via les **CarOrdinal** de la télémétrie quand dispo.
-- FH6 ~550 voitures (Japon, kei cars). FH5 en backfill.
+- **Wiki Fandom** (API MediaWiki) — source primaire implémentée (`cmd/seed cars`) : page liste `{{CarListStatsFH6}}` + infobox par voiture. Datasets communautaires (Kaggle, listes GitHub) en complément/cross-check éventuel.
+- Cross-check officiel : la liste publique **forza.net/fh6cars** (counts, nouveautés Car Pass).
+- Normalisation → table `cars`. Réconciliation des ids via les **CarOrdinal** de la télémétrie quand dispo (source propre à trouver : crowdsourcing Data Out ; les dumps « car ID list » de mods extraits des fichiers du jeu sont OFF-LIMITS).
+- FH6 ~620 voitures / ~87 constructeurs (juin 2026, Japon, kei cars). FH5 en backfill.
 
 ## Festival Playlist
 
@@ -15,8 +16,13 @@ Pour chaque type : la source PROPRE et la méthode. Off-limits en bas.
 
 ## Perfs & leaderboards
 
-- **Data Out** officiel (UDP, 60 pkt/s, layout Horizon FH4/5/6, 324 octets, offset +12). Companion desktop **read-only** → POST /v1/sessions.
+- **Data Out** officiel (UDP one-way, fréquence = framerate). ⚠️ Le format FH6 est **fixe et distinct de FH4/FH5** : 3 champs supplémentaires (`CarGroup`, `SmashableVelDiff`, `SmashableMass`) insérés après `NumCylinders`, avant `PositionX` — pas de sélection de format in-game. Réf. : doc officielle « Forza Horizon 6 Data Out Documentation » (support.forza.net). Companion desktop **read-only** → POST /v1/sessions.
 - On construit **nos** leaderboards. On ne lit pas ceux du jeu.
+
+## Stories & Tours (Discovery FH6)
+
+- **Wiki Fandom** (API MediaWiki) : pages Stories / Tours of Japan. Même pipeline que le catalogue (cmd/seed), champs non sourcés → NULL.
+- Les récompenses (stamps, voitures) recoupent le Collection Journal (`journal_tiers`).
 
 ## Tunes & liveries
 

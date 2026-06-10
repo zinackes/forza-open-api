@@ -6,12 +6,17 @@ import (
 	"context"
 
 	"github.com/zinackes/forza-open-api/internal/oas"
+	"github.com/zinackes/forza-open-api/internal/store"
 )
 
 // ListManufacturers implémente GET /v1/manufacturers : les constructeurs du jeu
-// avec leur nombre de voitures (carCount).
+// avec leur nombre de voitures (carCount), filtrables par pays et nom.
 func (h *Handler) ListManufacturers(ctx context.Context, params oas.ListManufacturersParams) (oas.ListManufacturersRes, error) {
-	rows, err := h.store.ListManufacturers(ctx, string(params.Game))
+	rows, err := h.store.ListManufacturers(ctx, store.ManufacturerFilter{
+		Game:    string(params.Game),
+		Country: optFilter(params.Country.Set, params.Country.Value),
+		Q:       optFilter(params.Q.Set, params.Q.Value),
+	})
 	if err != nil {
 		return nil, err
 	}
