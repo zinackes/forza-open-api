@@ -139,3 +139,28 @@ jobs:
       # Le SDK + l'appel typé d'exemple doivent compiler contre le contrat.
       - run: task client:build
       - run: task client:check
+
+  client-python:
+    name: client-python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+      # Le SDK Python découle du contrat : on régénère (openapi-generator via
+      # Docker, dispo sur le runner) et on échoue si l'arbre de travail a bougé.
+      - run: task client:py:generate
+      - name: Verify generated client matches the contract
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Python client is out of sync with api/openapi.yaml. Run 'task client:py:generate' and commit the result."
+            git status --porcelain
+            git --no-pager diff
+            exit 1
+          fi
+      # Le paquet s'installe, s'importe et l'appel typé d'exemple type-check.
+      - run: task client:py:check

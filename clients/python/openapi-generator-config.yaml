@@ -1,0 +1,13 @@
+# openapi-generator config for the Python SDK. The contract (api/openapi.yaml)
+# is the source of truth; this only fixes naming/packaging. `packageVersion` is
+# NOT set here — it is passed at generation time from info.version (see the
+# `client:py:generate` task) so the package tracks the contract version.
+#
+# Regenerate with: task client:py:generate
+additionalProperties:
+  packageName: forza_open_api_client
+  projectName: forza-open-api-client
+  library: urllib3
+  packageUrl: https://github.com/zinackes/forza-open-api/tree/main/clients/python
+  # Deterministic output (no timestamps) so the drift CI check is stable.
+  hideGenerationTimestamp: "true"

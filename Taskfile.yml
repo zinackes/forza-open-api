@@ -68,6 +68,32 @@ tasks:
     cmds:
       - npm run check
 
+  client:py:generate:
+    desc: Régénère le SDK Python depuis le contrat (openapi-generator, image Docker pinnée)
+    # Tourne depuis la racine : le conteneur monte $PWD et lit api/openapi.yaml.
+    vars:
+      GEN_VERSION: v7.22.0
+      # info.version du contrat (source de vérité) -> packageVersion du paquet.
+      PKG_VERSION:
+        sh: grep -m1 -E '^  version:' api/openapi.yaml | sed -E 's/.*version:[[:space:]]*//'
+    cmds:
+      - >-
+        docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/local -w /local
+        openapitools/openapi-generator-cli:{{.GEN_VERSION}} generate
+        -i api/openapi.yaml -g python -o clients/python
+        -c clients/python/openapi-generator-config.yaml
+        --additional-properties=packageVersion={{.PKG_VERSION}}
+
+  client:py:check:
+    desc: Installe le SDK Python dans un venv, smoke-import + typecheck de l'exemple
+    dir: clients/python
+    cmds:
+      - python3 -m venv .venv
+      - .venv/bin/python -m pip install --quiet --upgrade pip
+      - .venv/bin/pip install --quiet . mypy
+      - .venv/bin/python -c "import forza_open_api_client as c; print(c.__version__)"
+      - .venv/bin/python -m mypy --cache-dir=.venv/.mypy_cache --follow-imports=silent examples/list_cars.py
+
   up:
     desc: Lève Postgres + Valkey + API et attend qu'ils soient sains (/healthz 200)
     cmds:
