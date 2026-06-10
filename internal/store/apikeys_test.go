@@ -5,6 +5,7 @@ package store_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/zinackes/forza-open-api/internal/apikey"
@@ -29,7 +30,7 @@ func TestAPIKeyCreateAndLookup(t *testing.T) {
 		t.Fatalf("hash sha256 hex attendu (64 chars), reçu %d", len(hash))
 	}
 
-	if err := st.CreateAPIKey(ctx, hash, "overlay-prod", 5000); err != nil {
+	if err := st.CreateAPIKey(ctx, hash, "overlay-prod", 5000, []string{"read", "submit-ugc"}); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 
@@ -48,6 +49,9 @@ func TestAPIKeyCreateAndLookup(t *testing.T) {
 	}
 	if got.RateLimit != 5000 {
 		t.Errorf("rate_limit = %d, want 5000", got.RateLimit)
+	}
+	if want := []string{"read", "submit-ugc"}; !slices.Equal(got.Scopes, want) {
+		t.Errorf("scopes = %v, want %v", got.Scopes, want)
 	}
 	if got.RevokedAt != nil {
 		t.Errorf("revoked_at = %v, want nil (clé fraîche)", got.RevokedAt)
@@ -75,8 +79,9 @@ func TestAPIKeyRateLimitDefault(t *testing.T) {
 	}
 	hash := apikey.Hash(plain)
 
-	// rateLimit <= 0 → la colonne est omise, le DEFAULT 1000 du schéma s'applique.
-	if err := st.CreateAPIKey(ctx, hash, "default-rl", 0); err != nil {
+	// rateLimit <= 0 et scopes nil → colonnes omises : DEFAULT du schéma (rate_limit
+	// 1000, scopes {read}) s'applique.
+	if err := st.CreateAPIKey(ctx, hash, "default-rl", 0, nil); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 	got, err := st.LookupAPIKey(ctx, hash)
@@ -85,6 +90,9 @@ func TestAPIKeyRateLimitDefault(t *testing.T) {
 	}
 	if got == nil || got.RateLimit != 1000 {
 		t.Fatalf("rate_limit par défaut attendu 1000, reçu %+v", got)
+	}
+	if want := []string{"read"}; !slices.Equal(got.Scopes, want) {
+		t.Errorf("scopes par défaut = %v, want %v", got.Scopes, want)
 	}
 }
 
@@ -98,7 +106,7 @@ func TestAPIKeyRevoke(t *testing.T) {
 		t.Fatalf("generate: %v", err)
 	}
 	hash := apikey.Hash(plain)
-	if err := st.CreateAPIKey(ctx, hash, "to-revoke", 0); err != nil {
+	if err := st.CreateAPIKey(ctx, hash, "to-revoke", 0, nil); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 

@@ -76,7 +76,7 @@ func mustKey(t *testing.T, st *store.Store, name string, rateLimit int, revoke b
 		t.Fatalf("generate: %v", err)
 	}
 	hash := apikey.Hash(plain)
-	if err := st.CreateAPIKey(ctx, hash, name, rateLimit); err != nil {
+	if err := st.CreateAPIKey(ctx, hash, name, rateLimit, nil); err != nil {
 		t.Fatalf("create %s: %v", name, err)
 	}
 	if revoke {

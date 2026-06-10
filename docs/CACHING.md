@@ -15,14 +15,9 @@ le trafic, l'origin ne sert que les `MISS` et les revalidations 304.
 | `GET /v1/cars/compare` | idem | idem |
 | `GET /v1/cars/random` | `no-store` | Tirage aléatoire : jamais mis en cache (sinon tous les clients voient la même voiture). |
 | `GET /v1/meta` | `public, max-age=60, stale-while-revalidate=300` | Fraîcheur des données = objet de l'endpoint ; cache court. |
-| `GET /v1/playlist/current` | `public, max-age=300, stale-while-revalidate=3600` *(à câbler)* | Festival Playlist : rafraîchie fréquemment côté jeu ; TTL court + SWR. |
-| `GET /v1/playlist/series`, `…/series/{id}` | `public, max-age=300, stale-while-revalidate=3600` *(à câbler)* | idem. |
-
-> **Playlist** : les handlers `getCurrentPlaylist` / `listSeries` / `getSeries` ne
-> sont pas encore implémentés (501). La politique ci-dessus est la cible ; le
-> `Cache-Control` sera posé via le wrapper `*Headers` du contrat (comme cars/meta)
-> au moment de leur implémentation. En attendant, la règle edge Cloudflare
-> ci-dessous suffit à protéger l'origin une fois les endpoints en ligne.
+| `GET /v1/playlist/current` | `public, max-age=300, stale-while-revalidate=3600` | Festival Playlist : rafraîchie fréquemment côté jeu ; TTL court + SWR. Posé via le wrapper `*Headers` du contrat (comme cars/meta). |
+| `GET /v1/playlist/series`, `…/series/{id}` | `public, max-age=300, stale-while-revalidate=3600` | idem. |
+| `GET /v1/me` | `no-store` | Réponse propre à la clé appelante et volatile (quota courant) : jamais mise en cache. |
 
 ## Validation conditionnelle (ETag / 304)
 
@@ -43,10 +38,10 @@ titre que `X-RateLimit-*` (seul le `429` est au contrat, pas ses en-têtes).
 **Côté client** : conserver l'`ETag` reçu et le renvoyer en `If-None-Match` au prochain
 appel pour ne re-télécharger que si le catalogue a changé.
 
-**CORS** (carte 2.6, non encore implémentée) : la couche CORS devra autoriser le header
-requête `If-None-Match` (`Access-Control-Allow-Headers`) et exposer `ETag`
-(`Access-Control-Expose-Headers`) pour que le SDK browser puisse faire du conditional
-GET. Le cache HTTP natif du navigateur, lui, gère 304 sans exposition CORS.
+**CORS** (`internal/handler/cors.go`, politique → `docs/API.md`) : la couche CORS
+autorise le header requête `If-None-Match` (`Access-Control-Allow-Headers`) et expose
+`ETag` (`Access-Control-Expose-Headers`) pour que le SDK browser puisse faire du
+conditional GET. Le cache HTTP natif du navigateur, lui, gère 304 sans exposition CORS.
 
 ## Cloudflare Cache Rules par endpoint (Phase 5)
 

@@ -37,6 +37,10 @@ type GetForzathonShopRes interface {
 	getForzathonShopRes()
 }
 
+type GetMeRes interface {
+	getMeRes()
+}
+
 type GetMetaRes interface {
 	getMetaRes()
 }
