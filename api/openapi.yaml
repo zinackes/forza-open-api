@@ -112,6 +112,28 @@ paths:
           in: query
           description: Filtre par pack DLC (identifiant d'un dlc_packs) ; liste les voitures du pack.
           schema: { type: string }
+        - name: obtain
+          in: query
+          description: >-
+            Filtre par méthode d'obtention. obtain_method est multi-valeurs
+            (ex. "Autoshow, Wheelspin") : la correspondance se fait par token —
+            obtain=wheelspin renvoie toute voiture dont l'une des méthodes est
+            Wheelspin. Correspondances : autoshow → Autoshow ; wheelspin →
+            Wheelspin ; wristband → Wristband reward / Yellow Wristband ;
+            barn_find → Barn Find ; treasure → Treasure Car ; car_mastery →
+            Car Mastery ; journal → Collection Journal ; car_pass → Car Pass ;
+            hard_to_find → Hard to Find ; aftermarket → Aftermarket Car ;
+            prologue → Complete the Prologue ; loyalty → Loyalty Reward ;
+            preorder → Pre-order ; promotional → Promotional ; vip →
+            VIP Membership ; welcome_pack → Welcome Pack ; unobtainable →
+            Unobtainable. Les voitures de packs DLC se filtrent via `dlc`.
+            Compteurs par valeur : facette `obtainMethods` de /v1/reference.
+          schema:
+            type: string
+            enum: [autoshow, wheelspin, wristband, barn_find, treasure,
+                   car_mastery, journal, car_pass, hard_to_find, aftermarket,
+                   prologue, loyalty, preorder, promotional, vip, welcome_pack,
+                   unobtainable]
         - $ref: '#/components/parameters/UpdatedSince'
         - name: sort
           in: query
@@ -141,7 +163,8 @@ paths:
       summary: Renvoie une voiture aléatoire satisfaisant les filtres.
       description: >
         Tire une seule voiture au hasard parmi celles qui satisfont les filtres
-        (mêmes filtres optionnels que /v1/cars, hors q/dlc et pagination).
+        (mêmes filtres optionnels que /v1/cars, hors q/dlc/ids/obtain/
+        updated_since et pagination).
         Pensé pour les bots Discord
         ("bagnole random du jour"), défis communautaires et easter-eggs sur la
         landing. Réponse non cacheable (Cache-Control: no-store) : chaque appel
@@ -1523,7 +1546,7 @@ components:
         Facettes de référence pour amorcer les filtres d'un client. Les compteurs
         classes/drivetrains/bodyTypes/countries/categories sont scopés au `game`
         demandé ; games est global.
-      required: [game, classes, drivetrains, bodyTypes, countries, categories, regions, trackTypes, eventTypes, prStuntTypes, games]
+      required: [game, classes, drivetrains, bodyTypes, countries, categories, regions, trackTypes, eventTypes, prStuntTypes, obtainMethods, games]
       properties:
         game: { $ref: '#/components/schemas/Game' }
         classes:
@@ -1564,6 +1587,13 @@ components:
         prStuntTypes:
           type: array
           description: Types de PR Stunt et leurs compteurs (ordre canonique, count 0 inclus).
+          items: { $ref: '#/components/schemas/RefCount' }
+        obtainMethods:
+          type: array
+          description: >
+            Méthodes d'obtention (valeurs du paramètre obtain de /v1/cars) et
+            leurs compteurs (ordre canonique, count 0 inclus). obtain_method
+            étant multi-valeurs, une voiture compte dans chacune de ses méthodes.
           items: { $ref: '#/components/schemas/RefCount' }
         games:
           type: array

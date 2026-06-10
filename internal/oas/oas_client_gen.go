@@ -87,9 +87,9 @@ type CarsInvoker interface {
 	// GetRandomCar invokes getRandomCar operation.
 	//
 	// Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
-	// que /v1/cars, hors q/dlc et pagination). Pensé pour les bots Discord ("bagnole random du jour"),
-	// défis communautaires et easter-eggs sur la landing. Réponse non cacheable (Cache-Control:
-	// no-store) : chaque appel re-tire. 404 si aucune voiture ne correspond.
+	// que /v1/cars, hors q/dlc/ids/obtain/ updated_since et pagination). Pensé pour les bots Discord
+	// ("bagnole random du jour"), défis communautaires et easter-eggs sur la landing. Réponse non
+	// cacheable (Cache-Control: no-store) : chaque appel re-tire. 404 si aucune voiture ne correspond.
 	//
 	// GET /v1/cars/random
 	GetRandomCar(ctx context.Context, params GetRandomCarParams) (GetRandomCarRes, error)
@@ -1417,9 +1417,9 @@ func (c *Client) sendGetPrStunt(ctx context.Context, params GetPrStuntParams) (r
 // GetRandomCar invokes getRandomCar operation.
 //
 // Tire une seule voiture au hasard parmi celles qui satisfont les filtres (mêmes filtres optionnels
-// que /v1/cars, hors q/dlc et pagination). Pensé pour les bots Discord ("bagnole random du jour"),
-// défis communautaires et easter-eggs sur la landing. Réponse non cacheable (Cache-Control:
-// no-store) : chaque appel re-tire. 404 si aucune voiture ne correspond.
+// que /v1/cars, hors q/dlc/ids/obtain/ updated_since et pagination). Pensé pour les bots Discord
+// ("bagnole random du jour"), défis communautaires et easter-eggs sur la landing. Réponse non
+// cacheable (Cache-Control: no-store) : chaque appel re-tire. 404 si aucune voiture ne correspond.
 //
 // GET /v1/cars/random
 func (c *Client) GetRandomCar(ctx context.Context, params GetRandomCarParams) (GetRandomCarRes, error) {
@@ -2923,6 +2923,23 @@ func (c *Client) sendListCars(ctx context.Context, params ListCarsParams) (res L
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
 			if val, ok := params.Dlc.Get(); ok {
 				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "obtain" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "obtain",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Obtain.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
 			}
 			return nil
 		}); err != nil {

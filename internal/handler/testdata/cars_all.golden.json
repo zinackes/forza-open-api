@@ -9,6 +9,7 @@
       "pi": 600,
       "drivetrain": "RWD",
       "bodyType": "coupe",
+      "obtainMethod": "Wristband reward",
       "createdAt": "<ts>",
       "updatedAt": "<ts>"
     },
@@ -22,6 +23,7 @@
       "drivetrain": "FWD",
       "bodyType": "hatchback",
       "category": "Hot Hatch",
+      "obtainMethod": "Autoshow",
       "createdAt": "<ts>",
       "updatedAt": "<ts>"
     },
@@ -49,6 +51,7 @@
       "drivetrain": "AWD",
       "bodyType": "coupe",
       "category": "Modern Supercars",
+      "obtainMethod": "Autoshow, Wheelspin",
       "createdAt": "<ts>",
       "updatedAt": "<ts>"
     },

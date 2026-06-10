@@ -156,6 +156,76 @@
       "count": 0
     }
   ],
+  "obtainMethods": [
+    {
+      "code": "autoshow",
+      "count": 2
+    },
+    {
+      "code": "wheelspin",
+      "count": 0
+    },
+    {
+      "code": "wristband",
+      "count": 0
+    },
+    {
+      "code": "barn_find",
+      "count": 0
+    },
+    {
+      "code": "treasure",
+      "count": 0
+    },
+    {
+      "code": "car_mastery",
+      "count": 0
+    },
+    {
+      "code": "journal",
+      "count": 0
+    },
+    {
+      "code": "car_pass",
+      "count": 0
+    },
+    {
+      "code": "hard_to_find",
+      "count": 0
+    },
+    {
+      "code": "aftermarket",
+      "count": 0
+    },
+    {
+      "code": "prologue",
+      "count": 0
+    },
+    {
+      "code": "loyalty",
+      "count": 0
+    },
+    {
+      "code": "preorder",
+      "count": 0
+    },
+    {
+      "code": "promotional",
+      "count": 0
+    },
+    {
+      "code": "vip",
+      "count": 0
+    },
+    {
+      "code": "welcome_pack",
+      "count": 0
+    },
+    {
+      "code": "unobtainable",
+      "count": 0
+    }
+  ],
   "games": [
     {
       "code": "fh6",

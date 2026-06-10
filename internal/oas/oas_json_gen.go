@@ -9291,6 +9291,14 @@ func (s *Reference) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
+		e.FieldStart("obtainMethods")
+		e.ArrStart()
+		for _, elem := range s.ObtainMethods {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
 		e.FieldStart("games")
 		e.ArrStart()
 		for _, elem := range s.Games {
@@ -9300,7 +9308,7 @@ func (s *Reference) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfReference = [11]string{
+var jsonFieldsNameOfReference = [12]string{
 	0:  "game",
 	1:  "classes",
 	2:  "drivetrains",
@@ -9311,7 +9319,8 @@ var jsonFieldsNameOfReference = [11]string{
 	7:  "trackTypes",
 	8:  "eventTypes",
 	9:  "prStuntTypes",
-	10: "games",
+	10: "obtainMethods",
+	11: "games",
 }
 
 // Decode decodes Reference from json.
@@ -9495,8 +9504,26 @@ func (s *Reference) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"prStuntTypes\"")
 			}
-		case "games":
+		case "obtainMethods":
 			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				s.ObtainMethods = make([]RefCount, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem RefCount
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.ObtainMethods = append(s.ObtainMethods, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"obtainMethods\"")
+			}
+		case "games":
+			requiredBitSet[1] |= 1 << 3
 			if err := func() error {
 				s.Games = make([]GameCount, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -9524,7 +9551,7 @@ func (s *Reference) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b11111111,
-		0b00000111,
+		0b00001111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
