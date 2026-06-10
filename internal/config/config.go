@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,14 @@ type Config struct {
 	// Le quota (api_keys.rate_limit) s'entend « requêtes par fenêtre ». Env
 	// RATE_LIMIT_WINDOW en secondes (défaut 60s).
 	RateLimitWindow time.Duration
+	// CORSAllowedOrigins : origines autorisées pour la lecture publique (GET/HEAD).
+	// Large par défaut ("*") car l'API en lecture est ouverte ; env
+	// CORS_ALLOWED_ORIGINS (CSV). "*" → toute origine.
+	CORSAllowedOrigins []string
+	// CORSWriteOrigins : origines autorisées pour les writes (POST/PUT/PATCH/
+	// DELETE). Restreint par défaut (vide → aucun write navigateur) ; env
+	// CORS_WRITE_ORIGINS (CSV). À renseigner explicitement par déploiement.
+	CORSWriteOrigins []string
 }
 
 // Load lit la config depuis l'environnement avec des défauts orientés dev local.
@@ -30,7 +39,27 @@ func Load() Config {
 		LogLevel:        parseLevel(getenv("LOG_LEVEL", "info")),
 		DataVersion:     os.Getenv("DATA_VERSION"),
 		RateLimitWindow: time.Duration(getenvInt("RATE_LIMIT_WINDOW", 60)) * time.Second,
+		// Lecture publique ouverte par défaut ; writes fermés tant que des
+		// origines ne sont pas explicitement autorisées.
+		CORSAllowedOrigins: splitCSV(getenv("CORS_ALLOWED_ORIGINS", "*")),
+		CORSWriteOrigins:   splitCSV(os.Getenv("CORS_WRITE_ORIGINS")),
 	}
+}
+
+// splitCSV découpe une liste CSV d'environnement en éléments non vides trimés.
+// Absente/vide → slice nil (aucune origine).
+func splitCSV(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 func getenv(key, def string) string {
