@@ -342,12 +342,16 @@ func seedExports(logger *slog.Logger) {
 	defer st.Close()
 	monitor := newMonitor(st, logger)
 
-	uploader := export.UploaderFor(export.R2Config{
+	uploader, err := export.UploaderFor(export.R2Config{
 		Endpoint:        cfg.R2Endpoint,
 		Bucket:          cfg.R2Bucket,
 		AccessKeyID:     cfg.R2AccessKeyID,
 		SecretAccessKey: cfg.R2SecretAccessKey,
 	}, cfg.ExportsDir)
+	if err != nil {
+		logger.Error("seed exports: backend", "err", err)
+		os.Exit(1)
+	}
 
 	for _, game := range games {
 		started := time.Now()
