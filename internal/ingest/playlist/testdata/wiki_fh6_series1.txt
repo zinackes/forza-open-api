@@ -1,0 +1,85 @@
+{{Game|fh6=y}}{{DISPLAYTITLE:Series 1}}{{InfoboxFH6FestivalPlaylist
+|name     = Welcome to Japan
+|image    = FH6_Series1.jpg
+|series   = 1
+|duration = May 21, 2026 - June 18, 2026
+|start    = May 21 2026
+|end      = June 18 2026
+|summer   = 45
+|autumn   = 45
+|winter   = 45
+|spring   = 45
+|complete = 180
+|prev     = n
+}}'''Series 1''', dubbed "Welcome to Japan", is the first [[Forza Horizon 6/Festival Playlist|Festival Playlist]] in ''[[Forza Horizon 6]]'' held between May 21, 2026 to June 18, 2026.
+
+It will be succeeded by [[Forza Horizon 6/Series 2|Series 2: "Horizon Decades"]] on June 18, 2026.
+
+Players can earn points (PTS) from completing objectives listed in the Festival Playlist. These objectives can include completing the weekly Forzathon, events, PR Stunts, and challenges listed in the Festival Playlist. Completed objectives in the Festival Playlist are highlighted in gold.
+
+==Series 1==
+Series 1 has a total of 180 points available for completing objectives in each of the series' four seasons in the Festival Playlist. Earning 180 points is required to complete the Series.
+
+As players earn points by completing objectives in a season, they can earn two rewards by accumulating a certain amount of points during each season, and can earn two rewards by accumulating a certain amount of points over an entire series.
+
+{|class="table" style="width: 100%; text-align: center"
+!<div style="display: grid; grid-template-columns: 1fr 250px; grid-column-start: 1; grid-column-end: 2;>
+<div>Season Progress Milestone</div>
+<div>Reward</div>
+</div>
+|-
+{{FH6FPEvent|seriescar|60|{{FH6FPReward|ex|Mazda_Furai|[[Mazda Furai]]|l}}}}
+{{FH6FPEvent|seriescar|120|{{FH6FPReward|ex|Nissan_370Z|[[Nissan 370Z]]|c}}}}
+|}
+
+{{FH6SeasonSection|summer|1|May 21, 2026|May 28, 2026|total = 45|complete = 45}}
+{{FH6SeasonSection|autumn|1|May 28, 2026|June 4, 2026|total = 45|complete = 45}}
+{{FH6SeasonSection|winter|1|June 4, 2026|June 11, 2026|total = 45|complete = 45}}
+{{FH6SeasonSection|spring|1|June 11, 2026|June 18, 2026|total = 45|complete = 45}}
+
+==Evolving World==
+[[File:FH6 S1 Logo.png|150px|right]]
+===Added Cars===
+====Festival Playlist====
+<div style="column-count: 2">
+*2016 [[Abarth 695 Biposto]]: Complete the "Majestic Domestics" championship during the Autumn season
+*2021 [[Aston Martin DBX]]: Complete the "Country Living" championship during the Autumn season
+*1969 [[Datsun 2000 Roadster|Datsun 2000]]: Complete the "Be a Good Sport" championship during the Winter season
+*2022 [[Ferrari 296 GTB]]: Complete the "5 vs 1" [[Hide & Seek]] challenge during the Summer season
+*1995 [[Ferrari F355 Berlinetta]]: Complete the "Hitting the Highway" championship during the Spring season
+*2020 [[Ferrari Roma]]: Complete the "When in Roma" championship during the Winter season
+*2003 [[Ford F-150 SVT Lightning]]: Complete the "Floor It!" [[Forza Horizon 6/Horizon Play|Horizon Play]] challenge during the Summer season
+*1991 [[Honda CR-X SiR]]: Earn 30 points in the Autumn season
+*1988 [[Lamborghini Countach LP5000 QV]]: Complete the "Dodge, Duck, Dip, Dive and Drift!" Horizon Drift challenge during the Winter season
+*2020 [[Lamborghini Huracán EVO]]: Complete the "Mazda of the Mountain" touge showdown during the Autumn season
+*2023 [[Lotus Emira]]: Complete the "Snack Attack" collectibles challenge during the Winter season
+*2018 [[Lotus Exige Cup 430]]: Complete the "Battle Royale" [[The Eliminator]] challenge during the Winter season
+*2004 [[Maserati MC12]]: Complete the "Instant Classic" championship during the Spring season
+*2008 [[Mazda Furai]]: Earn 60 points in the Series
+*2021 [[McLaren Sabre]]: Complete the "Throwback Throwdown" championship during the Summer season
+*2021 [[MINI John Cooper Works GP (2021)|MINI John Cooper Works GP]]: Complete the "Spring into Action" championship during the Spring season
+*2006 [[Mitsubishi Lancer Evolution IX MR]]: Earn 30 points in the Summer season
+*2010 [[Nissan 370Z]]: Earn 120 points in the Series
+*1987 [[Nissan Be-1]]: Complete the "Tokyo City Food Delivery" job during the Autumn season
+*1997 [[Nissan Skyline GT-R V-Spec (1997)|Nissan Skyline GT-R V-Spec]]: Earn 15 points in the Autumn season
+*2022 [[Pagani Huayra R]]: Complete the "Street Fighter" championship during the Summer season
+*1967 [[Renault 8 Gordini]]: Complete the "Monsters on Mud" championship during the Winter season
+*2017 [[Saleen S7 LM]]: Complete the "Spec-tacular Driving!" Horizon Play challenge during the Spring season
+*1993 [[Schuppan 962CR]]: Complete the "Trail Mix" championship during the Autumn season
+*2019 [[Subaru STI S209]]: Earn 15 points in the Winter season
+*1999 [[Toyota Altezza RS200 Z EDITION]]: Earn 15 points in the Summer season
+*1974 [[Toyota Corolla SR5]]: Earn 30 points in the Spring season
+*2016 [[Toyota Land Cruiser Arctic Trucks AT37]]: Earn 30 points in the Winter season
+*1989 [[Toyota MR2 SC]]: Complete the "Hot Like Summer" championship during the Summer season
+*1996 [[Toyota Starlet Glanza V]]: Earn 15 points in the Spring season
+</div>
+
+====Car Pass====
+*1972 [[Datsun 269 Attacking the Clock Racing 240Z 'All Carbon Hill Climb Beast'|Datsun #269 Attacking the Clock Racing 240Z 'All Carbon Hill Climb Beast']] (June 11, 2026)
+*2008 [[Honda Civic Type R (2008)|Honda Civic Type R]] (June 4, 2026)
+*2024 [[Koenigsegg Gemera]] (May 28, 2026)
+*1990 [[Nissan 12 Skyline GT-R (BNR32 Gr. A) JTC|Nissan #12 Skyline GT-R (BNR32 Gr. A) JTC]] (May 19, 2026)
+
+==References==
+<references />
+{{FH6FPNav}}

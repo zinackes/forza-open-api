@@ -11,6 +11,9 @@
 //	seed playlist [game] [SxxWx]              ingère la série/saison courante de la
 //	                                           Festival Playlist depuis forza.net +
 //	                                           forums.forza.net (déf. fh6, courante).
+//	seed playlist-history [game]              backfill de TOUT l'historique Festival
+//	                                           Playlist (S1 → courante) depuis l'API
+//	                                           MediaWiki du wiki Forza (déf. fh6).
 package main
 
 import (
@@ -40,13 +43,15 @@ func main() {
 		seedCars(logger)
 	case "playlist":
 		seedPlaylist(logger)
+	case "playlist-history":
+		seedPlaylistHistory(logger)
 	default:
 		usage(logger)
 	}
 }
 
 func usage(logger *slog.Logger) {
-	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game] | seed playlist [game] [SxxWx]")
+	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game] | seed playlist [game] [SxxWx] | seed playlist-history [game]")
 }
 
 func seedTracks(logger *slog.Logger) {
@@ -241,6 +246,55 @@ func seedPlaylist(logger *slog.Logger) {
 		"challenges", len(challenges),
 		"divergences", len(div.Divergences),
 		"new", added,
+	)
+}
+
+// seedPlaylistHistory backfill TOUT l'historique Festival Playlist d'un jeu depuis
+// l'API MediaWiki du wiki Forza : « seed playlist-history [game] » (déf. fh6).
+// One-shot idempotent (upsert sur l'id stable de chaque saison) ; ensuite maintenu
+// par le scheduler (carte 3.5). is_current est décidé par la fenêtre de dates
+// (now ∈ [start,end]) ; UpsertSeries éteint les autres séries courantes du jeu.
+func seedPlaylistHistory(logger *slog.Logger) {
+	game := "fh6"
+	if len(os.Args) >= 3 {
+		game = os.Args[2]
+	}
+
+	// Réseau borné mais généreux : découverte + des centaines de pages par lots
+	// (FH5 ≈ 61 séries × 4 saisons), avec délais polis entre lots.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+	now := time.Now().UTC()
+
+	logger.Info("seed playlist-history: backfill", "game", game)
+	seasons, err := playlist.BackfillPlaylist(ctx, game, now)
+	if err != nil {
+		logger.Error("backfill playlist", "err", err)
+		os.Exit(1)
+	}
+
+	st := mustStore(ctx, logger)
+	defer st.Close()
+
+	added, updated := 0, 0
+	for _, s := range seasons {
+		isNew, err := st.UpsertSeries(ctx, s.Series, s.Rewards, s.Challenges)
+		if err != nil {
+			logger.Error("upsert series", "id", s.Series.ID, "err", err)
+			os.Exit(1)
+		}
+		if isNew {
+			added++
+		} else {
+			updated++
+		}
+	}
+
+	logger.Info("seed playlist-history ok",
+		"game", game,
+		"seasons", len(seasons),
+		"added", added,
+		"updated", updated,
 	)
 }
 
