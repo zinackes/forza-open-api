@@ -1,0 +1,45 @@
+{
+  "items": [
+    {
+      "id": "audi-r8",
+      "game": "fh6",
+      "name": "R8",
+      "make": "Audi",
+      "class": "S1",
+      "pi": 850,
+      "drivetrain": "AWD",
+      "bodyType": "coupe",
+      "category": "Modern Supercars",
+      "obtainMethod": "Autoshow, Wheelspin",
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
+    },
+    {
+      "id": "ford-gt",
+      "game": "fh6",
+      "name": "GT",
+      "make": "Ford",
+      "class": "S2",
+      "pi": 920,
+      "drivetrain": "RWD",
+      "bodyType": "coupe",
+      "category": "Modern Supercars",
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
+    },
+    {
+      "id": "honda-civic",
+      "game": "fh6",
+      "name": "Civic Type R",
+      "make": "Honda",
+      "class": "A",
+      "pi": 780,
+      "drivetrain": "FWD",
+      "bodyType": "hatchback",
+      "category": "Hot Hatch",
+      "obtainMethod": "Autoshow",
+      "createdAt": "<ts>",
+      "updatedAt": "<ts>"
+    }
+  ]
+}

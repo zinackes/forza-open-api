@@ -514,6 +514,25 @@ func (s *CarClass) UnmarshalText(data []byte) error {
 	}
 }
 
+// Comparaison de 2 à 3 voitures, alignées dans l'ordre des ids demandés. Chaque entrée est
+// l'objet Car complet (PI, classe, transmission, stats).
+// Ref: #/components/schemas/CarComparison
+type CarComparison struct {
+	Items []Car `json:"items"`
+}
+
+// GetItems returns the value of Items.
+func (s *CarComparison) GetItems() []Car {
+	return s.Items
+}
+
+// SetItems sets the value of Items.
+func (s *CarComparison) SetItems(val []Car) {
+	s.Items = val
+}
+
+func (*CarComparison) compareCarsRes() {}
+
 // CarHeaders wraps Car with response headers.
 type CarHeaders struct {
 	CacheControl OptString
@@ -1347,6 +1366,22 @@ func (s *ChangeList) SetPageSize(val int) {
 }
 
 func (*ChangeList) listChangesRes() {}
+
+type CompareCarsBadRequest Error
+
+func (*CompareCarsBadRequest) compareCarsRes() {}
+
+type CompareCarsNotFound Error
+
+func (*CompareCarsNotFound) compareCarsRes() {}
+
+type CompareCarsTooManyRequests Error
+
+func (*CompareCarsTooManyRequests) compareCarsRes() {}
+
+type CompareCarsUnauthorized Error
+
+func (*CompareCarsUnauthorized) compareCarsRes() {}
 
 // Type de pack DLC.
 // Ref: #/components/schemas/DlcKind
