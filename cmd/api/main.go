@@ -60,6 +60,7 @@ func main() {
 	}
 	rateLimiter := handler.NewRateLimiter(sec, cfg.RateLimitWindow)
 	conditional := handler.ConditionalGet(cfg.DataVersion)
+	cors := handler.NewCORS(cfg.CORSAllowedOrigins, cfg.CORSWriteOrigins)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthz(st))
@@ -71,8 +72,12 @@ func main() {
 	mux.Handle("/", rateLimiter.Middleware(conditional(oasSrv)))
 
 	srv := &http.Server{
-		Addr:    cfg.Addr,
-		Handler: accessLog(mux),
+		Addr: cfg.Addr,
+		// CORS + en-têtes de sécurité enveloppent tout le mux : le preflight OPTIONS
+		// est traité avant le routage (jamais d'OPTIONS vers ogen ni de quota
+		// consommé), et les statiques (/openapi.yaml, /llms.txt) restent fetchables
+		// cross-origin par le SDK TS. accessLog reste à l'extérieur pour tout tracer.
+		Handler: accessLog(handler.SecurityHeaders(cors.Middleware(mux))),
 		// Timeouts complets : sans eux une connexion lente (slowloris) retient
 		// goroutine + FD indéfiniment. API GET-only → bornes courtes.
 		ReadHeaderTimeout: 5 * time.Second,

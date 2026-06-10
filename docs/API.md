@@ -30,6 +30,19 @@ Header `X-API-Key` (SecurityHandler ogen). Clés opaques hashées. Lecture publi
 
 Sliding window par clé (Redis). Headers X-RateLimit-Limit/Remaining/Reset. 429 + Retry-After au dépassement.
 
+## CORS
+
+L'API est consommable **depuis le navigateur** (overlays, apps web via le SDK TS). Middleware transport enveloppant tout le mux, **avant** le rate-limit et le cache.
+
+- **Lecture (GET/HEAD)** : large. `CORS_ALLOWED_ORIGINS` (CSV, défaut `*`). `*` → `Access-Control-Allow-Origin: *` ; sinon écho de l'`Origin` autorisée + `Vary: Origin`.
+- **Writes (POST/PUT/PATCH/DELETE)** : **restreints**. `CORS_WRITE_ORIGINS` (CSV, **défaut vide = aucun write navigateur**) ; à renseigner explicitement par déploiement.
+- **Preflight `OPTIONS`** : court-circuité en `204` (jamais routé vers ogen, aucun quota consommé). Classe d'origines choisie selon `Access-Control-Request-Method`. `Access-Control-Max-Age: 600`.
+- **Requête autorisés** (preflight) : `X-API-Key`, `Content-Type`, `If-None-Match`.
+- **Réponse exposés** au JS (`Access-Control-Expose-Headers`) : `X-RateLimit-Limit/Remaining/Reset`, `RateLimit`, `RateLimit-Policy`, `Retry-After`, `ETag`.
+- Pas d'`Access-Control-Allow-Credentials` : l'auth passe par l'en-tête `X-API-Key`, pas par cookie → compatible avec `Allow-Origin: *`.
+
+**En-têtes de sécurité** (toutes réponses, en coordination avec Cloudflare qui gère TLS/HSTS) : `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: cross-origin`. Pas de CSP (API JSON, aucun HTML rendu).
+
 ## Erreurs
 
 **RFC 9457** (application/problem+json) : type, title, status, detail, instance. Codes stables documentés.
