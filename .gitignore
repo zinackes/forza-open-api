@@ -16,6 +16,10 @@ clients/ts/dist/
 *.pem
 *.key
 
+# Archives d'exports générées (bind mount du compose) — seul le dossier est versionné
+/data/exports/*
+!/data/exports/.gitkeep
+
 # Config locale Claude Code
 .claude/settings.local.json
 
