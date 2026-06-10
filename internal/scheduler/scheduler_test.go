@@ -71,6 +71,7 @@ func TestRunPlaylistIdempotentAndCurrentToggle(t *testing.T) {
 	// La semaine « courante » servie par la fausse ingestion est pilotable.
 	week := 2
 	r := &scheduler.Runner{
+		Source:  "playlist",
 		Games:   []string{"fh6"},
 		Logger:  discardLogger(),
 		Monitor: &health.Monitor{Store: st, Logger: discardLogger()},
@@ -83,11 +84,11 @@ func TestRunPlaylistIdempotentAndCurrentToggle(t *testing.T) {
 	now := time.Now().UTC()
 
 	// 1) Run manuel.
-	if err := r.RunPlaylist(ctx, now); err != nil {
+	if err := r.Run(ctx, now); err != nil {
 		t.Fatalf("run #1: %v", err)
 	}
 	// 2) Re-run identique : rejouable sans doublon.
-	if err := r.RunPlaylist(ctx, now); err != nil {
+	if err := r.Run(ctx, now); err != nil {
 		t.Fatalf("run #2 (re-run): %v", err)
 	}
 
@@ -111,7 +112,7 @@ func TestRunPlaylistIdempotentAndCurrentToggle(t *testing.T) {
 
 	// 3) Reset hebdo : la nouvelle semaine devient courante, l'ancienne s'éteint.
 	week = 3
-	if err := r.RunPlaylist(ctx, now); err != nil {
+	if err := r.Run(ctx, now); err != nil {
 		t.Fatalf("run #3 (rollover): %v", err)
 	}
 	if got := queryInt(t, st, `SELECT count(*) FROM series WHERE game='fh6'`); got != 2 {
@@ -137,6 +138,7 @@ func TestRunPlaylistAlertsOnFailureAndContinues(t *testing.T) {
 	defer srv.Close()
 
 	r := &scheduler.Runner{
+		Source:  "playlist",
 		Games:   []string{"fh6", "fh5"},
 		Logger:  discardLogger(),
 		Monitor: &health.Monitor{Store: st, Notifier: health.NewNotifier(srv.URL), Logger: discardLogger()},
@@ -150,9 +152,9 @@ func TestRunPlaylistAlertsOnFailureAndContinues(t *testing.T) {
 		},
 	}
 
-	err := r.RunPlaylist(ctx, time.Now().UTC())
+	err := r.Run(ctx, time.Now().UTC())
 	if err == nil {
-		t.Fatal("RunPlaylist = nil, want erreur agrégée (fh6 a échoué)")
+		t.Fatal("Run = nil, want erreur agrégée (fh6 a échoué)")
 	}
 	if !strings.Contains(err.Error(), "fh6") || !strings.Contains(err.Error(), "boom") {
 		t.Errorf("erreur agrégée = %q, want mention fh6 + cause", err)
@@ -195,6 +197,7 @@ func TestRunPlaylistAlertsOnAnomaly(t *testing.T) {
 	defer srv.Close()
 
 	r := &scheduler.Runner{
+		Source:  "playlist",
 		Games:   []string{"fh6"},
 		Logger:  discardLogger(),
 		Monitor: &health.Monitor{Store: st, Notifier: health.NewNotifier(srv.URL), Logger: discardLogger()},
@@ -205,9 +208,9 @@ func TestRunPlaylistAlertsOnAnomaly(t *testing.T) {
 		},
 	}
 
-	err := r.RunPlaylist(ctx, time.Now().UTC())
+	err := r.Run(ctx, time.Now().UTC())
 	if err == nil || !strings.Contains(err.Error(), "anomalie") {
-		t.Fatalf("RunPlaylist = %v, want erreur mentionnant une anomalie", err)
+		t.Fatalf("Run = %v, want erreur mentionnant une anomalie", err)
 	}
 
 	got := alerts.all()

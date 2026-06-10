@@ -14,6 +14,9 @@
 //	seed playlist-history [game]              backfill de TOUT l'historique Festival
 //	                                           Playlist (S1 → courante) depuis l'API
 //	                                           MediaWiki du wiki Forza (déf. fh6).
+//	seed exports  [game]                      régénère les archives téléchargeables
+//	                                           du dataset (JSON/CSV/JSONL) par jeu
+//	                                           (déf. tous les EXPORTS_GAMES).
 package main
 
 import (
@@ -26,6 +29,7 @@ import (
 	"time"
 
 	"github.com/zinackes/forza-open-api/internal/config"
+	"github.com/zinackes/forza-open-api/internal/export"
 	"github.com/zinackes/forza-open-api/internal/health"
 	"github.com/zinackes/forza-open-api/internal/ingest/cars"
 	"github.com/zinackes/forza-open-api/internal/ingest/playlist"
@@ -49,6 +53,8 @@ func main() {
 		seedPlaylist(logger)
 	case "playlist-history":
 		seedPlaylistHistory(logger)
+	case "exports":
+		seedExports(logger)
 	case "health":
 		seedHealth(logger)
 	default:
@@ -57,7 +63,7 @@ func main() {
 }
 
 func usage(logger *slog.Logger) {
-	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game] | seed playlist [game] [SxxWx] | seed playlist-history [game] | seed health")
+	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game] | seed playlist [game] [SxxWx] | seed playlist-history [game] | seed exports [game] | seed health")
 }
 
 func seedTracks(logger *slog.Logger) {
@@ -307,6 +313,46 @@ func seedPlaylistHistory(logger *slog.Logger) {
 		"added", added,
 		"updated", updated,
 	)
+}
+
+// seedExports régénère les archives téléchargeables (GET /v1/exports) : « seed
+// exports [game] » (déf. tous les EXPORTS_GAMES). Dump complet par jeu → fichiers
+// statiques (R2 si configuré, sinon EXPORTS_DIR) + manifeste. Idempotent, rejouable.
+func seedExports(logger *slog.Logger) {
+	cfg := config.Load()
+	games := cfg.ExportsGames
+	if len(os.Args) >= 3 {
+		games = []string{os.Args[2]}
+	}
+
+	// Borne large : le dump couvre toutes les ressources de chaque jeu.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+	now := time.Now().UTC()
+
+	st := mustStore(ctx, logger)
+	defer st.Close()
+	monitor := newMonitor(st, logger)
+
+	uploader := export.UploaderFor(export.R2Config{
+		Endpoint:        cfg.R2Endpoint,
+		Bucket:          cfg.R2Bucket,
+		AccessKeyID:     cfg.R2AccessKeyID,
+		SecretAccessKey: cfg.R2SecretAccessKey,
+	}, cfg.ExportsDir)
+
+	for _, game := range games {
+		started := time.Now()
+		res, err := export.Generate(ctx, st, uploader, cfg.ExportsBaseURL, game, now)
+		if err != nil {
+			failRun(ctx, monitor, "exports", game, started, fmt.Errorf("generate exports: %w", err))
+		}
+		// Contrôle de santé : dataset non entièrement vide (jeu non seedé = anomalie).
+		monitor.Observe(ctx, health.Report{
+			Source: "exports", Game: game, Records: res.Artifacts, Violations: export.CheckRun(res, now),
+		}, started)
+		logger.Info("seed exports ok", "game", game, "artifacts", res.Artifacts, "rows", res.Rows)
+	}
 }
 
 // deref rend la valeur d'un *string pour le log (vide si nil).

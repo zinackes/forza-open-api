@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Forza Open API — Reference</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Interactive reference for the Forza Open API, generated from the OpenAPI 3.1 contract." />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <!-- Scalar standalone bundle (CDN, cached at the edge) -->
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+
+    <!-- Render the reference straight from the contract served at /openapi.yaml.
+         Same-origin, so try-it requests hit the live API with no proxy. -->
+    <script>
+      Scalar.createApiReference('#app', {
+        url: '/openapi.yaml',
+        theme: 'purple',
+        metaData: {
+          title: 'Forza Open API — Reference',
+        },
+      })
+    </script>
+  </body>
+</html>
