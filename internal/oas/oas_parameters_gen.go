@@ -2120,6 +2120,10 @@ type ListCarsParams struct {
 	// Ne renvoie que les éléments modifiés après cet instant (synchro incrémentale : un client ne
 	// re-télécharge que le delta).
 	UpdatedSince OptDateTime `json:",omitempty,omitzero"`
+	// Tri du résultat : pi, name, year ou value (valeur en crédits). Préfixe "-" pour l'ordre
+	// décroissant (ex. sort=-pi). Défaut : pi croissant. Tri stable (départage par name puis id) ;
+	// les valeurs absentes (year/value NULL) sont renvoyées en dernier.
+	Sort OptListCarsSort `json:",omitempty,omitzero"`
 	// Numéro de page (1-based).
 	Page OptInt `json:",omitempty,omitzero"`
 	// Taille de page.
@@ -2213,6 +2217,15 @@ func unpackListCarsParams(packed middleware.Parameters) (params ListCarsParams) 
 		}
 		if v, ok := packed[key]; ok {
 			params.UpdatedSince = v.(OptDateTime)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "sort",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Sort = v.(OptListCarsSort)
 		}
 	}
 	{
@@ -2727,6 +2740,62 @@ func decodeListCarsParams(args [0]string, argsEscaped bool, r *http.Request) (pa
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "updated_since",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: sort.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "sort",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotSortVal ListCarsSort
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotSortVal = ListCarsSort(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Sort.SetTo(paramsDotSortVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Sort.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "sort",
 			In:   "query",
 			Err:  err,
 		}

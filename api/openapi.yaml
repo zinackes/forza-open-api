@@ -100,6 +100,16 @@ paths:
           description: Filtre par pack DLC (identifiant d'un dlc_packs) ; liste les voitures du pack.
           schema: { type: string }
         - $ref: '#/components/parameters/UpdatedSince'
+        - name: sort
+          in: query
+          description: >-
+            Tri du résultat : pi, name, year ou value (valeur en crédits).
+            Préfixe "-" pour l'ordre décroissant (ex. sort=-pi).
+            Défaut : pi croissant. Tri stable (départage par name puis id) ;
+            les valeurs absentes (year/value NULL) sont renvoyées en dernier.
+          schema:
+            type: string
+            enum: [pi, -pi, name, -name, year, -year, value, -value]
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:

@@ -1200,6 +1200,29 @@ func (s JournalTrack) Validate() error {
 	}
 }
 
+func (s ListCarsSort) Validate() error {
+	switch s {
+	case "pi":
+		return nil
+	case "-pi":
+		return nil
+	case "name":
+		return nil
+	case "-name":
+		return nil
+	case "year":
+		return nil
+	case "-year":
+		return nil
+	case "value":
+		return nil
+	case "-value":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s ListDlcPacksOKApplicationJSON) Validate() error {
 	alias := ([]DlcPack)(s)
 	if alias == nil {

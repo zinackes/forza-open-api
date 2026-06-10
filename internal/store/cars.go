@@ -24,8 +24,34 @@ type CarFilter struct {
 	Q            *string
 	Dlc          *string // identifiant d'un dlc_packs : restreint aux voitures du pack
 	UpdatedSince *time.Time
+	Sort         string // valeur du contrat (pi/name/year/value, préfixe "-" = desc) ; vide = défaut pi
 	Limit        int
 	Offset       int
+}
+
+// carSortColumns whiteliste les clés de tri du contrat vers leur colonne SQL.
+// La valeur client ne touche jamais le SQL : seul le mapping est interpolé.
+var carSortColumns = map[string]string{
+	"pi":    "c.pi",
+	"name":  "c.name",
+	"year":  "c.year",
+	"value": "c.value_cr",
+}
+
+// carOrderBy traduit Sort en clause ORDER BY whitelistée. Clé inconnue ou vide →
+// défaut pi croissant. NULLS LAST pour que year/value_cr absents sortent en
+// dernier quel que soit le sens ; départage stable par name puis id.
+func carOrderBy(sort string) string {
+	dir := "ASC"
+	key := strings.TrimPrefix(sort, "-")
+	if key != sort {
+		dir = "DESC"
+	}
+	col, ok := carSortColumns[key]
+	if !ok {
+		col, dir = "c.pi", "ASC"
+	}
+	return "\nORDER BY " + col + " " + dir + " NULLS LAST, c.name, c.id"
 }
 
 // Car est la vue DB d'une voiture (snake_case). class/pi/drivetrain sont requis
@@ -87,11 +113,11 @@ WHERE c.game = $1
 		return nil, 0, fmt.Errorf("count cars: %w", err)
 	}
 
-	const q = `
+	q := `
 SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
        c.drivetrain, c.stats, c.body_type, c.category, c.rarity, c.value_cr,
-       c.obtain_method, c.image_url, c.created_at, c.updated_at` + fromWhere + `
-ORDER BY c.pi, c.name, c.id
+       c.obtain_method, c.image_url, c.created_at, c.updated_at` + fromWhere +
+		carOrderBy(f.Sort) + `
 LIMIT $11 OFFSET $12`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
 		f.Drivetrain, f.Category, qLit, f.Dlc, f.UpdatedSince, f.Limit, f.Offset)

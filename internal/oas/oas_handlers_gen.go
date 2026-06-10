@@ -3304,6 +3304,10 @@ func (s *Server) handleListCarsRequest(args [0]string, argsEscaped bool, w http.
 					In:   "query",
 				}: params.UpdatedSince,
 				{
+					Name: "sort",
+					In:   "query",
+				}: params.Sort,
+				{
 					Name: "page",
 					In:   "query",
 				}: params.Page,
