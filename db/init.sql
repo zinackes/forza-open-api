@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS cars (
     make          TEXT NOT NULL,
     model         TEXT,
     year          INT,
-    class         TEXT CHECK (class IN ('D','C','B','A','S1','S2','X','R')),
-    pi            INT  CHECK (pi BETWEEN 100 AND 999),
-    drivetrain    TEXT CHECK (drivetrain IN ('FWD','RWD','AWD')),
+    class         TEXT NOT NULL CHECK (class IN ('D','C','B','A','S1','S2','X','R')),
+    pi            INT  NOT NULL CHECK (pi BETWEEN 100 AND 999),
+    drivetrain    TEXT NOT NULL CHECK (drivetrain IN ('FWD','RWD','AWD')),
     stats         JSONB,
     body_type     TEXT,
     category      TEXT,
@@ -27,6 +27,14 @@ CREATE TABLE IF NOT EXISTS cars (
 -- Bases créées avant l'ajout de updated_at : CREATE TABLE IF NOT EXISTS ne
 -- complète pas les colonnes → ALTER idempotent pour les upgrades en place.
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+-- Le contrat exige class/pi/drivetrain (la vue Car les scanne en non-pointeurs :
+-- une ligne NULL ferait des 500 sur /v1/cars) et l'ingestion écarte déjà les
+-- voitures incomplètes (cars.Validate). SET NOT NULL est rejouable (no-op si
+-- déjà posé) ; il échouerait sur des lignes NULL héritées — impossibles via
+-- l'ingestion, à nettoyer à la main le cas échéant.
+ALTER TABLE cars ALTER COLUMN class      SET NOT NULL;
+ALTER TABLE cars ALTER COLUMN pi         SET NOT NULL;
+ALTER TABLE cars ALTER COLUMN drivetrain SET NOT NULL;
 CREATE INDEX IF NOT EXISTS cars_game_idx          ON cars (game);
 CREATE INDEX IF NOT EXISTS cars_game_class_idx    ON cars (game, class);
 CREATE INDEX IF NOT EXISTS cars_game_pi_idx       ON cars (game, pi);

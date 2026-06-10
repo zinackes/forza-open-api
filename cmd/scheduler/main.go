@@ -88,12 +88,18 @@ func main() {
 	// dataset complet par jeu en fichiers statiques (R2 en prod, FS local sinon)
 	// et met à jour le manifeste. Cron quotidien (le dataset ne bouge qu'à
 	// l'ingestion) ; borne large car le dump couvre toutes les ressources.
-	uploader := export.UploaderFor(export.R2Config{
+	uploader, err := export.UploaderFor(export.R2Config{
 		Endpoint:        cfg.R2Endpoint,
 		Bucket:          cfg.R2Bucket,
 		AccessKeyID:     cfg.R2AccessKeyID,
 		SecretAccessKey: cfg.R2SecretAccessKey,
 	}, cfg.ExportsDir)
+	if err != nil {
+		// Config R2 partielle : échec franc au boot plutôt qu'au premier tick
+		// du cron quotidien (où il passerait inaperçu jusqu'à l'alerte).
+		logger.Error("exports backend", "err", err)
+		os.Exit(1)
+	}
 	exportsRunner := &scheduler.Runner{
 		Source: "exports", Games: cfg.ExportsGames, Monitor: monitor, Logger: logger,
 		Ingest: func(ctx context.Context, game string, now time.Time) (health.Report, error) {

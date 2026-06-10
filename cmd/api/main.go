@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -79,7 +80,7 @@ func main() {
 	// pointe le domaine R2) → on n'enregistre pas la route locale.
 	if cfg.R2Endpoint == "" || cfg.R2Bucket == "" {
 		exportsFS := http.StripPrefix("/static/exports/", http.FileServer(http.Dir(cfg.ExportsDir)))
-		mux.Handle("GET /static/exports/", longCache(exportsFS))
+		mux.Handle("GET /static/exports/", longCache(noDirListing(exportsFS)))
 	}
 	// Routes du contrat (/v1/...) derrière le rate-limit puis le cache conditionnel
 	// (ETag/304, calculé sur le corps final) ; /healthz et les statiques sont
@@ -134,6 +135,20 @@ func staticFile(contentType string, body []byte) http.HandlerFunc {
 func longCache(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "public, max-age=86400")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// noDirListing coupe le listing de répertoire de http.FileServer : tout chemin
+// terminé par « / » → 404. Le manifeste (GET /v1/exports) est la seule liste
+// publique des archives ; l'index du dossier n'a pas à être exposé. Appliqué
+// AVANT le StripPrefix pour voir le chemin complet de la requête.
+func noDirListing(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/") {
+			http.NotFound(w, r)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }
