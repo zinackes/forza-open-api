@@ -46,6 +46,8 @@ tags:
     description: Collection Journal FH6 (Wristbands Horizon Festival + Stamps Discover Japan ; remplace les Accolades de FH5).
   - name: Reference
     description: Énumérations et compteurs agrégés (facettes) pour construire les filtres côté client.
+  - name: Stats
+    description: Agrégats statistiques du catalogue (compteurs par facette, histogramme PI, classements).
   - name: Stories
     description: Stories FH6 (missions narratives Discover Japan ; rapportent des stamps au Collection Journal).
   - name: Tours
@@ -442,6 +444,38 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Reference' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/stats:
+    get:
+      operationId: getStats
+      summary: Agrégats statistiques du catalogue d'un jeu.
+      description: >
+        Vue analytique du catalogue pour le `game` demandé, en un seul appel :
+        compteurs par facette (classe, transmission, constructeur, décennie,
+        carrosserie, catégorie), histogramme du Performance Index par paliers de
+        50, et classements (top 10). Les classements `speed` et `acceleration`
+        s'appuient sur les NOTES in-game (échelle 0–10, champ `stats`) — ce sont
+        des proxys, pas des unités physiques (km/h, secondes), absentes des
+        sources propres ; `pi` est la colonne réelle. Aucune voiture sans la
+        donnée concernée n'est inventée (NULL exclu des agrégats). Réponse
+        fortement cacheable, invalidée par les jobs d'ingestion.
+      tags: [Stats]
+      x-ogen-operation-group: Stats
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Agrégats du catalogue pour le jeu.
+          headers:
+            Cache-Control:
+              description: Cache long (la donnée ne bouge qu'à l'ingestion, qui purge l'edge).
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Stats' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -1864,6 +1898,105 @@ components:
           type: array
           description: Jeux disponibles et leurs volumes (global, indépendant du paramètre game).
           items: { $ref: '#/components/schemas/GameCount' }
+
+    CountMap:
+      type: object
+      description: >
+        Compteur par code (clé → nombre de voitures). Les clés présentes ne
+        couvrent que des valeurs réellement observées (NULL exclu) ; une facette
+        énumérée (classe, transmission) renvoie tous ses codes valides, 0 inclus.
+      additionalProperties: { type: integer, format: int64 }
+
+    NamedCount:
+      type: object
+      description: Valeur libre et son nombre d'occurrences (pour les facettes triables par fréquence).
+      required: [name, count]
+      properties:
+        name: { type: string }
+        count: { type: integer, format: int64 }
+
+    PiBucket:
+      type: object
+      description: Palier de l'histogramme PI (intervalle fermé-ouvert de 50) et son effectif.
+      required: [bucket, count]
+      properties:
+        bucket: { type: string, description: 'Intervalle PI, ex. "100-150" (borne haute exclue).' }
+        count: { type: integer, format: int64 }
+
+    TopCar:
+      type: object
+      description: Entrée d'un classement — voiture et valeur de la métrique classée.
+      required: [carId, name, value]
+      properties:
+        carId: { type: string }
+        name: { type: string }
+        value:
+          type: number
+          description: Valeur de la métrique (PI entier, ou note in-game 0–10 pour speed/acceleration).
+
+    StatsCountsBy:
+      type: object
+      description: Compteurs du catalogue ventilés par facette, scopés au jeu demandé.
+      required: [class, drivetrain, manufacturer, yearDecade, bodyType, category]
+      properties:
+        class:
+          allOf: [{ $ref: '#/components/schemas/CountMap' }]
+          description: Voitures par classe PI (tous les codes valides, 0 inclus).
+        drivetrain:
+          allOf: [{ $ref: '#/components/schemas/CountMap' }]
+          description: Voitures par transmission (tous les codes valides, 0 inclus).
+        manufacturer:
+          type: array
+          description: Voitures par constructeur (make), plus fréquents d'abord. Liste libre → tableau.
+          items: { $ref: '#/components/schemas/NamedCount' }
+        yearDecade:
+          allOf: [{ $ref: '#/components/schemas/CountMap' }]
+          description: >
+            Voitures par décennie (clé = année de début, ex. "1990"). Décennies
+            sans voiture omises ; voitures sans année (NULL) exclues.
+        bodyType:
+          allOf: [{ $ref: '#/components/schemas/CountMap' }]
+          description: Voitures par type de carrosserie présent (NULL exclu).
+        category:
+          allOf: [{ $ref: '#/components/schemas/CountMap' }]
+          description: Voitures par catégorie / division in-game présente (NULL exclu).
+
+    StatsTop:
+      type: object
+      description: >
+        Classements (top 10) du catalogue. `pi` s'appuie sur la colonne réelle ;
+        `speed`/`acceleration` sur les notes in-game (champ stats, échelle 0–10),
+        proxys faute de vitesse de pointe / 0–100 en unités physiques sourçables.
+      required: [pi, speed, acceleration]
+      properties:
+        pi:
+          type: array
+          description: Top par Performance Index (colonne pi).
+          items: { $ref: '#/components/schemas/TopCar' }
+        speed:
+          type: array
+          description: Top par note de vitesse in-game (stats.speed).
+          items: { $ref: '#/components/schemas/TopCar' }
+        acceleration:
+          type: array
+          description: Top par note d'accélération in-game (stats.acceleration).
+          items: { $ref: '#/components/schemas/TopCar' }
+
+    Stats:
+      type: object
+      description: >
+        Agrégats statistiques du catalogue pour un jeu : compteurs par facette,
+        histogramme PI (paliers de 50) et classements. Réponse cacheable, purgée
+        à l'ingestion.
+      required: [game, countsBy, piHistogram, top]
+      properties:
+        game: { $ref: '#/components/schemas/Game' }
+        countsBy: { $ref: '#/components/schemas/StatsCountsBy' }
+        piHistogram:
+          type: array
+          description: Effectifs par palier PI de 50 (paliers vides omis, ordre croissant).
+          items: { $ref: '#/components/schemas/PiBucket' }
+        top: { $ref: '#/components/schemas/StatsTop' }
 
     MetaGame:
       type: object

@@ -23,6 +23,7 @@ type Handler interface {
 	PlaylistHandler
 	ReferenceHandler
 	SearchHandler
+	StatsHandler
 	StoriesHandler
 	ToursHandler
 	TracksHandler
@@ -316,6 +317,24 @@ type SearchHandler interface {
 	//
 	// GET /v1/search
 	Search(ctx context.Context, params SearchParams) (SearchRes, error)
+}
+
+// StatsHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Stats
+type StatsHandler interface {
+	// GetStats implements getStats operation.
+	//
+	// Vue analytique du catalogue pour le `game` demandé, en un seul appel : compteurs par facette
+	// (classe, transmission, constructeur, décennie, carrosserie, catégorie), histogramme du
+	// Performance Index par paliers de 50, et classements (top 10). Les classements `speed` et
+	// `acceleration` s'appuient sur les NOTES in-game (échelle 0–10, champ `stats`) — ce sont des
+	// proxys, pas des unités physiques (km/h, secondes), absentes des sources propres ; `pi` est la
+	// colonne réelle. Aucune voiture sans la donnée concernée n'est inventée (NULL exclu des
+	// agrégats). Réponse fortement cacheable, invalidée par les jobs d'ingestion.
+	//
+	// GET /v1/stats
+	GetStats(ctx context.Context, params GetStatsParams) (GetStatsRes, error)
 }
 
 // StoriesHandler handles operations described by OpenAPI v3 specification.

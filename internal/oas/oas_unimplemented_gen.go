@@ -177,6 +177,21 @@ func (UnimplementedHandler) GetSeries(ctx context.Context, params GetSeriesParam
 	return r, ht.ErrNotImplemented
 }
 
+// GetStats implements getStats operation.
+//
+// Vue analytique du catalogue pour le `game` demandé, en un seul appel : compteurs par facette
+// (classe, transmission, constructeur, décennie, carrosserie, catégorie), histogramme du
+// Performance Index par paliers de 50, et classements (top 10). Les classements `speed` et
+// `acceleration` s'appuient sur les NOTES in-game (échelle 0–10, champ `stats`) — ce sont des
+// proxys, pas des unités physiques (km/h, secondes), absentes des sources propres ; `pi` est la
+// colonne réelle. Aucune voiture sans la donnée concernée n'est inventée (NULL exclu des
+// agrégats). Réponse fortement cacheable, invalidée par les jobs d'ingestion.
+//
+// GET /v1/stats
+func (UnimplementedHandler) GetStats(ctx context.Context, params GetStatsParams) (r GetStatsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetTrack implements getTrack operation.
 //
 // Récupère un tracé par identifiant.

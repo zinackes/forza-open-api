@@ -21,6 +21,7 @@ const (
 	GetRandomTrackOperation           OperationName = "GetRandomTrack"
 	GetReferenceOperation             OperationName = "GetReference"
 	GetSeriesOperation                OperationName = "GetSeries"
+	GetStatsOperation                 OperationName = "GetStats"
 	GetTrackOperation                 OperationName = "GetTrack"
 	GetTreasureCarOperation           OperationName = "GetTreasureCar"
 	ListBarnFindsOperation            OperationName = "ListBarnFinds"
