@@ -23,6 +23,14 @@ var (
 	canonicalTrackTypes   = []string{"circuit", "road", "dirt", "cross", "street", "touge", "horizon_rush"}
 	canonicalEventTypes   = []string{"circuit", "road", "dirt", "cross", "street", "touge_battle", "horizon_rush", "drag_meet", "time_attack", "showcase"}
 	canonicalPRStuntTypes = []string{"speed_trap", "speed_zone", "drift_zone", "danger_sign"}
+	// cf. l'enum du paramètre obtain de /v1/cars et carObtainTokens (cars.go) :
+	// voies du catalogue d'abord, puis voies cachées, déblocages et éditions.
+	canonicalObtainMethods = []string{
+		"autoshow", "wheelspin", "wristband", "barn_find", "treasure",
+		"car_mastery", "journal", "car_pass", "hard_to_find", "aftermarket",
+		"prologue", "loyalty", "preorder", "promotional", "vip", "welcome_pack",
+		"unobtainable",
+	}
 )
 
 // RefCount est une valeur de facette et son nombre d'occurrences.
@@ -42,16 +50,17 @@ type GameCount struct {
 // bodyTypes/countries/categories/regions/*Types sont scopés au jeu demandé ;
 // games est global.
 type Reference struct {
-	Classes      []RefCount
-	Drivetrains  []RefCount
-	BodyTypes    []RefCount
-	Countries    []RefCount
-	Categories   []RefCount
-	Regions      []RefCount
-	TrackTypes   []RefCount
-	EventTypes   []RefCount
-	PRStuntTypes []RefCount
-	Games        []GameCount
+	Classes       []RefCount
+	Drivetrains   []RefCount
+	BodyTypes     []RefCount
+	Countries     []RefCount
+	Categories    []RefCount
+	Regions       []RefCount
+	TrackTypes    []RefCount
+	EventTypes    []RefCount
+	PRStuntTypes  []RefCount
+	ObtainMethods []RefCount
+	Games         []GameCount
 }
 
 // GetReference renvoie les facettes de référence pour un jeu. Jeu inconnu →
@@ -78,16 +87,17 @@ func (s *Store) GetReference(ctx context.Context, game string) (Reference, error
 	}
 
 	return Reference{
-		Classes:      expandCanonical(canonicalClasses, carFacets["class"]),
-		Drivetrains:  expandCanonical(canonicalDrivetrains, carFacets["drivetrain"]),
-		BodyTypes:    presentByCount(carFacets["body_type"]),
-		Categories:   presentByCount(carFacets["category"]),
-		Countries:    presentByCount(countries),
-		Regions:      presentByCount(geoFacets["region"]),
-		TrackTypes:   expandCanonical(canonicalTrackTypes, geoFacets["track_type"]),
-		EventTypes:   expandCanonical(canonicalEventTypes, geoFacets["event_type"]),
-		PRStuntTypes: expandCanonical(canonicalPRStuntTypes, geoFacets["stunt_type"]),
-		Games:        games,
+		Classes:       expandCanonical(canonicalClasses, carFacets["class"]),
+		Drivetrains:   expandCanonical(canonicalDrivetrains, carFacets["drivetrain"]),
+		BodyTypes:     presentByCount(carFacets["body_type"]),
+		Categories:    presentByCount(carFacets["category"]),
+		Countries:     presentByCount(countries),
+		Regions:       presentByCount(geoFacets["region"]),
+		TrackTypes:    expandCanonical(canonicalTrackTypes, geoFacets["track_type"]),
+		EventTypes:    expandCanonical(canonicalEventTypes, geoFacets["event_type"]),
+		PRStuntTypes:  expandCanonical(canonicalPRStuntTypes, geoFacets["stunt_type"]),
+		ObtainMethods: expandObtainMethods(carFacets["obtain"]),
+		Games:         games,
 	}, nil
 }
 
@@ -144,7 +154,12 @@ SELECT 'drivetrain' AS facet, drivetrain AS code, count(*) AS n FROM cars WHERE 
 UNION ALL
 SELECT 'body_type'  AS facet, body_type  AS code, count(*) AS n FROM cars WHERE game = $1 AND body_type  IS NOT NULL GROUP BY body_type
 UNION ALL
-SELECT 'category'   AS facet, category   AS code, count(*) AS n FROM cars WHERE game = $1 AND category   IS NOT NULL GROUP BY category`
+SELECT 'category'   AS facet, category   AS code, count(*) AS n FROM cars WHERE game = $1 AND category   IS NOT NULL GROUP BY category
+UNION ALL
+SELECT 'obtain' AS facet, lower(btrim(tok)) AS code, count(*) AS n
+FROM cars, unnest(string_to_array(obtain_method, ',')) AS tok
+WHERE game = $1 AND obtain_method IS NOT NULL
+GROUP BY lower(btrim(tok))`
 	rows, err := s.DB.Query(ctx, q, game)
 	if err != nil {
 		return nil, fmt.Errorf("query car facets: %w", err)
@@ -233,6 +248,22 @@ func expandCanonical(order []string, counts map[string]int64) []RefCount {
 	out := make([]RefCount, 0, len(order))
 	for _, code := range order {
 		out = append(out, RefCount{Code: code, Count: counts[code]})
+	}
+	return out
+}
+
+// expandObtainMethods projette les compteurs par token d'obtain_method (clés en
+// minuscules) sur les valeurs canoniques du paramètre obtain : chaque valeur
+// somme les tokens qu'elle couvre (carObtainTokens), count 0 si absente.
+// Une voiture multi-méthodes compte dans chacune de ses méthodes.
+func expandObtainMethods(tokenCounts map[string]int64) []RefCount {
+	out := make([]RefCount, 0, len(canonicalObtainMethods))
+	for _, code := range canonicalObtainMethods {
+		var n int64
+		for _, tok := range carObtainTokens[code] {
+			n += tokenCounts[tok]
+		}
+		out = append(out, RefCount{Code: code, Count: n})
 	}
 	return out
 }

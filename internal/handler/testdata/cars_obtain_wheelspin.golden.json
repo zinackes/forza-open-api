@@ -1,20 +1,6 @@
 {
   "items": [
     {
-      "id": "mazda-rx7",
-      "game": "fh6",
-      "name": "RX-7",
-      "make": "Mazda",
-      "model": "FD",
-      "year": 1998,
-      "class": "A",
-      "pi": 780,
-      "drivetrain": "RWD",
-      "bodyType": "coupe",
-      "createdAt": "<ts>",
-      "updatedAt": "<ts>"
-    },
-    {
       "id": "audi-r8",
       "game": "fh6",
       "name": "R8",
@@ -29,7 +15,7 @@
       "updatedAt": "<ts>"
     }
   ],
-  "total": 5,
-  "page": 2,
-  "pageSize": 2
+  "total": 1,
+  "page": 1,
+  "pageSize": 50
 }

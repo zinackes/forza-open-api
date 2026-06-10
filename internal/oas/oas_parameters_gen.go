@@ -2121,6 +2121,17 @@ type ListCarsParams struct {
 	Q OptString `json:",omitempty,omitzero"`
 	// Filtre par pack DLC (identifiant d'un dlc_packs) ; liste les voitures du pack.
 	Dlc OptString `json:",omitempty,omitzero"`
+	// Filtre par méthode d'obtention. obtain_method est multi-valeurs (ex. "Autoshow, Wheelspin") : la
+	// correspondance se fait par token — obtain=wheelspin renvoie toute voiture dont l'une des
+	// méthodes est Wheelspin. Correspondances : autoshow → Autoshow ; wheelspin → Wheelspin ;
+	// wristband → Wristband reward / Yellow Wristband ; barn_find → Barn Find ; treasure →
+	// Treasure Car ; car_mastery → Car Mastery ; journal → Collection Journal ; car_pass → Car
+	// Pass ; hard_to_find → Hard to Find ; aftermarket → Aftermarket Car ; prologue → Complete the
+	// Prologue ; loyalty → Loyalty Reward ; preorder → Pre-order ; promotional → Promotional ; vip
+	// → VIP Membership ; welcome_pack → Welcome Pack ; unobtainable → Unobtainable. Les voitures
+	// de packs DLC se filtrent via `dlc`. Compteurs par valeur : facette `obtainMethods` de
+	// /v1/reference.
+	Obtain OptListCarsObtain `json:",omitempty,omitzero"`
 	// Ne renvoie que les éléments modifiés après cet instant (synchro incrémentale : un client ne
 	// re-télécharge que le delta).
 	UpdatedSince OptDateTime `json:",omitempty,omitzero"`
@@ -2221,6 +2232,15 @@ func unpackListCarsParams(packed middleware.Parameters) (params ListCarsParams) 
 		}
 		if v, ok := packed[key]; ok {
 			params.Dlc = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "obtain",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Obtain = v.(OptListCarsObtain)
 		}
 	}
 	{
@@ -2771,6 +2791,62 @@ func decodeListCarsParams(args [0]string, argsEscaped bool, r *http.Request) (pa
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "dlc",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: obtain.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "obtain",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotObtainVal ListCarsObtain
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotObtainVal = ListCarsObtain(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Obtain.SetTo(paramsDotObtainVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Obtain.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "obtain",
 			In:   "query",
 			Err:  err,
 		}

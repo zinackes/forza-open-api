@@ -129,6 +129,65 @@ func TestListCarsIDsFilter(t *testing.T) {
 	}
 }
 
+// TestListCarsObtainFilter vérifie le filtre obtain : match par token sur
+// obtain_method multi-valeurs (« Autoshow, Wheelspin, … »), valeurs couvrant
+// plusieurs tokens (wristband → Wristband reward / Yellow Wristband),
+// obtain_method NULL jamais matché, isolation par jeu, combinaison avec un
+// filtre scalaire, et repli token littéral pour une valeur hors whitelist
+// (impossible via l'API — l'enum du contrat la rejette en 400).
+func TestListCarsObtainFilter(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain, obtain_method) VALUES
+		('ob-autoshow','fh6','Asho','Make','A',780,'RWD','Autoshow'),
+		('ob-multi','fh6','Multi','Make','S1',850,'RWD','Autoshow, Wheelspin, Yellow Wristband'),
+		('ob-wrist','fh6','Wrist','Make','B',600,'RWD','Wristband reward'),
+		('ob-barn','fh6','Barn','Make','C',650,'RWD','Barn Find'),
+		('ob-none','fh6','None','Make','D',500,'RWD',NULL),
+		('ob-raw','fh6','Raw','Make','D',520,'RWD','customcode'),
+		('ob-fh5','fh5','Old','Make','D',400,'RWD','Autoshow')`)
+
+	cases := []struct {
+		name   string
+		obtain *string
+		want   []string // IDs ordonnés (ORDER BY pi, name, id)
+		total  int64
+	}{
+		{"token dans une valeur simple et multi", strptr("autoshow"), []string{"ob-autoshow", "ob-multi"}, 2},
+		{"token au milieu d'une valeur multi", strptr("wheelspin"), []string{"ob-multi"}, 1},
+		{"valeur couvrant deux tokens (wristband)", strptr("wristband"), []string{"ob-wrist", "ob-multi"}, 2},
+		{"barn_find", strptr("barn_find"), []string{"ob-barn"}, 1},
+		{"aucune correspondance", strptr("treasure"), []string{}, 0},
+		{"hors whitelist → token littéral (code brut)", strptr("customcode"), []string{"ob-raw"}, 1},
+		{"nil = pas de filtre (NULL inclus)", nil, []string{"ob-none", "ob-raw", "ob-wrist", "ob-barn", "ob-autoshow", "ob-multi"}, 6},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cars, total, err := st.ListCars(ctx, store.CarFilter{Game: "fh6", Obtain: tc.obtain, Limit: 50})
+			if err != nil {
+				t.Fatalf("ListCars(obtain=%v): %v", tc.obtain, err)
+			}
+			if total != tc.total {
+				t.Errorf("total = %d, want %d", total, tc.total)
+			}
+			if got := carIDs(cars); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("ids = %v, want %v", got, tc.want)
+			}
+		})
+	}
+
+	// Combiné avec un filtre scalaire : intersection.
+	cars, total, err := st.ListCars(ctx, store.CarFilter{
+		Game: "fh6", Obtain: strptr("autoshow"), PIMin: intptr(800), Limit: 50})
+	if err != nil {
+		t.Fatalf("ListCars(obtain+pi_min): %v", err)
+	}
+	if total != 1 || !reflect.DeepEqual(carIDs(cars), []string{"ob-multi"}) {
+		t.Errorf("obtain+pi_min = %v (total %d), want [ob-multi] (1)", carIDs(cars), total)
+	}
+}
+
 // TestListCarsPagination vérifie le découpage LIMIT/OFFSET (total stable d'une page
 // à l'autre) et le cas « page hors borne » : au-delà des données la page est vide
 // mais le total reste exact (COUNT séparé, indépendant de l'OFFSET).

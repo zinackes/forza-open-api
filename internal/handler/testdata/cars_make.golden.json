@@ -10,6 +10,7 @@
       "drivetrain": "FWD",
       "bodyType": "hatchback",
       "category": "Hot Hatch",
+      "obtainMethod": "Autoshow",
       "createdAt": "<ts>",
       "updatedAt": "<ts>"
     }

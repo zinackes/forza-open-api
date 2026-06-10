@@ -1,0 +1,7 @@
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "operation ListCars: decode params: query: \"obtain\": invalid value: bogus"
+}
+

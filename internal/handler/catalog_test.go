@@ -90,13 +90,13 @@ func newSeededCatalogServer(t *testing.T) http.Handler {
 func seedCatalog(ctx context.Context, t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
 	const cars = `INSERT INTO cars
-		(id, game, name, make, model, year, class, pi, drivetrain, body_type, category, created_at) VALUES
-		('audi-r8','fh6','R8','Audi',NULL,NULL,'S1',850,'AWD','coupe','Modern Supercars','2026-01-01T00:00:00Z'),
-		('ford-gt','fh6','GT','Ford',NULL,NULL,'S2',920,'RWD','coupe','Modern Supercars','2026-01-01T00:00:00Z'),
-		('honda-civic','fh6','Civic Type R','Honda',NULL,NULL,'A',780,'FWD','hatchback','Hot Hatch','2026-01-01T00:00:00Z'),
-		('mazda-rx7','fh6','RX-7','Mazda','FD',1998,'A',780,'RWD','coupe',NULL,'2026-01-01T00:00:00Z'),
-		('toyota-ae86','fh6','AE86','Toyota',NULL,NULL,'B',600,'RWD','coupe',NULL,'2026-01-01T00:00:00Z'),
-		('vw-beetle','fh5','Beetle','Volkswagen',NULL,NULL,'D',400,'RWD','hatchback',NULL,'2026-01-01T00:00:00Z')`
+		(id, game, name, make, model, year, class, pi, drivetrain, body_type, category, obtain_method, created_at) VALUES
+		('audi-r8','fh6','R8','Audi',NULL,NULL,'S1',850,'AWD','coupe','Modern Supercars','Autoshow, Wheelspin','2026-01-01T00:00:00Z'),
+		('ford-gt','fh6','GT','Ford',NULL,NULL,'S2',920,'RWD','coupe','Modern Supercars',NULL,'2026-01-01T00:00:00Z'),
+		('honda-civic','fh6','Civic Type R','Honda',NULL,NULL,'A',780,'FWD','hatchback','Hot Hatch','Autoshow','2026-01-01T00:00:00Z'),
+		('mazda-rx7','fh6','RX-7','Mazda','FD',1998,'A',780,'RWD','coupe',NULL,NULL,'2026-01-01T00:00:00Z'),
+		('toyota-ae86','fh6','AE86','Toyota',NULL,NULL,'B',600,'RWD','coupe',NULL,'Wristband reward','2026-01-01T00:00:00Z'),
+		('vw-beetle','fh5','Beetle','Volkswagen',NULL,NULL,'D',400,'RWD','hatchback',NULL,NULL,'2026-01-01T00:00:00Z')`
 	const manufacturers = `INSERT INTO manufacturers (game, name, country) VALUES
 		('fh6','Audi','Germany'),
 		('fh6','Ford','USA'),
@@ -130,6 +130,10 @@ func TestCatalogGolden(t *testing.T) {
 		{"cars_page_out_of_bounds", "/v1/cars?game=fh6&page=99", http.StatusOK},
 		{"cars_empty_result", "/v1/cars?game=fh6&make=Bugatti", http.StatusOK},
 		{"cars_game_fh5", "/v1/cars?game=fh5", http.StatusOK},
+		// obtain : match par token d'obtain_method multi-valeurs ; valeur hors
+		// enum rejetée en 400 par ogen.
+		{"cars_obtain_wheelspin", "/v1/cars?game=fh6&obtain=wheelspin", http.StatusOK},
+		{"cars_obtain_invalid", "/v1/cars?game=fh6&obtain=bogus", http.StatusBadRequest},
 		// getCar : trouvé puis 404 RFC 9457.
 		{"getcar_found", "/v1/cars/honda-civic", http.StatusOK},
 		{"getcar_not_found", "/v1/cars/ghost", http.StatusNotFound},

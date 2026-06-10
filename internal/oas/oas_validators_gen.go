@@ -1200,6 +1200,47 @@ func (s JournalTrack) Validate() error {
 	}
 }
 
+func (s ListCarsObtain) Validate() error {
+	switch s {
+	case "autoshow":
+		return nil
+	case "wheelspin":
+		return nil
+	case "wristband":
+		return nil
+	case "barn_find":
+		return nil
+	case "treasure":
+		return nil
+	case "car_mastery":
+		return nil
+	case "journal":
+		return nil
+	case "car_pass":
+		return nil
+	case "hard_to_find":
+		return nil
+	case "aftermarket":
+		return nil
+	case "prologue":
+		return nil
+	case "loyalty":
+		return nil
+	case "preorder":
+		return nil
+	case "promotional":
+		return nil
+	case "vip":
+		return nil
+	case "welcome_pack":
+		return nil
+	case "unobtainable":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s ListCarsSort) Validate() error {
 	switch s {
 	case "pi":
@@ -1584,6 +1625,17 @@ func (s *Reference) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "prStuntTypes",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.ObtainMethods == nil {
+			return errors.New("nil is invalid value")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "obtainMethods",
 			Error: err,
 		})
 	}

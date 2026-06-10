@@ -423,3 +423,42 @@ func TestReferenceGeoFacets(t *testing.T) {
 		t.Errorf("regions = %v, want [Tokyo 3, Hakone 1]", ref.Regions)
 	}
 }
+
+// TestReferenceObtainFacet vérifie la facette obtainMethods : ordre canonique
+// complet (count 0 inclus), une voiture multi-méthodes comptée dans chacune,
+// valeurs couvrant deux tokens sommées (wristband), obtain_method NULL exclu,
+// isolation par jeu.
+func TestReferenceObtainFacet(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain, obtain_method) VALUES
+		('rf-1','fh6','C1','Make','A',780,'RWD','Autoshow, Wheelspin'),
+		('rf-2','fh6','C2','Make','B',600,'RWD','Yellow Wristband'),
+		('rf-3','fh6','C3','Make','C',650,'RWD','Wristband reward'),
+		('rf-4','fh6','C4','Make','D',500,'RWD',NULL),
+		('rf-5','fh5','C5','Make','D',400,'RWD','Autoshow')`)
+
+	ref, err := st.GetReference(ctx, "fh6")
+	if err != nil {
+		t.Fatalf("GetReference: %v", err)
+	}
+
+	om := map[string]int64{}
+	for _, r := range ref.ObtainMethods {
+		om[r.Code] = r.Count
+	}
+	if len(ref.ObtainMethods) != 17 {
+		t.Fatalf("obtainMethods = %d codes, want 17 canoniques", len(ref.ObtainMethods))
+	}
+	if om["autoshow"] != 1 || om["wheelspin"] != 1 {
+		t.Errorf("autoshow/wheelspin = %d/%d, want 1/1 (rf-1 compté dans chacune, fh5 exclu)",
+			om["autoshow"], om["wheelspin"])
+	}
+	if om["wristband"] != 2 {
+		t.Errorf("wristband = %d, want 2 (Yellow Wristband + Wristband reward)", om["wristband"])
+	}
+	if om["barn_find"] != 0 {
+		t.Errorf("barn_find = %d, want 0", om["barn_find"])
+	}
+}

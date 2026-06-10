@@ -2455,6 +2455,152 @@ type ListCarsBadRequest Error
 
 func (*ListCarsBadRequest) listCarsRes() {}
 
+type ListCarsObtain string
+
+const (
+	ListCarsObtainAutoshow     ListCarsObtain = "autoshow"
+	ListCarsObtainWheelspin    ListCarsObtain = "wheelspin"
+	ListCarsObtainWristband    ListCarsObtain = "wristband"
+	ListCarsObtainBarnFind     ListCarsObtain = "barn_find"
+	ListCarsObtainTreasure     ListCarsObtain = "treasure"
+	ListCarsObtainCarMastery   ListCarsObtain = "car_mastery"
+	ListCarsObtainJournal      ListCarsObtain = "journal"
+	ListCarsObtainCarPass      ListCarsObtain = "car_pass"
+	ListCarsObtainHardToFind   ListCarsObtain = "hard_to_find"
+	ListCarsObtainAftermarket  ListCarsObtain = "aftermarket"
+	ListCarsObtainPrologue     ListCarsObtain = "prologue"
+	ListCarsObtainLoyalty      ListCarsObtain = "loyalty"
+	ListCarsObtainPreorder     ListCarsObtain = "preorder"
+	ListCarsObtainPromotional  ListCarsObtain = "promotional"
+	ListCarsObtainVip          ListCarsObtain = "vip"
+	ListCarsObtainWelcomePack  ListCarsObtain = "welcome_pack"
+	ListCarsObtainUnobtainable ListCarsObtain = "unobtainable"
+)
+
+// AllValues returns all ListCarsObtain values.
+func (ListCarsObtain) AllValues() []ListCarsObtain {
+	return []ListCarsObtain{
+		ListCarsObtainAutoshow,
+		ListCarsObtainWheelspin,
+		ListCarsObtainWristband,
+		ListCarsObtainBarnFind,
+		ListCarsObtainTreasure,
+		ListCarsObtainCarMastery,
+		ListCarsObtainJournal,
+		ListCarsObtainCarPass,
+		ListCarsObtainHardToFind,
+		ListCarsObtainAftermarket,
+		ListCarsObtainPrologue,
+		ListCarsObtainLoyalty,
+		ListCarsObtainPreorder,
+		ListCarsObtainPromotional,
+		ListCarsObtainVip,
+		ListCarsObtainWelcomePack,
+		ListCarsObtainUnobtainable,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ListCarsObtain) MarshalText() ([]byte, error) {
+	switch s {
+	case ListCarsObtainAutoshow:
+		return []byte(s), nil
+	case ListCarsObtainWheelspin:
+		return []byte(s), nil
+	case ListCarsObtainWristband:
+		return []byte(s), nil
+	case ListCarsObtainBarnFind:
+		return []byte(s), nil
+	case ListCarsObtainTreasure:
+		return []byte(s), nil
+	case ListCarsObtainCarMastery:
+		return []byte(s), nil
+	case ListCarsObtainJournal:
+		return []byte(s), nil
+	case ListCarsObtainCarPass:
+		return []byte(s), nil
+	case ListCarsObtainHardToFind:
+		return []byte(s), nil
+	case ListCarsObtainAftermarket:
+		return []byte(s), nil
+	case ListCarsObtainPrologue:
+		return []byte(s), nil
+	case ListCarsObtainLoyalty:
+		return []byte(s), nil
+	case ListCarsObtainPreorder:
+		return []byte(s), nil
+	case ListCarsObtainPromotional:
+		return []byte(s), nil
+	case ListCarsObtainVip:
+		return []byte(s), nil
+	case ListCarsObtainWelcomePack:
+		return []byte(s), nil
+	case ListCarsObtainUnobtainable:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ListCarsObtain) UnmarshalText(data []byte) error {
+	switch ListCarsObtain(data) {
+	case ListCarsObtainAutoshow:
+		*s = ListCarsObtainAutoshow
+		return nil
+	case ListCarsObtainWheelspin:
+		*s = ListCarsObtainWheelspin
+		return nil
+	case ListCarsObtainWristband:
+		*s = ListCarsObtainWristband
+		return nil
+	case ListCarsObtainBarnFind:
+		*s = ListCarsObtainBarnFind
+		return nil
+	case ListCarsObtainTreasure:
+		*s = ListCarsObtainTreasure
+		return nil
+	case ListCarsObtainCarMastery:
+		*s = ListCarsObtainCarMastery
+		return nil
+	case ListCarsObtainJournal:
+		*s = ListCarsObtainJournal
+		return nil
+	case ListCarsObtainCarPass:
+		*s = ListCarsObtainCarPass
+		return nil
+	case ListCarsObtainHardToFind:
+		*s = ListCarsObtainHardToFind
+		return nil
+	case ListCarsObtainAftermarket:
+		*s = ListCarsObtainAftermarket
+		return nil
+	case ListCarsObtainPrologue:
+		*s = ListCarsObtainPrologue
+		return nil
+	case ListCarsObtainLoyalty:
+		*s = ListCarsObtainLoyalty
+		return nil
+	case ListCarsObtainPreorder:
+		*s = ListCarsObtainPreorder
+		return nil
+	case ListCarsObtainPromotional:
+		*s = ListCarsObtainPromotional
+		return nil
+	case ListCarsObtainVip:
+		*s = ListCarsObtainVip
+		return nil
+	case ListCarsObtainWelcomePack:
+		*s = ListCarsObtainWelcomePack
+		return nil
+	case ListCarsObtainUnobtainable:
+		*s = ListCarsObtainUnobtainable
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type ListCarsSort string
 
 const (
@@ -3399,6 +3545,52 @@ func (o OptJournalTrack) Or(d JournalTrack) JournalTrack {
 	return d
 }
 
+// NewOptListCarsObtain returns new OptListCarsObtain with value set to v.
+func NewOptListCarsObtain(v ListCarsObtain) OptListCarsObtain {
+	return OptListCarsObtain{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptListCarsObtain is optional ListCarsObtain.
+type OptListCarsObtain struct {
+	Value ListCarsObtain
+	Set   bool
+}
+
+// IsSet returns true if OptListCarsObtain was set.
+func (o OptListCarsObtain) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptListCarsObtain) Reset() {
+	var v ListCarsObtain
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptListCarsObtain) SetTo(v ListCarsObtain) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptListCarsObtain) Get() (v ListCarsObtain, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptListCarsObtain) Or(d ListCarsObtain) ListCarsObtain {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptListCarsSort returns new OptListCarsSort with value set to v.
 func NewOptListCarsSort(v ListCarsSort) OptListCarsSort {
 	return OptListCarsSort{
@@ -4024,6 +4216,10 @@ type Reference struct {
 	EventTypes []RefCount `json:"eventTypes"`
 	// Types de PR Stunt et leurs compteurs (ordre canonique, count 0 inclus).
 	PrStuntTypes []RefCount `json:"prStuntTypes"`
+	// Méthodes d'obtention (valeurs du paramètre obtain de /v1/cars) et leurs compteurs (ordre
+	// canonique, count 0 inclus). obtain_method étant multi-valeurs, une voiture compte dans chacune de
+	// ses méthodes.
+	ObtainMethods []RefCount `json:"obtainMethods"`
 	// Jeux disponibles et leurs volumes (global, indépendant du paramètre game).
 	Games []GameCount `json:"games"`
 }
@@ -4076,6 +4272,11 @@ func (s *Reference) GetEventTypes() []RefCount {
 // GetPrStuntTypes returns the value of PrStuntTypes.
 func (s *Reference) GetPrStuntTypes() []RefCount {
 	return s.PrStuntTypes
+}
+
+// GetObtainMethods returns the value of ObtainMethods.
+func (s *Reference) GetObtainMethods() []RefCount {
+	return s.ObtainMethods
 }
 
 // GetGames returns the value of Games.
@@ -4131,6 +4332,11 @@ func (s *Reference) SetEventTypes(val []RefCount) {
 // SetPrStuntTypes sets the value of PrStuntTypes.
 func (s *Reference) SetPrStuntTypes(val []RefCount) {
 	s.PrStuntTypes = val
+}
+
+// SetObtainMethods sets the value of ObtainMethods.
+func (s *Reference) SetObtainMethods(val []RefCount) {
+	s.ObtainMethods = val
 }
 
 // SetGames sets the value of Games.

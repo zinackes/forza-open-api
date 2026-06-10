@@ -1,5 +1,5 @@
 // Handler du catalogue voitures : GET /v1/cars. Lecture seule, store paramétré,
-// pagination, filtres (ids/make/class/pi/drivetrain/q + dlc). Mapping DB → contrat.
+// pagination, filtres (ids/make/class/pi/drivetrain/q + dlc/obtain). Mapping DB → contrat.
 package handler
 
 import (
@@ -26,6 +26,7 @@ func (h *Handler) ListCars(ctx context.Context, params oas.ListCarsParams) (oas.
 		Category:     optFilter(params.Category.Set, params.Category.Value),
 		Q:            optFilter(params.Q.Set, params.Q.Value),
 		Dlc:          optFilter(params.Dlc.Set, params.Dlc.Value),
+		Obtain:       optFilter(params.Obtain.Set, string(params.Obtain.Value)),
 		UpdatedSince: optTimeFilter(params.UpdatedSince),
 		Sort:         string(params.Sort.Or("")),
 		Limit:        size,

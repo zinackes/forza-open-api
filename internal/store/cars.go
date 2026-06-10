@@ -24,6 +24,7 @@ type CarFilter struct {
 	Category     *string // division in-game, correspondance exacte
 	Q            *string
 	Dlc          *string // identifiant d'un dlc_packs : restreint aux voitures du pack
+	Obtain       *string // valeur du contrat (autoshow, wheelspin, …) : match par token d'obtain_method
 	UpdatedSince *time.Time
 	Sort         string // valeur du contrat (pi/name/year/value, préfixe "-" = desc) ; vide = défaut pi
 	Limit        int
@@ -53,6 +54,45 @@ func carOrderBy(sort string) string {
 		col, dir = "c.pi", "ASC"
 	}
 	return "\nORDER BY " + col + " " + dir + " NULLS LAST, c.name, c.id"
+}
+
+// carObtainTokens whiteliste les valeurs du paramètre obtain du contrat vers les
+// tokens d'obtain_method qu'elles couvrent (texte multi-valeurs « Autoshow,
+// Wheelspin » issu d'obtainNames côté ingestion). Tokens en minuscules : la
+// comparaison SQL se fait sur lower(btrim(token)). La valeur client ne touche
+// jamais le SQL : tout passe en paramètre text[].
+var carObtainTokens = map[string][]string{
+	"autoshow":     {"autoshow"},
+	"wheelspin":    {"wheelspin"},
+	"wristband":    {"wristband reward", "yellow wristband"},
+	"barn_find":    {"barn find"},
+	"treasure":     {"treasure car"},
+	"car_mastery":  {"car mastery"},
+	"journal":      {"collection journal"},
+	"car_pass":     {"car pass"},
+	"hard_to_find": {"hard to find"},
+	"aftermarket":  {"aftermarket car"},
+	"prologue":     {"complete the prologue"},
+	"loyalty":      {"loyalty reward"},
+	"preorder":     {"pre-order"},
+	"promotional":  {"promotional"},
+	"vip":          {"vip membership"},
+	"welcome_pack": {"welcome pack"},
+	"unobtainable": {"unobtainable"},
+}
+
+// obtainFilterTokens traduit la valeur du filtre en tokens à matcher ; nil = pas
+// de filtre. Valeur hors whitelist (impossible via l'API — l'enum du contrat la
+// rejette en 400) : on matche le token littéral, cohérent avec les codes bruts
+// que l'ingestion conserve pour les valeurs inconnues.
+func obtainFilterTokens(obtain *string) []string {
+	if obtain == nil {
+		return nil
+	}
+	if toks, ok := carObtainTokens[*obtain]; ok {
+		return toks
+	}
+	return []string{strings.ToLower(strings.TrimSpace(*obtain))}
 }
 
 // Car est la vue DB d'une voiture (snake_case). class/pi/drivetrain sont requis
@@ -97,13 +137,17 @@ WHERE c.game = $1
   AND ($9::text IS NULL OR EXISTS (
         SELECT 1 FROM car_dlc cd WHERE cd.car_id = c.id AND cd.dlc_id = $9))
   AND ($10::timestamptz IS NULL OR c.updated_at > $10)
-  AND ($11::text[] IS NULL OR c.id = ANY($11))`
+  AND ($11::text[] IS NULL OR c.id = ANY($11))
+  AND ($12::text[] IS NULL OR EXISTS (
+        SELECT 1 FROM unnest(string_to_array(c.obtain_method, ',')) tok
+        WHERE lower(btrim(tok)) = ANY($12)))`
 
 	// Slice vide = pas de filtre (et non « aucun résultat ») : on passe NULL.
 	ids := f.IDs
 	if len(ids) == 0 {
 		ids = nil
 	}
+	obtainToks := obtainFilterTokens(f.Obtain)
 
 	// q est une recherche de sous-chaîne LITTÉRALE : on neutralise les
 	// métacaractères LIKE pour qu'un client ne puisse pas injecter ses propres
@@ -117,7 +161,8 @@ WHERE c.game = $1
 	var total int64
 	if err := s.DB.QueryRow(ctx, `SELECT count(*)`+fromWhere,
 		f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
-		f.Drivetrain, f.Category, qLit, f.Dlc, f.UpdatedSince, ids).Scan(&total); err != nil {
+		f.Drivetrain, f.Category, qLit, f.Dlc, f.UpdatedSince, ids,
+		obtainToks).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count cars: %w", err)
 	}
 
@@ -126,9 +171,10 @@ SELECT c.id, c.game, c.name, c.make, c.model, c.year, c.class, c.pi,
        c.drivetrain, c.stats, c.body_type, c.category, c.rarity, c.value_cr,
        c.obtain_method, c.image_url, c.created_at, c.updated_at` + fromWhere +
 		carOrderBy(f.Sort) + `
-LIMIT $12 OFFSET $13`
+LIMIT $13 OFFSET $14`
 	rows, err := s.DB.Query(ctx, q, f.Game, f.Make, f.Class, f.PIMin, f.PIMax,
-		f.Drivetrain, f.Category, qLit, f.Dlc, f.UpdatedSince, ids, f.Limit, f.Offset)
+		f.Drivetrain, f.Category, qLit, f.Dlc, f.UpdatedSince, ids, obtainToks,
+		f.Limit, f.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("query cars: %w", err)
 	}
