@@ -17,21 +17,24 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from forza_open_api_client.models.upgrade_part import UpgradePart
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class CarUpgrade(BaseModel):
+class Me(BaseModel):
     """
-    Upgrade disponible pour une voiture : une pièce du catalogue assortie de ses contraintes d'installation (prérequis, groupe exclusif). 
+    Identité et quota de la clé API présentée dans X-API-Key (endpoint /v1/me, authentification requise). remaining/resetAt reflètent l'état courant de la fenêtre glissante de rate-limit (cohérents avec les en-têtes X-RateLimit-* de la réponse) ; tous deux omis si le compteur (Redis) est indisponible. 
     """ # noqa: E501
-    part: UpgradePart
-    requires_part_id: Optional[StrictStr] = Field(default=None, description="Pièce prérequise (réf. upgrade-parts) à monter avant celle-ci. Absent si aucune.", alias="requiresPartId")
-    exclusive_group: Optional[StrictStr] = Field(default=None, description="Groupe exclusif : une seule pièce d'un même groupe peut être montée à la fois (ex. compounds de pneus). Absent si non concerné. ", alias="exclusiveGroup")
-    __properties: ClassVar[List[str]] = ["part", "requiresPartId", "exclusiveGroup"]
+    name: StrictStr = Field(description="Nom de la clé (libellé donné à la création).")
+    scopes: List[StrictStr] = Field(description="Permissions accordées à la clé (ex. read, submit-ugc).")
+    rate_limit: StrictInt = Field(description="Quota maximal de requêtes sur la fenêtre glissante.", alias="rateLimit")
+    remaining: Optional[StrictInt] = Field(default=None, description="Requêtes restantes sur la fenêtre courante (compteur sliding-window). Omis si le compteur (Redis) est indisponible. ")
+    reset_at: Optional[datetime] = Field(default=None, description="Instant où un créneau de quota se libère (fin de la fenêtre courante). Omis si le compteur (Redis) est indisponible. ", alias="resetAt")
+    created_at: datetime = Field(description="Date de création de la clé.", alias="createdAt")
+    __properties: ClassVar[List[str]] = ["name", "scopes", "rateLimit", "remaining", "resetAt", "createdAt"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -51,7 +54,7 @@ class CarUpgrade(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CarUpgrade from a JSON string"""
+        """Create an instance of Me from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,14 +75,11 @@ class CarUpgrade(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of part
-        if self.part:
-            _dict['part'] = self.part.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CarUpgrade from a dict"""
+        """Create an instance of Me from a dict"""
         if obj is None:
             return None
 
@@ -87,9 +87,12 @@ class CarUpgrade(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "part": UpgradePart.from_dict(obj["part"]) if obj.get("part") is not None else None,
-            "requiresPartId": obj.get("requiresPartId"),
-            "exclusiveGroup": obj.get("exclusiveGroup")
+            "name": obj.get("name"),
+            "scopes": obj.get("scopes"),
+            "rateLimit": obj.get("rateLimit"),
+            "remaining": obj.get("remaining"),
+            "resetAt": obj.get("resetAt"),
+            "createdAt": obj.get("createdAt")
         })
         return _obj
 
