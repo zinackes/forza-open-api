@@ -1,11 +1,13 @@
 // Command seed orchestre l'ingestion du catalogue depuis des sources PROPRES
-// (datasets communautaires, exports wiki Fandom). Jamais de scraping du jeu,
+// (datasets communautaires, exports/API wiki Fandom). Jamais de scraping du jeu,
 // lecture mémoire, injection ni botting. Upserts idempotents (ON CONFLICT),
 // rejouables sans doublon.
 //
 // Usage :
 //
 //	seed tracks <dataset.json | https://…>   ingère un dataset de tracés.
+//	seed cars   [game]                       ingère le catalogue voitures (déf. fh6)
+//	                                          depuis l'API MediaWiki du wiki Forza.
 package main
 
 import (
@@ -15,6 +17,7 @@ import (
 	"time"
 
 	"github.com/zinackes/forza-open-api/internal/config"
+	"github.com/zinackes/forza-open-api/internal/ingest/cars"
 	"github.com/zinackes/forza-open-api/internal/ingest/tracks"
 	"github.com/zinackes/forza-open-api/internal/store"
 )
@@ -22,12 +25,30 @@ import (
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	if len(os.Args) < 3 || os.Args[1] != "tracks" {
-		logger.Info("usage: seed tracks <dataset.json | URL> — ingestion idempotente d'un dataset de tracés")
+	if len(os.Args) < 2 {
+		usage(logger)
 		return
 	}
-	src := os.Args[2]
+	switch os.Args[1] {
+	case "tracks":
+		seedTracks(logger)
+	case "cars":
+		seedCars(logger)
+	default:
+		usage(logger)
+	}
+}
 
+func usage(logger *slog.Logger) {
+	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game]")
+}
+
+func seedTracks(logger *slog.Logger) {
+	if len(os.Args) < 3 {
+		logger.Info("usage: seed tracks <dataset.json | URL>")
+		os.Exit(1)
+	}
+	src := os.Args[2]
 	ctx := context.Background()
 
 	raw, err := tracks.FetchDataset(ctx, src)
@@ -41,11 +62,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	st, err := store.New(ctx, config.Load())
-	if err != nil {
-		logger.Error("store init", "err", err)
-		os.Exit(1)
-	}
+	st := mustStore(ctx, logger)
 	defer st.Close()
 
 	if err := st.UpsertTracks(ctx, parsed); err != nil {
@@ -53,4 +70,113 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info("seed tracks ok", "upserted", len(parsed), "skipped", skipped, "src", src)
+}
+
+// carSource associe un jeu à sa page liste et au template de ligne du wiki Forza.
+type carSource struct {
+	listPage     string
+	listTemplate string
+}
+
+var carSources = map[string]carSource{
+	"fh6": {listPage: "Forza Horizon 6/Cars", listTemplate: "CarListStatsFH6"},
+}
+
+func seedCars(logger *slog.Logger) {
+	game := "fh6"
+	if len(os.Args) >= 3 {
+		game = os.Args[2]
+	}
+	src, ok := carSources[game]
+	if !ok {
+		logger.Error("seed cars: jeu non supporté", "game", game)
+		os.Exit(1)
+	}
+
+	// Réseau borné : l'ingestion ne doit pas pendre indéfiniment.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	logger.Info("seed cars: fetch list", "game", game, "page", src.listPage)
+	listWT, err := cars.FetchCarListWikitext(ctx, src.listPage)
+	if err != nil {
+		logger.Error("fetch car list", "err", err)
+		os.Exit(1)
+	}
+	rows := cars.ParseCarList(listWT, src.listTemplate)
+	titles := cars.CarTitles(rows)
+	logger.Info("seed cars: list parsed", "rows", len(rows), "distinct_titles", len(titles))
+
+	logger.Info("seed cars: fetch car pages (batched)", "titles", len(titles))
+	pages, err := cars.FetchCarPages(ctx, titles)
+	if err != nil {
+		logger.Error("fetch car pages", "err", err)
+		os.Exit(1)
+	}
+	infoboxes := make(map[string]cars.Infobox, len(pages))
+	for title, wt := range pages {
+		infoboxes[title] = cars.ParseInfobox(wt)
+	}
+	logger.Info("seed cars: pages fetched", "pages", len(pages), "missing", len(titles)-len(pages))
+
+	catalogue, rep := cars.Normalize(rows, infoboxes, game)
+
+	// Étape qualité : valide les invariants du contrat (class/pi/drivetrain,
+	// champs requis) sans bloquer l'ingestion. Les entrées douteuses sont
+	// seedées mais signalées ; les entrées qui violeraient une contrainte DB
+	// (CHECK/NOT NULL) sont écartées de l'upsert pour ne pas avorter le batch.
+	vrep := cars.Validate(catalogue, game)
+	if n := vrep.Count(cars.SevWarning); n > 0 {
+		logger.Warn("seed cars: entrées douteuses (seedées, à investiguer)",
+			"count", n, "rules", cars.SortedReport(vrep.RuleCounts()))
+	}
+	if n := vrep.Count(cars.SevBlocking); n > 0 {
+		blocking := vrep.BlockingIDs()
+		kept := make([]store.Car, 0, len(catalogue))
+		for _, c := range catalogue {
+			if _, bad := blocking[c.ID]; !bad {
+				kept = append(kept, c)
+			}
+		}
+		logger.Error("seed cars: anomalies BLOQUANTES écartées de l'upsert (contrainte violée)",
+			"count", n, "dropped_cars", len(catalogue)-len(kept),
+			"rules", cars.SortedReport(vrep.RuleCounts()))
+		catalogue = kept
+	}
+
+	st := mustStore(ctx, logger)
+	defer st.Close()
+
+	if err := st.UpsertCars(ctx, catalogue); err != nil {
+		logger.Error("upsert cars", "err", err)
+		os.Exit(1)
+	}
+
+	logger.Info("seed cars ok",
+		"game", game,
+		"rows", rep.Rows,
+		"imported", rep.Imported,
+		"upserted", len(catalogue),
+		"distinct_upserted", rep.Distinct,
+		"deduped", rep.Imported-rep.Distinct,
+		"skipped", rep.Rows-rep.Imported,
+		"skip_reasons", cars.SortedReport(rep.SkipReasons),
+		"classes", cars.SortedReport(rep.Classes),
+		"drivetrains", cars.SortedReport(rep.Drivetrains),
+	)
+	if len(rep.Collisions) > 0 {
+		logger.Info("seed cars: doublons de listing dédupliqués (last-wins)", "ids", cars.SortedReport(rep.Collisions))
+	}
+	if len(rep.UnknownCodes) > 0 {
+		logger.Warn("seed cars: codes non mappés (anomalies)", "codes", cars.SortedReport(rep.UnknownCodes))
+	}
+}
+
+func mustStore(ctx context.Context, logger *slog.Logger) *store.Store {
+	st, err := store.New(ctx, config.Load())
+	if err != nil {
+		logger.Error("store init", "err", err)
+		os.Exit(1)
+	}
+	return st
 }

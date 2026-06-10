@@ -1,0 +1,6 @@
+{{CarListInfobox|name=Cars|cars=5}}
+{{CarListStatsFH6|Abarth 695 Biposto| |2016|c|250,000|htf|4.9|5.3|4.7|3.9|4.8|5.1|540|ita}}
+{{CarListStatsFH6|Ferrari F50| |1995|l|3,000,000|awh|9.1|7.8|8.4|7.0|7.5|3.2|912|ita}}
+{{CarListStatsFH6|Honda Civic Type R|Honda Civic Type R|2023|fe|0|cm|6.0|6.5|5.5|5.0|6.0|5.0|680|jpn}}
+{{CarListStatsFH6|Mystery Concept| |2030|||un|?|?|?|?|?|?|???|usa}}
+{{CarListStatsFH6|No Infobox Car| |2020|r|50,000|wh|5.0|5.0|5.0|5.0|5.0|5.0|600|ger}}
