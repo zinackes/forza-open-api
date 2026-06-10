@@ -55,10 +55,10 @@ func newRedisClient(t *testing.T) *redis.Client {
 	return client
 }
 
-// TestRateLimitMiddleware vérifie le quota par clé bout-en-bout. On vise un
-// endpoint encore en stub (/v1/playlist/series → 501 quand on passe) : tant
-// qu'on est sous la limite la réponse n'est PAS un 429 et porte les en-têtes de
-// quota ; au dépassement, le middleware court-circuite en 429 typé.
+// TestRateLimitMiddleware vérifie le quota par clé bout-en-bout sur
+// /v1/playlist/series : tant qu'on est sous la limite la réponse n'est PAS un 429
+// et porte les en-têtes de quota ; au dépassement, le middleware court-circuite en
+// 429 typé (avant d'atteindre le handler).
 func TestRateLimitMiddleware(t *testing.T) {
 	st := newAuthStore(t)
 	st.Redis = newRedisClient(t)

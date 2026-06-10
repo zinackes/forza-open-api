@@ -1247,9 +1247,12 @@ components:
 
     Reward:
       type: object
-      required: [id, atPercent, type, item]
+      required: [id, type, item]
       properties:
         id: { type: string }
+        # Palier de points (0..100) : présent pour les récompenses de milestone
+        # (series/season), absent (NULL) pour les récompenses d'events / car_pass /
+        # history qui ne sont pas liées à un seuil de points.
         atPercent: { type: integer, minimum: 0, maximum: 100 }
         type: { type: string }
         item: { type: string }
