@@ -20,14 +20,32 @@ type Config struct {
 	// Le quota (api_keys.rate_limit) s'entend « requêtes par fenêtre ». Env
 	// RATE_LIMIT_WINDOW en secondes (défaut 60s).
 	RateLimitWindow time.Duration
-	// Scheduler (cmd/scheduler) — rafraîchissement périodique de la Festival
-	// Playlist. PlaylistCron : spec cron 5 champs (fuseau UTC), défaut « 0 15 * *
-	// 4 » = jeudi 15:00 UTC, peu après le reset hebdo Forza (14:30 UTC).
-	// PlaylistGames : jeux rafraîchis (CSV, défaut « fh6 »). AlertWebhookURL :
-	// webhook d'alerte sur échec (vide = log structuré seul).
+	// Scheduler (cmd/scheduler) — rafraîchissement périodique des données
+	// volatiles. Les crons sont des specs 5 champs (fuseau UTC), défaut « 0 15 * *
+	// 4 » = jeudi 15:00 UTC, peu après le reset hebdo Forza (14:30 UTC). Les *Games
+	// sont les jeux rafraîchis (CSV, défaut « fh6 »).
+	//   - PlaylistCron / PlaylistGames : Festival Playlist.
+	//   - ForzathonCron / ForzathonGames : Forzathon Shop (rotation hebdo).
+	// AlertWebhookURL : webhook d'alerte sur échec (vide = log structuré seul).
 	PlaylistCron    string
 	PlaylistGames   []string
+	ForzathonCron   string
+	ForzathonGames  []string
 	AlertWebhookURL string
+	// Exports (cmd/seed exports | cmd/scheduler) — archives téléchargeables du
+	// dataset (GET /v1/exports). ExportsCron : spec cron 5 champs (UTC), défaut
+	// quotidien 05:00. ExportsGames : jeux archivés (CSV). ExportsBaseURL préfixe
+	// l'URL publique des fichiers (edge). ExportsDir : dossier local (backend par
+	// défaut, servi en statique). R2* : bucket Cloudflare R2 (prod) ; si Endpoint
+	// ET Bucket sont fournis, R2 prime sur le filesystem local. Secrets par env.
+	ExportsCron       string
+	ExportsGames      []string
+	ExportsBaseURL    string
+	ExportsDir        string
+	R2Endpoint        string
+	R2Bucket          string
+	R2AccessKeyID     string
+	R2SecretAccessKey string
 }
 
 // Load lit la config depuis l'environnement avec des défauts orientés dev local.
@@ -41,7 +59,18 @@ func Load() Config {
 		RateLimitWindow: time.Duration(getenvInt("RATE_LIMIT_WINDOW", 60)) * time.Second,
 		PlaylistCron:    getenv("PLAYLIST_CRON", "0 15 * * 4"),
 		PlaylistGames:   splitCSV(getenv("PLAYLIST_GAMES", "fh6")),
+		ForzathonCron:   getenv("FORZATHON_CRON", "0 15 * * 4"),
+		ForzathonGames:  splitCSV(getenv("FORZATHON_GAMES", "fh6")),
 		AlertWebhookURL: os.Getenv("ALERT_WEBHOOK_URL"),
+
+		ExportsCron:       getenv("EXPORTS_CRON", "0 5 * * *"),
+		ExportsGames:      splitCSV(getenv("EXPORTS_GAMES", "fh6")),
+		ExportsBaseURL:    getenv("EXPORTS_BASE_URL", "http://localhost:8080/static/exports"),
+		ExportsDir:        getenv("EXPORTS_DIR", "./data/exports"),
+		R2Endpoint:        os.Getenv("R2_ENDPOINT"),
+		R2Bucket:          os.Getenv("R2_BUCKET"),
+		R2AccessKeyID:     os.Getenv("R2_ACCESS_KEY_ID"),
+		R2SecretAccessKey: os.Getenv("R2_SECRET_ACCESS_KEY"),
 	}
 }
 

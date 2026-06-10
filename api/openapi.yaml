@@ -24,6 +24,8 @@ tags:
     description: Constructeurs automobiles.
   - name: Playlist
     description: Festival Playlist (séries saisonnières, récompenses, défis).
+  - name: ForzathonShop
+    description: Forzathon Shop (rotation hebdomadaire d'objets contre Forza Points).
   - name: Tracks
     description: Tracés / circuits indexés (fondation des leaderboards et de la carte).
   - name: PRStunts
@@ -54,6 +56,8 @@ tags:
     description: Journal des changements de données (nouvelles voitures, packs, séries…).
   - name: Meta
     description: Métadonnées du service (jeux supportés, volumes, fraîcheur des données).
+  - name: Exports
+    description: Archives téléchargeables (JSON/CSV/JSONL) du dataset par jeu, pour usage offline / analyse.
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -471,6 +475,44 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
+  /v1/exports:
+    get:
+      operationId: listExports
+      summary: "Archives téléchargeables du dataset (JSON/CSV/JSONL) par jeu."
+      description: >
+        Manifeste des archives statiques régénérées périodiquement (job
+        quotidien) : un fichier par jeu, ressource et format. Les fichiers sont
+        servis depuis l'edge (cache long + ETag) — récupérer le dataset complet
+        offline sans solliciter l'API de lecture (esprit open-data). Le champ
+        `game` est un filtre OPTIONNEL (le manifeste est cross-jeu, comme
+        `/v1/meta`) : absent → toutes les archives. N'apparaissent que les
+        archives réellement générées (jamais d'URL inventée) : une ressource
+        imbriquée (playlist) n'expose pas de variante CSV. `etag` et `sizeBytes`
+        décrivent le fichier pointé par `url`.
+      tags: [Exports]
+      x-ogen-operation-group: Exports
+      parameters:
+        - name: game
+          in: query
+          required: false
+          description: Filtre optionnel par jeu (absent = toutes les archives, tous jeux).
+          schema: { $ref: '#/components/schemas/Game' }
+      responses:
+        '200':
+          description: Les archives disponibles (filtrées par jeu si fourni).
+          headers:
+            Cache-Control:
+              description: Cache moyen ; le manifeste ne bouge qu'à la régénération (~quotidienne).
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Export' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
   /v1/dlc-packs:
     get:
       operationId: listDlcPacks
@@ -594,6 +636,60 @@ paths:
               schema: { $ref: '#/components/schemas/Series' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/forzathon-shop:
+    get:
+      operationId: getForzathonShop
+      summary: Rotation courante du Forzathon Shop d'un jeu.
+      description: >
+        Les objets de la rotation hebdomadaire en cours (la plus récente connue)
+        du Forzathon Shop, achetables contre des Forza Points. Chaque objet porte
+        sa semaine (weekStart/weekEnd). Tableau vide si aucune rotation connue.
+      tags: [ForzathonShop]
+      x-ogen-operation-group: ForzathonShop
+      parameters:
+        - $ref: '#/components/parameters/Game'
+      responses:
+        '200':
+          description: Les objets de la rotation courante.
+          headers:
+            Cache-Control:
+              description: >-
+                Cache court + stale-while-revalidate (la rotation tourne ~hebdo).
+                Revalidation conditionnelle via ETag / If-None-Match (304).
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ForzathonShopItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/forzathon-shop/history:
+    get:
+      operationId: listForzathonShopHistory
+      summary: Historique des rotations du Forzathon Shop.
+      description: >
+        Les objets de toutes les rotations connues du Forzathon Shop pour le jeu,
+        les plus récentes d'abord (paginé). Regroupables par weekStart côté client
+        pour reconstituer chaque rotation hebdomadaire.
+      tags: [ForzathonShop]
+      x-ogen-operation-group: ForzathonShop
+      parameters:
+        - $ref: '#/components/parameters/Game'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page d'objets de Forzathon Shop (rotations récentes d'abord).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ForzathonShopList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /v1/tracks:
@@ -1306,6 +1402,52 @@ components:
           type: array
           items: { $ref: '#/components/schemas/Challenge' }
 
+    ForzathonShopKind:
+      type: string
+      description: Catégorie d'un objet du Forzathon Shop.
+      enum: [car, horn, clothing, forza_link_phrase, other]
+
+    ForzathonShopItem:
+      type: object
+      description: >
+        Objet d'une rotation hebdomadaire du Forzathon Shop, achetable contre des
+        Forza Points (qui se reportent d'une semaine à l'autre). Champs non sourcés → omis.
+      required: [id, game, weekStart, kind, name]
+      examples:
+        - id: fh6-20260604-mazda-furai
+          game: fh6
+          weekStart: 2026-06-04T14:30:00Z
+          weekEnd: 2026-06-11T14:30:00Z
+          kind: car
+          carId: fh6-mazda-furai-2008
+          name: Mazda Furai
+          fpCost: 750
+          source: forza.net
+      properties:
+        id: { type: string }
+        game: { $ref: '#/components/schemas/Game' }
+        weekStart: { type: string, format: date-time, description: Début de la fenêtre de rotation (reset hebdo Forza, jeudi 14:30 UTC). }
+        weekEnd: { type: string, format: date-time, description: Fin de la fenêtre. Absente si non sourcée. }
+        kind: { $ref: '#/components/schemas/ForzathonShopKind' }
+        carId: { type: string, description: Voiture liée (réf. /v1/cars). Présent uniquement pour les objets kind=car identifiés au catalogue. }
+        name: { type: string }
+        fpCost: { type: integer, description: Coût en Forza Points. Absent si non sourcé. }
+        description: { type: string }
+        imageUrl: { type: string, format: uri }
+        source: { type: string, description: Source propre de la donnée. }
+        lastVerified: { type: string, format: date-time }
+
+    ForzathonShopList:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ForzathonShopItem' }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        pageSize: { type: integer }
+
     Region:
       type: string
       description: >
@@ -1765,6 +1907,43 @@ components:
           type: string
           format: date-time
           description: Instant de calcul de la réponse (permet d'estimer l'âge des données côté client).
+
+    ExportFormat:
+      type: string
+      description: Format de sérialisation d'une archive.
+      enum: [json, csv, jsonl]
+
+    ExportResource:
+      type: string
+      description: Ressource du dataset couverte par une archive.
+      enum: [cars, playlist, tracks, pr_stunts, events, barn_finds, treasure_cars, mastery, journal, dlc_packs, manufacturers]
+
+    Export:
+      type: object
+      description: >
+        Archive statique téléchargeable d'une ressource pour un jeu, dans un
+        format donné. `url` pointe le fichier servi depuis l'edge (cache long +
+        ETag) ; `etag` et `sizeBytes` décrivent ce fichier ; `generatedAt` =
+        instant de régénération de l'archive.
+      required: [game, resource, format, url, sizeBytes, etag, generatedAt]
+      properties:
+        game: { $ref: '#/components/schemas/Game' }
+        resource: { $ref: '#/components/schemas/ExportResource' }
+        format: { $ref: '#/components/schemas/ExportFormat' }
+        url:
+          type: string
+          description: URL absolue du fichier d'archive (servi depuis l'edge).
+        sizeBytes:
+          type: integer
+          format: int64
+          description: Taille du fichier en octets.
+        etag:
+          type: string
+          description: ETag du fichier (hash de contenu), pour la revalidation conditionnelle.
+        generatedAt:
+          type: string
+          format: date-time
+          description: Instant de régénération de l'archive.
 
     CarObtainMasteryUnlock:
       type: object

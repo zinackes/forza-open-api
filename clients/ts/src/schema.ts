@@ -195,6 +195,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Archives téléchargeables du dataset (JSON/CSV/JSONL) par jeu.
+         * @description Manifeste des archives statiques régénérées périodiquement (job quotidien) : un fichier par jeu, ressource et format. Les fichiers sont servis depuis l'edge (cache long + ETag) — récupérer le dataset complet offline sans solliciter l'API de lecture (esprit open-data). Le champ `game` est un filtre OPTIONNEL (le manifeste est cross-jeu, comme `/v1/meta`) : absent → toutes les archives. N'apparaissent que les archives réellement générées (jamais d'URL inventée) : une ressource imbriquée (playlist) n'expose pas de variante CSV. `etag` et `sizeBytes` décrivent le fichier pointé par `url`.
+         */
+        get: operations["listExports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/dlc-packs": {
         parameters: {
             query?: never;
@@ -272,6 +292,46 @@ export interface paths {
         };
         /** Récupère une série par identifiant. */
         get: operations["getSeries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/forzathon-shop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rotation courante du Forzathon Shop d'un jeu.
+         * @description Les objets de la rotation hebdomadaire en cours (la plus récente connue) du Forzathon Shop, achetables contre des Forza Points. Chaque objet porte sa semaine (weekStart/weekEnd). Tableau vide si aucune rotation connue.
+         */
+        get: operations["getForzathonShop"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/forzathon-shop/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Historique des rotations du Forzathon Shop.
+         * @description Les objets de toutes les rotations connues du Forzathon Shop pour le jeu, les plus récentes d'abord (paginé). Regroupables par weekStart côté client pour reconstituer chaque rotation hebdomadaire.
+         */
+        get: operations["listForzathonShopHistory"];
         put?: never;
         post?: never;
         delete?: never;
@@ -732,6 +792,59 @@ export interface components {
             rewards?: components["schemas"]["Reward"][];
             challenges?: components["schemas"]["Challenge"][];
         };
+        /**
+         * @description Catégorie d'un objet du Forzathon Shop.
+         * @enum {string}
+         */
+        ForzathonShopKind: "car" | "horn" | "clothing" | "forza_link_phrase" | "other";
+        /**
+         * @description Objet d'une rotation hebdomadaire du Forzathon Shop, achetable contre des Forza Points (qui se reportent d'une semaine à l'autre). Champs non sourcés → omis.
+         * @example {
+         *       "id": "fh6-20260604-mazda-furai",
+         *       "game": "fh6",
+         *       "weekStart": "2026-06-04T14:30:00Z",
+         *       "weekEnd": "2026-06-11T14:30:00Z",
+         *       "kind": "car",
+         *       "carId": "fh6-mazda-furai-2008",
+         *       "name": "Mazda Furai",
+         *       "fpCost": 750,
+         *       "source": "forza.net"
+         *     }
+         */
+        ForzathonShopItem: {
+            id: string;
+            game: components["schemas"]["Game"];
+            /**
+             * Format: date-time
+             * @description Début de la fenêtre de rotation (reset hebdo Forza
+             */
+            weekStart: string;
+            /**
+             * Format: date-time
+             * @description Fin de la fenêtre. Absente si non sourcée.
+             */
+            weekEnd?: string;
+            kind: components["schemas"]["ForzathonShopKind"];
+            /** @description Voiture liée (réf. /v1/cars). Présent uniquement pour les objets kind=car identifiés au catalogue. */
+            carId?: string;
+            name: string;
+            /** @description Coût en Forza Points. Absent si non sourcé. */
+            fpCost?: number;
+            description?: string;
+            /** Format: uri */
+            imageUrl?: string;
+            /** @description Source propre de la donnée. */
+            source?: string;
+            /** Format: date-time */
+            lastVerified?: string;
+        };
+        ForzathonShopList: {
+            items: components["schemas"]["ForzathonShopItem"][];
+            /** Format: int64 */
+            total: number;
+            page: number;
+            pageSize: number;
+        };
         /** @description Région de la carte (dépend du jeu ; FH6 = 7 régions / 74 districts). Valeur libre : l'ensemble n'est pas figé au contrat. Absente → champ omis. */
         Region: string;
         /**
@@ -1076,6 +1189,36 @@ export interface components {
             /**
              * Format: date-time
              * @description Instant de calcul de la réponse (permet d'estimer l'âge des données côté client).
+             */
+            generatedAt: string;
+        };
+        /**
+         * @description Format de sérialisation d'une archive.
+         * @enum {string}
+         */
+        ExportFormat: "json" | "csv" | "jsonl";
+        /**
+         * @description Ressource du dataset couverte par une archive.
+         * @enum {string}
+         */
+        ExportResource: "cars" | "playlist" | "tracks" | "pr_stunts" | "events" | "barn_finds" | "treasure_cars" | "mastery" | "journal" | "dlc_packs" | "manufacturers";
+        /** @description Archive statique téléchargeable d'une ressource pour un jeu, dans un format donné. `url` pointe le fichier servi depuis l'edge (cache long + ETag) ; `etag` et `sizeBytes` décrivent ce fichier ; `generatedAt` = instant de régénération de l'archive. */
+        Export: {
+            game: components["schemas"]["Game"];
+            resource: components["schemas"]["ExportResource"];
+            format: components["schemas"]["ExportFormat"];
+            /** @description URL absolue du fichier d'archive (servi depuis l'edge). */
+            url: string;
+            /**
+             * Format: int64
+             * @description Taille du fichier en octets.
+             */
+            sizeBytes: number;
+            /** @description ETag du fichier (hash de contenu), pour la revalidation conditionnelle. */
+            etag: string;
+            /**
+             * Format: date-time
+             * @description Instant de régénération de l'archive.
              */
             generatedAt: string;
         };
@@ -1624,6 +1767,34 @@ export interface operations {
             429: components["responses"]["TooManyRequests"];
         };
     };
+    listExports: {
+        parameters: {
+            query?: {
+                /** @description Filtre optionnel par jeu (absent = toutes les archives, tous jeux). */
+                game?: components["schemas"]["Game"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Les archives disponibles (filtrées par jeu si fourni). */
+            200: {
+                headers: {
+                    /** @description Cache moyen ; le manifeste ne bouge qu'à la régénération (~quotidienne). */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Export"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
     listDlcPacks: {
         parameters: {
             query: {
@@ -1760,6 +1931,64 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getForzathonShop: {
+        parameters: {
+            query: {
+                /** @description Jeu cible (obligatoire sur les ressources multi-jeux). */
+                game: components["parameters"]["Game"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Les objets de la rotation courante. */
+            200: {
+                headers: {
+                    /** @description Cache court + stale-while-revalidate (la rotation tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForzathonShopItem"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listForzathonShopHistory: {
+        parameters: {
+            query: {
+                /** @description Jeu cible (obligatoire sur les ressources multi-jeux). */
+                game: components["parameters"]["Game"];
+                /** @description Numéro de page (1-based). */
+                page?: components["parameters"]["Page"];
+                /** @description Taille de page. */
+                page_size?: components["parameters"]["PageSize"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page d'objets de Forzathon Shop (rotations récentes d'abord). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForzathonShopList"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
             429: components["responses"]["TooManyRequests"];
         };
     };

@@ -4,7 +4,29 @@ OpenAPI **3.1**, `api/openapi.yaml` = source de vérité. Généré par ogen. Op
 
 ## Versioning
 
-Préfixe `/v1`. Semver du contrat. Breaking change → /v2 + dépréciation annoncée (headers Deprecation/Sunset). CHANGELOG du contrat tenu. Diff de spec en CI.
+Le **contrat est versionné en SemVer** (`info.version`, actuellement `1.0.0`) et historisé dans **`api/CHANGELOG.md`** (Keep a Changelog). L'URL ne porte que le **major** : préfixe `/v1`. Mineures et patches évoluent **dans** `/v1` sans changer l'URL.
+
+| Bump | Déclencheur | URL |
+|---|---|---|
+| **MAJOR** | breaking change (endpoint/champ retiré ou renommé, type modifié, validation durcie, param requis ajouté) | nouveau préfixe `/v2`, **additif** (`/v1` reste servi) |
+| **MINOR** | ajout rétro-compatible (endpoint, champ/param optionnel, valeur d'enum) | `/v1` |
+| **PATCH** | doc, exemples, description — aucun changement de comportement | `/v1` |
+
+Un breaking change **ne se livre jamais en place dans `/v1`** : on publie le nouveau major en additif, puis on déprécie l'ancien.
+
+### Dépréciation
+
+Toute opération ou champ déprécié porte `deprecated: true` au contrat et la réponse expose :
+
+- `Deprecation` (RFC 9745) — date de prise d'effet de la dépréciation.
+- `Sunset` (RFC 8594) — date prévue de retrait.
+- `Link: rel="deprecation"` (RFC 8631) → entrée `api/CHANGELOG.md` / guide de migration ; `rel="successor-version"` vers le remplaçant.
+
+**Fenêtres minimales** : ≥ **90 jours** entre `Deprecation` et `Sunset` pour un champ/param ; un major retiré reste servi ≥ **6 mois** après la sortie de son successeur. **Annonce** : entrée CHANGELOG + notes de release + les en-têtes ci-dessus. **Aucun retrait silencieux.**
+
+### Garde-fou CI (carte 0.5)
+
+En plus du job **spec-drift** (le code généré doit matcher le contrat), le job **spec-diff** compare `api/openapi.yaml` à la base de la PR via [`oasdiff`](https://github.com/oasdiff/oasdiff) et **échoue sur tout breaking change** (`task spec-diff`, `--fail-on ERR`). Un breaking volontaire passe soit en additif (`/v2`), soit — exceptionnellement, après review — via le label PR **`spec-breaking-ok`** qui saute le job.
 
 ## Pagination
 
