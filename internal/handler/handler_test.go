@@ -2,8 +2,10 @@ package handler_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/zinackes/forza-open-api/internal/handler"
@@ -64,6 +66,29 @@ func TestMissingGameReturns400(t *testing.T) {
 		if rec.Code != http.StatusBadRequest {
 			t.Fatalf("%s: status = %d, want 400\nbody: %s", target, rec.Code, rec.Body.String())
 		}
+	}
+}
+
+// TestListCarsIdsTooManyReturns400 vérifie la borne du contrat sur ids
+// (maxItems: 100) : une liste CSV de 101 identifiants est rejetée en 400 par la
+// validation ogen AVANT le handler (avec un store nil, un 400 prouve qu'on n'a
+// jamais touché la DB).
+func TestListCarsIdsTooManyReturns400(t *testing.T) {
+	ids := make([]string, 101)
+	for i := range ids {
+		ids[i] = fmt.Sprintf("car-%d", i)
+	}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet,
+		"/v1/cars?game=fh6&ids="+strings.Join(ids, ","), nil)
+
+	newServer(t).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400\nbody: %s", rec.Code, rec.Body.String())
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "application/problem+json" {
+		t.Errorf("Content-Type = %q, want application/problem+json", ct)
 	}
 }
 

@@ -2768,6 +2768,32 @@ func (c *Client) sendListCars(ctx context.Context, params ListCarsParams) (res L
 		}
 	}
 	{
+		// Encode "ids" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "ids",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if params.Ids != nil {
+				return e.EncodeArray(func(e uri.Encoder) error {
+					for i, item := range params.Ids {
+						if err := func() error {
+							return e.EncodeValue(conv.StringToString(item))
+						}(); err != nil {
+							return errors.Wrapf(err, "[%d]", i)
+						}
+					}
+					return nil
+				})
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
 		// Encode "make" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
 			Name:    "make",

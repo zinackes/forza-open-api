@@ -3268,6 +3268,10 @@ func (s *Server) handleListCarsRequest(args [0]string, argsEscaped bool, w http.
 					In:   "query",
 				}: params.Game,
 				{
+					Name: "ids",
+					In:   "query",
+				}: params.Ids,
+				{
 					Name: "make",
 					In:   "query",
 				}: params.Make,

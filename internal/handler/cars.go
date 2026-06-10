@@ -1,5 +1,5 @@
 // Handler du catalogue voitures : GET /v1/cars. Lecture seule, store paramétré,
-// pagination, filtres (make/class/pi/drivetrain/q + dlc). Mapping DB → contrat.
+// pagination, filtres (ids/make/class/pi/drivetrain/q + dlc). Mapping DB → contrat.
 package handler
 
 import (
@@ -17,6 +17,7 @@ func (h *Handler) ListCars(ctx context.Context, params oas.ListCarsParams) (oas.
 	page, size := pageParams(params.Page, params.PageSize)
 	rows, total, err := h.store.ListCars(ctx, store.CarFilter{
 		Game:         string(params.Game),
+		IDs:          params.Ids,
 		Make:         optFilter(params.Make.Set, params.Make.Value),
 		Class:        optFilter(params.Class.Set, string(params.Class.Value)),
 		PIMin:        optIntFilter(params.PiMin),
