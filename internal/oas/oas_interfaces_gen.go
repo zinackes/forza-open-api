@@ -33,6 +33,10 @@ type GetEventRes interface {
 	getEventRes()
 }
 
+type GetForzathonShopRes interface {
+	getForzathonShopRes()
+}
+
 type GetMetaRes interface {
 	getMetaRes()
 }
@@ -87,6 +91,14 @@ type ListDlcPacksRes interface {
 
 type ListEventsRes interface {
 	listEventsRes()
+}
+
+type ListExportsRes interface {
+	listExportsRes()
+}
+
+type ListForzathonShopHistoryRes interface {
+	listForzathonShopHistoryRes()
 }
 
 type ListJournalTiersRes interface {

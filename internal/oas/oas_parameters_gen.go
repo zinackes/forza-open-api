@@ -562,6 +562,72 @@ func decodeGetEventParams(args [1]string, argsEscaped bool, r *http.Request) (pa
 	return params, nil
 }
 
+// GetForzathonShopParams is parameters of getForzathonShop operation.
+type GetForzathonShopParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+}
+
+func unpackGetForzathonShopParams(packed middleware.Parameters) (params GetForzathonShopParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	return params
+}
+
+func decodeGetForzathonShopParams(args [0]string, argsEscaped bool, r *http.Request) (params GetForzathonShopParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetPrStuntParams is parameters of getPrStunt operation.
 type GetPrStuntParams struct {
 	// Identifiant stable du PR Stunt.
@@ -3970,6 +4036,316 @@ func decodeListEventsParams(args [0]string, argsEscaped bool, r *http.Request) (
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "q",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Page.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page_size.
+	{
+		val := int(50)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: page_size.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page_size",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.PageSize.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page_size",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListExportsParams is parameters of listExports operation.
+type ListExportsParams struct {
+	// Filtre optionnel par jeu (absent = toutes les archives, tous jeux).
+	Game OptGame `json:",omitempty,omitzero"`
+}
+
+func unpackListExportsParams(packed middleware.Parameters) (params ListExportsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Game = v.(OptGame)
+		}
+	}
+	return params
+}
+
+func decodeListExportsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListExportsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotGameVal Game
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotGameVal = Game(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Game.SetTo(paramsDotGameVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Game.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListForzathonShopHistoryParams is parameters of listForzathonShopHistory operation.
+type ListForzathonShopHistoryParams struct {
+	// Jeu cible (obligatoire sur les ressources multi-jeux).
+	Game Game
+	// Numéro de page (1-based).
+	Page OptInt `json:",omitempty,omitzero"`
+	// Taille de page.
+	PageSize OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListForzathonShopHistoryParams(packed middleware.Parameters) (params ListForzathonShopHistoryParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		params.Game = packed[key].(Game)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page_size",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListForzathonShopHistoryParams(args [0]string, argsEscaped bool, r *http.Request) (params ListForzathonShopHistoryParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Game = Game(c)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Game.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
 			In:   "query",
 			Err:  err,
 		}

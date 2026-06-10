@@ -83,6 +83,37 @@ CREATE TABLE IF NOT EXISTS challenges (
 );
 CREATE INDEX IF NOT EXISTS challenges_series_idx ON challenges (series_id);
 
+-- Forzathon Shop : rotation hebdomadaire d'objets contre Forza Points ---------
+-- FH6 confirme la mécanique : chaque jeudi (reset 14:30 UTC) une nouvelle vague
+-- d'objets (voitures, klaxons, vêtements, phrases Forza LINK…) achetables contre
+-- des Forza Points (qui se reportent d'une semaine à l'autre). Sources propres
+-- (forza.net + forums + wiki Fandom) ; jamais le jeu. car_id réf. la voiture du
+-- catalogue pour les objets kind=car identifiés (NULL sinon, ou si non rapproché).
+-- Champs non sourcés → NULL (jamais inventés). week_end NULL si la source ne donne
+-- pas la borne de fin. Clé naturelle (game, week_start, name) → upsert idempotent.
+CREATE TABLE IF NOT EXISTS forzathon_shop_items (
+    id            TEXT PRIMARY KEY,
+    game          TEXT NOT NULL,
+    week_start    TIMESTAMPTZ NOT NULL,
+    week_end      TIMESTAMPTZ,
+    kind          TEXT NOT NULL CHECK (kind IN ('car','horn','clothing','forza_link_phrase','other')),
+    car_id        TEXT REFERENCES cars (id) ON DELETE SET NULL,
+    name          TEXT NOT NULL,
+    fp_cost       INT,
+    description   TEXT,
+    image_url     TEXT,
+    source        TEXT,
+    last_verified TIMESTAMPTZ
+);
+-- Un seul objet par (jeu, semaine, nom) : garde-fou d'intégrité + cible de
+-- l'upsert idempotent (ON CONFLICT) — rejouable sans doublon.
+CREATE UNIQUE INDEX IF NOT EXISTS forzathon_shop_items_key
+    ON forzathon_shop_items (game, week_start, name);
+-- Rotation courante + historique paginé « plus récentes d'abord » par jeu.
+CREATE INDEX IF NOT EXISTS forzathon_shop_items_game_week_idx
+    ON forzathon_shop_items (game, week_start DESC);
+CREATE INDEX IF NOT EXISTS forzathon_shop_items_car_idx ON forzathon_shop_items (car_id);
+
 -- Carte : tracés, PR stunts, événements --------------------------------------
 -- Fonde les leaderboards (Phase 8) et la carte (Phase 9). Sources propres
 -- (wiki Fandom, datasets communautaires) ; jamais le jeu. Coords NULL si absentes.
@@ -409,3 +440,23 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS sessions_game_idx ON sessions (game);
+
+-- Manifeste des archives téléchargeables (GET /v1/exports) --------------------
+-- Écrite par le job de génération (internal/export via cmd/seed | cmd/scheduler) ;
+-- jamais par les handlers de lecture. Une ligne = un fichier statique (un jeu, une
+-- ressource, un format) servi depuis l'edge. Les fichiers eux-mêmes vivent sur
+-- l'object store / l'edge ; cette table ne sert QUE le manifeste (url/taille/etag).
+-- etag = hash de contenu calculé à la génération. Clé naturelle (game, resource,
+-- format) → upsert idempotent (régénération rejouable sans doublon).
+CREATE TABLE IF NOT EXISTS exports (
+    game         TEXT        NOT NULL,
+    resource     TEXT        NOT NULL,
+    format       TEXT        NOT NULL CHECK (format IN ('json','csv','jsonl')),
+    url          TEXT        NOT NULL,
+    size_bytes   BIGINT      NOT NULL,
+    etag         TEXT        NOT NULL,
+    generated_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (game, resource, format)
+);
+-- Listing du manifeste filtré par jeu (GET /v1/exports?game=…).
+CREATE INDEX IF NOT EXISTS exports_game_idx ON exports (game);
