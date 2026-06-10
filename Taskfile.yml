@@ -40,6 +40,25 @@ tasks:
     cmds:
       - golangci-lint run
 
+  client:generate:
+    desc: Régénère le SDK TS depuis le contrat (npm ci + openapi-typescript)
+    dir: clients/ts
+    cmds:
+      - npm ci
+      - npm run generate
+
+  client:build:
+    desc: Build le SDK TS (dist ESM + types)
+    dir: clients/ts
+    cmds:
+      - npm run build
+
+  client:check:
+    desc: Typecheck du SDK TS + appel typé d'exemple
+    dir: clients/ts
+    cmds:
+      - npm run check
+
   up:
     desc: Lève Postgres + Valkey + API et attend qu'ils soient sains (/healthz 200)
     cmds:

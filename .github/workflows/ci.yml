@@ -92,3 +92,31 @@ jobs:
             git --no-pager diff
             exit 1
           fi
+
+  client:
+    name: client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: clients/ts/package-lock.json
+      - uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+      # Le SDK TS découle du contrat : on régénère src/schema.ts depuis le spec
+      # et on échoue si l'arbre de travail a bougé (client désynchro du contrat).
+      - run: task client:generate
+      - name: Verify generated client matches the contract
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::TS client is out of sync with api/openapi.yaml. Run 'task client:generate' and commit the result."
+            git status --porcelain
+            git --no-pager diff
+            exit 1
+          fi
+      # Le SDK + l'appel typé d'exemple doivent compiler contre le contrat.
+      - run: task client:build
+      - run: task client:check

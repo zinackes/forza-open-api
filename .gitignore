@@ -4,6 +4,11 @@
 *.test
 *.out
 
+# SDK TypeScript (clients/ts) — node_modules + build, régénérables
+clients/ts/node_modules/
+clients/ts/dist/
+*.tgz
+
 # Env & secrets (jamais dans le repo)
 .env
 .env.*
