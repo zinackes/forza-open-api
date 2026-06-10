@@ -83,7 +83,7 @@ Name | Type | Description  | Notes
 
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** | La série courante avec ses récompenses et défis. |  * Cache-Control - Cache court + stale-while-revalidate (la playlist tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
+**200** | La série courante avec ses récompenses et défis. |  * Cache-Control - Cache court + stale-while-revalidate (la rotation tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
 **400** | Requête invalide. |  -  |
 **401** | Clé API absente ou invalide. |  -  |
 **404** | Ressource introuvable. |  -  |

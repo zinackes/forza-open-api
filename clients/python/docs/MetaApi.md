@@ -79,7 +79,7 @@ This endpoint does not need any parameter.
 
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** | Métadonnées du service. |  * Cache-Control - Cache court + stale-while-revalidate (la playlist tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
+**200** | Métadonnées du service. |  * Cache-Control - Cache court + stale-while-revalidate (la rotation tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
 **401** | Clé API absente ou invalide. |  -  |
 **429** | Quota de rate-limit dépassé. |  -  |
 

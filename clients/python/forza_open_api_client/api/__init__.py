@@ -6,6 +6,8 @@ from forza_open_api_client.api.cars_api import CarsApi
 from forza_open_api_client.api.changes_api import ChangesApi
 from forza_open_api_client.api.dlc_api import DLCApi
 from forza_open_api_client.api.events_api import EventsApi
+from forza_open_api_client.api.exports_api import ExportsApi
+from forza_open_api_client.api.forzathon_shop_api import ForzathonShopApi
 from forza_open_api_client.api.journal_api import JournalApi
 from forza_open_api_client.api.manufacturers_api import ManufacturersApi
 from forza_open_api_client.api.mastery_api import MasteryApi

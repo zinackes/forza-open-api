@@ -1,18 +1,18 @@
-# forza_open_api_client.ReferenceApi
+# forza_open_api_client.ExportsApi
 
 All URIs are relative to *https://api.forza-open-api.org*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**get_reference**](ReferenceApi.md#get_reference) | **GET** /v1/reference | Énumérations et compteurs (facettes) pour les filtres clients.
+[**list_exports**](ExportsApi.md#list_exports) | **GET** /v1/exports | Archives téléchargeables du dataset (JSON/CSV/JSONL) par jeu.
 
 
-# **get_reference**
-> Reference get_reference(game)
+# **list_exports**
+> List[Export] list_exports(game=game)
 
-Énumérations et compteurs (facettes) pour les filtres clients.
+Archives téléchargeables du dataset (JSON/CSV/JSONL) par jeu.
 
-Facettes agrégées pour construire les filtres d'un client en un seul appel : classes PI (incluant R en FH6), transmissions, types de carrosserie, pays des constructeurs et catégories (divisions in-game) — comptées pour le `game` demandé. La liste `games` est globale (volumes par jeu, indépendante du paramètre game) pour amorcer un sélecteur de jeu. Réponse fortement cacheable, invalidée par les jobs d'ingestion.
+Manifeste des archives statiques régénérées périodiquement (job quotidien) : un fichier par jeu, ressource et format. Les fichiers sont servis depuis l'edge (cache long + ETag) — récupérer le dataset complet offline sans solliciter l'API de lecture (esprit open-data). Le champ `game` est un filtre OPTIONNEL (le manifeste est cross-jeu, comme `/v1/meta`) : absent → toutes les archives. N'apparaissent que les archives réellement générées (jamais d'URL inventée) : une ressource imbriquée (playlist) n'expose pas de variante CSV. `etag` et `sizeBytes` décrivent le fichier pointé par `url`.
 
 
 ### Example
@@ -21,8 +21,8 @@ Facettes agrégées pour construire les filtres d'un client en un seul appel : c
 
 ```python
 import forza_open_api_client
+from forza_open_api_client.models.export import Export
 from forza_open_api_client.models.game import Game
-from forza_open_api_client.models.reference import Reference
 from forza_open_api_client.rest import ApiException
 from pprint import pprint
 
@@ -46,16 +46,16 @@ configuration.api_key['ApiKeyAuth'] = os.environ["API_KEY"]
 # Enter a context with an instance of the API client
 with forza_open_api_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = forza_open_api_client.ReferenceApi(api_client)
-    game = forza_open_api_client.Game() # Game | Jeu cible (obligatoire sur les ressources multi-jeux).
+    api_instance = forza_open_api_client.ExportsApi(api_client)
+    game = forza_open_api_client.Game() # Game | Filtre optionnel par jeu (absent = toutes les archives, tous jeux). (optional)
 
     try:
-        # Énumérations et compteurs (facettes) pour les filtres clients.
-        api_response = api_instance.get_reference(game)
-        print("The response of ReferenceApi->get_reference:\n")
+        # Archives téléchargeables du dataset (JSON/CSV/JSONL) par jeu.
+        api_response = api_instance.list_exports(game=game)
+        print("The response of ExportsApi->list_exports:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling ReferenceApi->get_reference: %s\n" % e)
+        print("Exception when calling ExportsApi->list_exports: %s\n" % e)
 ```
 
 
@@ -65,11 +65,11 @@ with forza_open_api_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **game** | [**Game**](.md)| Jeu cible (obligatoire sur les ressources multi-jeux). | 
+ **game** | [**Game**](.md)| Filtre optionnel par jeu (absent &#x3D; toutes les archives, tous jeux). | [optional] 
 
 ### Return type
 
-[**Reference**](Reference.md)
+[**List[Export]**](Export.md)
 
 ### Authorization
 
@@ -84,7 +84,7 @@ Name | Type | Description  | Notes
 
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** | Facettes de référence pour le jeu. |  * Cache-Control - Cache court + stale-while-revalidate (la rotation tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
+**200** | Les archives disponibles (filtrées par jeu si fourni). |  * Cache-Control - Cache court + stale-while-revalidate (la rotation tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
 **400** | Requête invalide. |  -  |
 **401** | Clé API absente ou invalide. |  -  |
 **429** | Quota de rate-limit dépassé. |  -  |

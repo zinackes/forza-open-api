@@ -36,6 +36,12 @@ from forza_open_api_client.models.error import Error
 from forza_open_api_client.models.event import Event
 from forza_open_api_client.models.event_list import EventList
 from forza_open_api_client.models.event_type import EventType
+from forza_open_api_client.models.export import Export
+from forza_open_api_client.models.export_format import ExportFormat
+from forza_open_api_client.models.export_resource import ExportResource
+from forza_open_api_client.models.forzathon_shop_item import ForzathonShopItem
+from forza_open_api_client.models.forzathon_shop_kind import ForzathonShopKind
+from forza_open_api_client.models.forzathon_shop_list import ForzathonShopList
 from forza_open_api_client.models.game import Game
 from forza_open_api_client.models.game_count import GameCount
 from forza_open_api_client.models.journal_tier import JournalTier

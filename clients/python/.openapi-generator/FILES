@@ -27,6 +27,14 @@ docs/Event.md
 docs/EventList.md
 docs/EventType.md
 docs/EventsApi.md
+docs/Export.md
+docs/ExportFormat.md
+docs/ExportResource.md
+docs/ExportsApi.md
+docs/ForzathonShopApi.md
+docs/ForzathonShopItem.md
+docs/ForzathonShopKind.md
+docs/ForzathonShopList.md
 docs/Game.md
 docs/GameCount.md
 docs/JournalApi.md
@@ -77,6 +85,8 @@ forza_open_api_client/api/cars_api.py
 forza_open_api_client/api/changes_api.py
 forza_open_api_client/api/dlc_api.py
 forza_open_api_client/api/events_api.py
+forza_open_api_client/api/exports_api.py
+forza_open_api_client/api/forzathon_shop_api.py
 forza_open_api_client/api/journal_api.py
 forza_open_api_client/api/manufacturers_api.py
 forza_open_api_client/api/mastery_api.py
@@ -118,6 +128,12 @@ forza_open_api_client/models/error.py
 forza_open_api_client/models/event.py
 forza_open_api_client/models/event_list.py
 forza_open_api_client/models/event_type.py
+forza_open_api_client/models/export.py
+forza_open_api_client/models/export_format.py
+forza_open_api_client/models/export_resource.py
+forza_open_api_client/models/forzathon_shop_item.py
+forza_open_api_client/models/forzathon_shop_kind.py
+forza_open_api_client/models/forzathon_shop_list.py
 forza_open_api_client/models/game.py
 forza_open_api_client/models/game_count.py
 forza_open_api_client/models/journal_tier.py

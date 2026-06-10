@@ -349,7 +349,7 @@ Name | Type | Description  | Notes
 
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** | Une voiture tirée au hasard parmi les correspondances. |  * Cache-Control - Cache court + stale-while-revalidate (la playlist tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
+**200** | Une voiture tirée au hasard parmi les correspondances. |  * Cache-Control - Cache court + stale-while-revalidate (la rotation tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
 **400** | Requête invalide. |  -  |
 **401** | Clé API absente ou invalide. |  -  |
 **404** | Ressource introuvable. |  -  |
@@ -461,7 +461,7 @@ Name | Type | Description  | Notes
 
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** | Page de voitures. |  * Cache-Control - Cache court + stale-while-revalidate (la playlist tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
+**200** | Page de voitures. |  * Cache-Control - Cache court + stale-while-revalidate (la rotation tourne ~hebdo). Revalidation conditionnelle via ETag / If-None-Match (304). <br>  |
 **400** | Requête invalide. |  -  |
 **401** | Clé API absente ou invalide. |  -  |
 **429** | Quota de rate-limit dépassé. |  -  |

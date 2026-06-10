@@ -23,6 +23,8 @@ __all__ = [
     "ChangesApi",
     "DLCApi",
     "EventsApi",
+    "ExportsApi",
+    "ForzathonShopApi",
     "JournalApi",
     "ManufacturersApi",
     "MasteryApi",
@@ -68,6 +70,12 @@ __all__ = [
     "Event",
     "EventList",
     "EventType",
+    "Export",
+    "ExportFormat",
+    "ExportResource",
+    "ForzathonShopItem",
+    "ForzathonShopKind",
+    "ForzathonShopList",
     "Game",
     "GameCount",
     "JournalTier",
@@ -106,6 +114,8 @@ from forza_open_api_client.api.cars_api import CarsApi as CarsApi
 from forza_open_api_client.api.changes_api import ChangesApi as ChangesApi
 from forza_open_api_client.api.dlc_api import DLCApi as DLCApi
 from forza_open_api_client.api.events_api import EventsApi as EventsApi
+from forza_open_api_client.api.exports_api import ExportsApi as ExportsApi
+from forza_open_api_client.api.forzathon_shop_api import ForzathonShopApi as ForzathonShopApi
 from forza_open_api_client.api.journal_api import JournalApi as JournalApi
 from forza_open_api_client.api.manufacturers_api import ManufacturersApi as ManufacturersApi
 from forza_open_api_client.api.mastery_api import MasteryApi as MasteryApi
@@ -155,6 +165,12 @@ from forza_open_api_client.models.error import Error as Error
 from forza_open_api_client.models.event import Event as Event
 from forza_open_api_client.models.event_list import EventList as EventList
 from forza_open_api_client.models.event_type import EventType as EventType
+from forza_open_api_client.models.export import Export as Export
+from forza_open_api_client.models.export_format import ExportFormat as ExportFormat
+from forza_open_api_client.models.export_resource import ExportResource as ExportResource
+from forza_open_api_client.models.forzathon_shop_item import ForzathonShopItem as ForzathonShopItem
+from forza_open_api_client.models.forzathon_shop_kind import ForzathonShopKind as ForzathonShopKind
+from forza_open_api_client.models.forzathon_shop_list import ForzathonShopList as ForzathonShopList
 from forza_open_api_client.models.game import Game as Game
 from forza_open_api_client.models.game_count import GameCount as GameCount
 from forza_open_api_client.models.journal_tier import JournalTier as JournalTier
