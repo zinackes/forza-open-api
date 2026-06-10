@@ -1,0 +1,10 @@
+# Files the generator would emit but we own / don't want committed.
+# We provide our own top-level README, examples and CI/release workflows.
+README.md
+git_push.sh
+.gitlab-ci.yml
+.travis.yml
+.github/
+tox.ini
+test/
+test-requirements.txt

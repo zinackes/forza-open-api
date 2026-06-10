@@ -1,0 +1,50 @@
+name: release-client-python
+
+# Publie le SDK Python forza-open-api-client sur PyPI.
+# Déclenché par un tag `client-py-v<version>` (ex. client-py-v1.0.0) — préfixe
+# dédié pour ne pas entrer en collision avec les tags npm (`client-v*`) ou Go.
+# La version est alignée sur le contrat (api/openapi.yaml) ; le tag doit matcher
+# cette version, sinon le job échoue.
+on:
+  push:
+    tags:
+      - 'client-py-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+      # Régénère depuis le contrat : pyproject.toml porte info.version.
+      - run: task client:py:generate
+      - name: Verify tag matches the contract version
+        run: |
+          tag_version="${GITHUB_REF_NAME#client-py-v}"
+          pkg_version="$(grep -m1 -E '^version = ' clients/python/pyproject.toml | sed -E 's/version = "(.*)"/\1/')"
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} ne correspond pas à la version du contrat (${pkg_version}). Tague client-py-v${pkg_version}."
+            exit 1
+          fi
+      - name: Build sdist + wheel
+        working-directory: clients/python
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - name: Publish to PyPI
+        working-directory: clients/python
+        run: |
+          python -m pip install --upgrade twine
+          python -m twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
