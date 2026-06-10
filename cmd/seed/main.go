@@ -18,11 +18,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
+	"text/tabwriter"
 	"time"
 
 	"github.com/zinackes/forza-open-api/internal/config"
+	"github.com/zinackes/forza-open-api/internal/health"
 	"github.com/zinackes/forza-open-api/internal/ingest/cars"
 	"github.com/zinackes/forza-open-api/internal/ingest/playlist"
 	"github.com/zinackes/forza-open-api/internal/ingest/tracks"
@@ -45,13 +49,15 @@ func main() {
 		seedPlaylist(logger)
 	case "playlist-history":
 		seedPlaylistHistory(logger)
+	case "health":
+		seedHealth(logger)
 	default:
 		usage(logger)
 	}
 }
 
 func usage(logger *slog.Logger) {
-	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game] | seed playlist [game] [SxxWx] | seed playlist-history [game]")
+	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game] | seed playlist [game] [SxxWx] | seed playlist-history [game] | seed health")
 }
 
 func seedTracks(logger *slog.Logger) {
@@ -62,24 +68,26 @@ func seedTracks(logger *slog.Logger) {
 	src := os.Args[2]
 	ctx := context.Background()
 
+	st := mustStore(ctx, logger)
+	defer st.Close()
+	monitor := newMonitor(st, logger)
+	started := time.Now()
+
 	raw, err := tracks.FetchDataset(ctx, src)
 	if err != nil {
-		logger.Error("fetch dataset", "src", src, "err", err)
-		os.Exit(1)
+		failRun(ctx, monitor, "tracks", "", started, fmt.Errorf("fetch dataset %q: %w", src, err))
 	}
 	parsed, skipped, err := tracks.ParseTracks(raw, time.Now().UTC())
 	if err != nil {
-		logger.Error("parse dataset", "src", src, "err", err)
-		os.Exit(1)
+		failRun(ctx, monitor, "tracks", "", started, fmt.Errorf("parse dataset %q: %w", src, err))
 	}
-
-	st := mustStore(ctx, logger)
-	defer st.Close()
-
 	if err := st.UpsertTracks(ctx, parsed); err != nil {
-		logger.Error("upsert tracks", "err", err)
-		os.Exit(1)
+		failRun(ctx, monitor, "tracks", "", started, fmt.Errorf("upsert tracks: %w", err))
 	}
+
+	monitor.Observe(ctx, health.Report{
+		Source: "tracks", Records: len(parsed), Violations: tracks.CheckRun(len(parsed), skipped),
+	}, started)
 	logger.Info("seed tracks ok", "upserted", len(parsed), "skipped", skipped, "src", src)
 }
 
@@ -109,11 +117,15 @@ func seedCars(logger *slog.Logger) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
+	st := mustStore(ctx, logger)
+	defer st.Close()
+	monitor := newMonitor(st, logger)
+	started := time.Now()
+
 	logger.Info("seed cars: fetch list", "game", game, "page", src.listPage)
 	listWT, err := cars.FetchCarListWikitext(ctx, src.listPage)
 	if err != nil {
-		logger.Error("fetch car list", "err", err)
-		os.Exit(1)
+		failRun(ctx, monitor, "cars", game, started, fmt.Errorf("fetch car list: %w", err))
 	}
 	rows := cars.ParseCarList(listWT, src.listTemplate)
 	titles := cars.CarTitles(rows)
@@ -122,8 +134,7 @@ func seedCars(logger *slog.Logger) {
 	logger.Info("seed cars: fetch car pages (batched)", "titles", len(titles))
 	pages, err := cars.FetchCarPages(ctx, titles)
 	if err != nil {
-		logger.Error("fetch car pages", "err", err)
-		os.Exit(1)
+		failRun(ctx, monitor, "cars", game, started, fmt.Errorf("fetch car pages: %w", err))
 	}
 	infoboxes := make(map[string]cars.Infobox, len(pages))
 	for title, wt := range pages {
@@ -156,13 +167,15 @@ func seedCars(logger *slog.Logger) {
 		catalogue = kept
 	}
 
-	st := mustStore(ctx, logger)
-	defer st.Close()
-
 	if err := st.UpsertCars(ctx, catalogue); err != nil {
-		logger.Error("upsert cars", "err", err)
-		os.Exit(1)
+		failRun(ctx, monitor, "cars", game, started, fmt.Errorf("upsert cars: %w", err))
 	}
+
+	// Contrôle de santé : counts dans la fourchette attendue, taux de parse, 0
+	// anomalie bloquante (rupture de structure wiki = anomaly silencieuse).
+	monitor.Observe(ctx, health.Report{
+		Source: "cars", Game: game, Records: len(catalogue), Violations: cars.CheckRun(rep, vrep, game),
+	}, started)
 
 	logger.Info("seed cars ok",
 		"game", game,
@@ -202,36 +215,24 @@ func seedPlaylist(logger *slog.Logger) {
 	defer cancel()
 	now := time.Now().UTC()
 
-	logger.Info("seed playlist: fetch", "game", game, "override", override)
-	ev, fd, err := playlist.FetchCurrent(ctx, game, override, now)
-	if err != nil {
-		logger.Error("fetch playlist", "err", err)
-		os.Exit(1)
-	}
-
-	// Validation croisée forza.net (primaire) ↔ titre forum (secondaire) : logue
-	// toute divergence (filet si forza.net change de structure) et complète les
-	// champs d'identité que forza.net ne fournirait plus.
-	ev, div := playlist.Reconcile(ev, fd)
-	div.Log(logger)
-
-	// Auto-discovery → c'est la série courante (rollover géré par l'upsert).
-	// Override d'une semaine précise → courante seulement si la fenêtre couvre now
-	// (un re-seed d'historique ne vole pas le flag « courante »).
-	isCurrent := override == "" ||
-		(!ev.Start.IsZero() && !ev.End.IsZero() && !ev.Start.After(now) && !ev.End.Before(now))
-
-	ser, rewards, challenges := playlist.Normalize(ev, fd, isCurrent)
-
 	st := mustStore(ctx, logger)
 	defer st.Close()
+	monitor := newMonitor(st, logger)
+	started := time.Now()
 
-	added, err := st.UpsertSeries(ctx, ser, rewards, challenges)
+	logger.Info("seed playlist: fetch", "game", game, "override", override)
+	res, err := playlist.IngestCurrent(ctx, st, game, override, now, logger)
 	if err != nil {
-		logger.Error("upsert series", "err", err)
-		os.Exit(1)
+		failRun(ctx, monitor, "playlist", game, started, fmt.Errorf("ingest playlist: %w", err))
 	}
 
+	// Contrôle de santé : nom/dates/récompenses/défis non vides (parse forza.net +
+	// forum OK), série courante non périmée.
+	monitor.Observe(ctx, health.Report{
+		Source: "playlist", Game: game, Records: 1, Violations: playlist.CheckRun(res, now),
+	}, started)
+
+	ser := res.Series
 	logger.Info("seed playlist ok",
 		"game", ser.Game,
 		"id", ser.ID,
@@ -242,10 +243,10 @@ func seedPlaylist(logger *slog.Logger) {
 		"starts_at", ser.StartsAt,
 		"ends_at", ser.EndsAt,
 		"is_current", ser.IsCurrent,
-		"rewards", len(rewards),
-		"challenges", len(challenges),
-		"divergences", len(div.Divergences),
-		"new", added,
+		"rewards", res.Rewards,
+		"challenges", res.Challenges,
+		"divergences", res.Divergences,
+		"new", res.Added,
 	)
 }
 
@@ -266,22 +267,22 @@ func seedPlaylistHistory(logger *slog.Logger) {
 	defer cancel()
 	now := time.Now().UTC()
 
+	st := mustStore(ctx, logger)
+	defer st.Close()
+	monitor := newMonitor(st, logger)
+	started := time.Now()
+
 	logger.Info("seed playlist-history: backfill", "game", game)
 	seasons, err := playlist.BackfillPlaylist(ctx, game, now)
 	if err != nil {
-		logger.Error("backfill playlist", "err", err)
-		os.Exit(1)
+		failRun(ctx, monitor, "playlist-history", game, started, fmt.Errorf("backfill playlist: %w", err))
 	}
-
-	st := mustStore(ctx, logger)
-	defer st.Close()
 
 	added, updated := 0, 0
 	for _, s := range seasons {
 		isNew, err := st.UpsertSeries(ctx, s.Series, s.Rewards, s.Challenges)
 		if err != nil {
-			logger.Error("upsert series", "id", s.Series.ID, "err", err)
-			os.Exit(1)
+			failRun(ctx, monitor, "playlist-history", game, started, fmt.Errorf("upsert series %s: %w", s.Series.ID, err))
 		}
 		if isNew {
 			added++
@@ -289,6 +290,16 @@ func seedPlaylistHistory(logger *slog.Logger) {
 			updated++
 		}
 	}
+
+	// Backfill one-shot : seul invariant utile = découverte non vide (0 saison =
+	// rupture de la découverte wiki).
+	var vios []health.Violation
+	if len(seasons) == 0 {
+		vios = []health.Violation{{Rule: "zero_records", Detail: "0 saison backfillée (découverte wiki vide ?)", Severity: health.SevAnomaly}}
+	}
+	monitor.Observe(ctx, health.Report{
+		Source: "playlist-history", Game: game, Records: len(seasons), Violations: vios,
+	}, started)
 
 	logger.Info("seed playlist-history ok",
 		"game", game,
@@ -313,4 +324,101 @@ func mustStore(ctx context.Context, logger *slog.Logger) *store.Store {
 		os.Exit(1)
 	}
 	return st
+}
+
+// newMonitor construit le moniteur de santé du seed : persiste chaque run dans
+// scrape_runs et alerte (webhook ALERT_WEBHOOK_URL si configuré, sinon log seul).
+func newMonitor(st *store.Store, logger *slog.Logger) *health.Monitor {
+	return &health.Monitor{
+		Store:    st,
+		Notifier: health.NewNotifier(config.Load().AlertWebhookURL),
+		Logger:   logger,
+	}
+}
+
+// failRun journalise l'échec dur d'un run (log + persistance + alerte via le
+// Monitor) puis sort en code != 0. Centralise les chemins d'erreur des seeds pour
+// qu'un échec soit toujours tracé dans scrape_runs et alerté.
+func failRun(ctx context.Context, m *health.Monitor, source, game string, started time.Time, err error) {
+	m.Observe(ctx, health.Report{Source: source, Game: game, Err: err}, started)
+	os.Exit(1)
+}
+
+// seedHealth imprime le dashboard ops de fraîcheur / échecs par source : le
+// dernier run de chaque source/jeu (statut, âge, volume, détail). Sortie tabulaire
+// sur stdout (sortie primaire de la commande, distincte des logs slog).
+func seedHealth(logger *slog.Logger) {
+	ctx := context.Background()
+	st := mustStore(ctx, logger)
+	defer st.Close()
+
+	runs, err := st.LatestScrapeRuns(ctx)
+	if err != nil {
+		logger.Error("seed health: query", "err", err)
+		os.Exit(1)
+	}
+	if len(runs) == 0 {
+		logger.Info("seed health: aucun run enregistré")
+		return
+	}
+
+	now := time.Now().UTC()
+	tw := tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', 0)
+	// Les erreurs d'écriture du tabwriter sont différées et remontent au Flush.
+	_, _ = fmt.Fprintln(tw, "SOURCE\tGAME\tLAST RUN\tSTATUS\tAGE\tRECORDS\tDETAIL")
+	for _, r := range runs {
+		_, _ = fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%d\t%s\n",
+			r.Source, gameLabel(r.Game), r.FinishedAt.UTC().Format("2006-01-02 15:04"),
+			r.Status, humanAge(now.Sub(r.FinishedAt)), r.Records, runDetail(r))
+	}
+	_ = tw.Flush()
+}
+
+// gameLabel rend le jeu d'un run (« - » pour les sources sans jeu, ex. tracks).
+func gameLabel(g *string) string {
+	if g == nil || *g == "" {
+		return "-"
+	}
+	return *g
+}
+
+// humanAge formate une ancienneté en m/h/j (lecture rapide du dashboard).
+func humanAge(d time.Duration) string {
+	switch {
+	case d < time.Hour:
+		return fmt.Sprintf("%dm", int(d.Minutes()))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("%dh", int(d.Hours()))
+	default:
+		return fmt.Sprintf("%dd", int(d.Hours()/24))
+	}
+}
+
+// runDetail rend la colonne DETAIL : l'erreur pour un échec, la 1re anomalie pour
+// une anomalie, « - » pour un run sain.
+func runDetail(r store.ScrapeRunSummary) string {
+	if r.Error != nil && *r.Error != "" {
+		return truncate(*r.Error, 60)
+	}
+	if len(r.Violations) > 0 {
+		var vs []health.Violation
+		if json.Unmarshal(r.Violations, &vs) == nil {
+			for _, v := range vs {
+				if v.Severity == health.SevAnomaly {
+					return truncate(v.Rule+" ("+v.Detail+")", 60)
+				}
+			}
+			if len(vs) > 0 {
+				return truncate(vs[0].Rule, 60)
+			}
+		}
+	}
+	return "-"
+}
+
+func truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n-1] + "…"
 }

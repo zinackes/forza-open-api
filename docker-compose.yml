@@ -55,5 +55,24 @@ services:
       retries: 10
       start_period: 5s
 
+  # Cron interne (robfig/cron) : rafraîchit la Festival Playlist au reset Forza
+  # (jeudi, fuseau UTC). Même image que l'API, ENTRYPOINT surchargé sur /scheduler.
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ["/scheduler"]
+    environment:
+      DATABASE_URL: "postgres://forza:forza@postgres:5432/forza?sslmode=disable"
+      REDIS_URL: "redis://valkey:6379/0"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      PLAYLIST_CRON: "${PLAYLIST_CRON:-0 15 * * 4}"
+      PLAYLIST_GAMES: "${PLAYLIST_GAMES:-fh6}"
+      ALERT_WEBHOOK_URL: "${ALERT_WEBHOOK_URL:-}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   pgdata:
