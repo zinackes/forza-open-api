@@ -440,3 +440,23 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS sessions_game_idx ON sessions (game);
+
+-- Manifeste des archives téléchargeables (GET /v1/exports) --------------------
+-- Écrite par le job de génération (internal/export via cmd/seed | cmd/scheduler) ;
+-- jamais par les handlers de lecture. Une ligne = un fichier statique (un jeu, une
+-- ressource, un format) servi depuis l'edge. Les fichiers eux-mêmes vivent sur
+-- l'object store / l'edge ; cette table ne sert QUE le manifeste (url/taille/etag).
+-- etag = hash de contenu calculé à la génération. Clé naturelle (game, resource,
+-- format) → upsert idempotent (régénération rejouable sans doublon).
+CREATE TABLE IF NOT EXISTS exports (
+    game         TEXT        NOT NULL,
+    resource     TEXT        NOT NULL,
+    format       TEXT        NOT NULL CHECK (format IN ('json','csv','jsonl')),
+    url          TEXT        NOT NULL,
+    size_bytes   BIGINT      NOT NULL,
+    etag         TEXT        NOT NULL,
+    generated_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (game, resource, format)
+);
+-- Listing du manifeste filtré par jeu (GET /v1/exports?game=…).
+CREATE INDEX IF NOT EXISTS exports_game_idx ON exports (game);

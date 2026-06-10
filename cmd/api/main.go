@@ -72,6 +72,14 @@ func main() {
 	mux.HandleFunc("GET /openapi.yaml", staticFile("application/yaml", api.OpenAPI))
 	mux.HandleFunc("GET /llms.txt", staticFile("text/plain; charset=utf-8", llmsTxt))
 	mux.HandleFunc("GET /docs", staticFile("text/html; charset=utf-8", docsHTML))
+	// Archives téléchargeables (GET /v1/exports) servies en statique quand le backend
+	// est le filesystem local : /static/exports/* → fichiers d'EXPORTS_DIR, cache long
+	// (régénérés ~1×/jour). En prod, R2 sert les fichiers depuis l'edge (EXPORTS_BASE_URL
+	// pointe le domaine R2) → on n'enregistre pas la route locale.
+	if cfg.R2Endpoint == "" || cfg.R2Bucket == "" {
+		exportsFS := http.StripPrefix("/static/exports/", http.FileServer(http.Dir(cfg.ExportsDir)))
+		mux.Handle("GET /static/exports/", longCache(exportsFS))
+	}
 	// Routes du contrat (/v1/...) derrière le rate-limit puis le cache conditionnel
 	// (ETag/304, calculé sur le corps final) ; /healthz et les statiques sont
 	// enregistrés à part et restent prioritaires + non limités.
@@ -113,6 +121,16 @@ func staticFile(contentType string, body []byte) http.HandlerFunc {
 		w.Header().Set("Cache-Control", "public, max-age=3600")
 		_, _ = w.Write(body)
 	}
+}
+
+// longCache pose un Cache-Control long sur les fichiers d'archive servis en
+// statique (immutables entre deux régénérations ; l'ETag/edge gère la revalidation
+// en prod). http.FileServer fournit Last-Modified + conditionnel If-Modified-Since.
+func longCache(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // statusRecorder capture le code de statut écrit par le handler aval.

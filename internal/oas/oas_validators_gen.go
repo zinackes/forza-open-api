@@ -1130,6 +1130,93 @@ func (s EventType) Validate() error {
 	}
 }
 
+func (s *Export) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Game.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "game",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Resource.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "resource",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Format.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "format",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s ExportFormat) Validate() error {
+	switch s {
+	case "json":
+		return nil
+	case "csv":
+		return nil
+	case "jsonl":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s ExportResource) Validate() error {
+	switch s {
+	case "cars":
+		return nil
+	case "playlist":
+		return nil
+	case "tracks":
+		return nil
+	case "pr_stunts":
+		return nil
+	case "events":
+		return nil
+	case "barn_finds":
+		return nil
+	case "treasure_cars":
+		return nil
+	case "mastery":
+		return nil
+	case "journal":
+		return nil
+	case "dlc_packs":
+		return nil
+	case "manufacturers":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *ForzathonShopItem) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -1507,6 +1594,46 @@ func (s ListDlcPacksOKApplicationJSON) Validate() error {
 				Error: err,
 			})
 		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *ListExportsOKHeaders) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if s.Response == nil {
+			return errors.New("nil is invalid value")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.Response {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "Response",
+			Error: err,
+		})
 	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}

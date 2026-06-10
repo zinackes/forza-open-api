@@ -29,6 +29,7 @@ const (
 	ListChangesOperation              OperationName = "ListChanges"
 	ListDlcPacksOperation             OperationName = "ListDlcPacks"
 	ListEventsOperation               OperationName = "ListEvents"
+	ListExportsOperation              OperationName = "ListExports"
 	ListForzathonShopHistoryOperation OperationName = "ListForzathonShopHistory"
 	ListJournalTiersOperation         OperationName = "ListJournalTiers"
 	ListManufacturersOperation        OperationName = "ListManufacturers"

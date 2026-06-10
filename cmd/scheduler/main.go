@@ -24,6 +24,7 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"github.com/zinackes/forza-open-api/internal/config"
+	"github.com/zinackes/forza-open-api/internal/export"
 	"github.com/zinackes/forza-open-api/internal/health"
 	"github.com/zinackes/forza-open-api/internal/ingest/forzathon"
 	"github.com/zinackes/forza-open-api/internal/ingest/playlist"
@@ -83,6 +84,29 @@ func main() {
 		},
 	}
 
+	// Génération des archives téléchargeables (GET /v1/exports) : régénère le
+	// dataset complet par jeu en fichiers statiques (R2 en prod, FS local sinon)
+	// et met à jour le manifeste. Cron quotidien (le dataset ne bouge qu'à
+	// l'ingestion) ; borne large car le dump couvre toutes les ressources.
+	uploader := export.UploaderFor(export.R2Config{
+		Endpoint:        cfg.R2Endpoint,
+		Bucket:          cfg.R2Bucket,
+		AccessKeyID:     cfg.R2AccessKeyID,
+		SecretAccessKey: cfg.R2SecretAccessKey,
+	}, cfg.ExportsDir)
+	exportsRunner := &scheduler.Runner{
+		Source: "exports", Games: cfg.ExportsGames, Monitor: monitor, Logger: logger,
+		Ingest: func(ctx context.Context, game string, now time.Time) (health.Report, error) {
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+			defer cancel()
+			res, err := export.Generate(ctx, st, uploader, cfg.ExportsBaseURL, game, now)
+			if err != nil {
+				return health.Report{}, err
+			}
+			return health.Report{Records: res.Artifacts, Violations: export.CheckRun(res, now)}, nil
+		},
+	}
+
 	type job struct {
 		spec   string
 		runner *scheduler.Runner
@@ -90,6 +114,7 @@ func main() {
 	jobs := []job{
 		{cfg.PlaylistCron, playlistRunner},
 		{cfg.ForzathonCron, forzathonRunner},
+		{cfg.ExportsCron, exportsRunner},
 	}
 
 	// -once : run synchrone immédiat de toutes les sources (run manuel / CI). Le
@@ -126,6 +151,7 @@ func main() {
 	logger.Info("scheduler up",
 		"playlist_spec", cfg.PlaylistCron, "playlist_games", cfg.PlaylistGames,
 		"forzathon_spec", cfg.ForzathonCron, "forzathon_games", cfg.ForzathonGames,
+		"exports_spec", cfg.ExportsCron, "exports_games", cfg.ExportsGames,
 		"alert_webhook", cfg.AlertWebhookURL != "")
 	c.Start()
 

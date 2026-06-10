@@ -32,6 +32,20 @@ type Config struct {
 	ForzathonCron   string
 	ForzathonGames  []string
 	AlertWebhookURL string
+	// Exports (cmd/seed exports | cmd/scheduler) — archives téléchargeables du
+	// dataset (GET /v1/exports). ExportsCron : spec cron 5 champs (UTC), défaut
+	// quotidien 05:00. ExportsGames : jeux archivés (CSV). ExportsBaseURL préfixe
+	// l'URL publique des fichiers (edge). ExportsDir : dossier local (backend par
+	// défaut, servi en statique). R2* : bucket Cloudflare R2 (prod) ; si Endpoint
+	// ET Bucket sont fournis, R2 prime sur le filesystem local. Secrets par env.
+	ExportsCron       string
+	ExportsGames      []string
+	ExportsBaseURL    string
+	ExportsDir        string
+	R2Endpoint        string
+	R2Bucket          string
+	R2AccessKeyID     string
+	R2SecretAccessKey string
 }
 
 // Load lit la config depuis l'environnement avec des défauts orientés dev local.
@@ -48,6 +62,15 @@ func Load() Config {
 		ForzathonCron:   getenv("FORZATHON_CRON", "0 15 * * 4"),
 		ForzathonGames:  splitCSV(getenv("FORZATHON_GAMES", "fh6")),
 		AlertWebhookURL: os.Getenv("ALERT_WEBHOOK_URL"),
+
+		ExportsCron:       getenv("EXPORTS_CRON", "0 5 * * *"),
+		ExportsGames:      splitCSV(getenv("EXPORTS_GAMES", "fh6")),
+		ExportsBaseURL:    getenv("EXPORTS_BASE_URL", "http://localhost:8080/static/exports"),
+		ExportsDir:        getenv("EXPORTS_DIR", "./data/exports"),
+		R2Endpoint:        os.Getenv("R2_ENDPOINT"),
+		R2Bucket:          os.Getenv("R2_BUCKET"),
+		R2AccessKeyID:     os.Getenv("R2_ACCESS_KEY_ID"),
+		R2SecretAccessKey: os.Getenv("R2_SECRET_ACCESS_KEY"),
 	}
 }
 

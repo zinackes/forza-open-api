@@ -4185,6 +4185,86 @@ func decodeListEventsParams(args [0]string, argsEscaped bool, r *http.Request) (
 	return params, nil
 }
 
+// ListExportsParams is parameters of listExports operation.
+type ListExportsParams struct {
+	// Filtre optionnel par jeu (absent = toutes les archives, tous jeux).
+	Game OptGame `json:",omitempty,omitzero"`
+}
+
+func unpackListExportsParams(packed middleware.Parameters) (params ListExportsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "game",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Game = v.(OptGame)
+		}
+	}
+	return params
+}
+
+func decodeListExportsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListExportsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: game.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotGameVal Game
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotGameVal = Game(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Game.SetTo(paramsDotGameVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Game.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ListForzathonShopHistoryParams is parameters of listForzathonShopHistory operation.
 type ListForzathonShopHistoryParams struct {
 	// Jeu cible (obligatoire sur les ressources multi-jeux).

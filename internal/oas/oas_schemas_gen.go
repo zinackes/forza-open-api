@@ -2005,6 +2005,250 @@ func (s *EventType) UnmarshalText(data []byte) error {
 	}
 }
 
+// Archive statique téléchargeable d'une ressource pour un jeu, dans un format donné. `url` pointe
+// le fichier servi depuis l'edge (cache long + ETag) ; `etag` et `sizeBytes` décrivent ce fichier ;
+// `generatedAt` = instant de régénération de l'archive.
+// Ref: #/components/schemas/Export
+type Export struct {
+	Game     Game           `json:"game"`
+	Resource ExportResource `json:"resource"`
+	Format   ExportFormat   `json:"format"`
+	// URL absolue du fichier d'archive (servi depuis l'edge).
+	URL string `json:"url"`
+	// Taille du fichier en octets.
+	SizeBytes int64 `json:"sizeBytes"`
+	// ETag du fichier (hash de contenu), pour la revalidation conditionnelle.
+	Etag string `json:"etag"`
+	// Instant de régénération de l'archive.
+	GeneratedAt time.Time `json:"generatedAt"`
+}
+
+// GetGame returns the value of Game.
+func (s *Export) GetGame() Game {
+	return s.Game
+}
+
+// GetResource returns the value of Resource.
+func (s *Export) GetResource() ExportResource {
+	return s.Resource
+}
+
+// GetFormat returns the value of Format.
+func (s *Export) GetFormat() ExportFormat {
+	return s.Format
+}
+
+// GetURL returns the value of URL.
+func (s *Export) GetURL() string {
+	return s.URL
+}
+
+// GetSizeBytes returns the value of SizeBytes.
+func (s *Export) GetSizeBytes() int64 {
+	return s.SizeBytes
+}
+
+// GetEtag returns the value of Etag.
+func (s *Export) GetEtag() string {
+	return s.Etag
+}
+
+// GetGeneratedAt returns the value of GeneratedAt.
+func (s *Export) GetGeneratedAt() time.Time {
+	return s.GeneratedAt
+}
+
+// SetGame sets the value of Game.
+func (s *Export) SetGame(val Game) {
+	s.Game = val
+}
+
+// SetResource sets the value of Resource.
+func (s *Export) SetResource(val ExportResource) {
+	s.Resource = val
+}
+
+// SetFormat sets the value of Format.
+func (s *Export) SetFormat(val ExportFormat) {
+	s.Format = val
+}
+
+// SetURL sets the value of URL.
+func (s *Export) SetURL(val string) {
+	s.URL = val
+}
+
+// SetSizeBytes sets the value of SizeBytes.
+func (s *Export) SetSizeBytes(val int64) {
+	s.SizeBytes = val
+}
+
+// SetEtag sets the value of Etag.
+func (s *Export) SetEtag(val string) {
+	s.Etag = val
+}
+
+// SetGeneratedAt sets the value of GeneratedAt.
+func (s *Export) SetGeneratedAt(val time.Time) {
+	s.GeneratedAt = val
+}
+
+// Format de sérialisation d'une archive.
+// Ref: #/components/schemas/ExportFormat
+type ExportFormat string
+
+const (
+	ExportFormatJSON  ExportFormat = "json"
+	ExportFormatCsv   ExportFormat = "csv"
+	ExportFormatJsonl ExportFormat = "jsonl"
+)
+
+// AllValues returns all ExportFormat values.
+func (ExportFormat) AllValues() []ExportFormat {
+	return []ExportFormat{
+		ExportFormatJSON,
+		ExportFormatCsv,
+		ExportFormatJsonl,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ExportFormat) MarshalText() ([]byte, error) {
+	switch s {
+	case ExportFormatJSON:
+		return []byte(s), nil
+	case ExportFormatCsv:
+		return []byte(s), nil
+	case ExportFormatJsonl:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ExportFormat) UnmarshalText(data []byte) error {
+	switch ExportFormat(data) {
+	case ExportFormatJSON:
+		*s = ExportFormatJSON
+		return nil
+	case ExportFormatCsv:
+		*s = ExportFormatCsv
+		return nil
+	case ExportFormatJsonl:
+		*s = ExportFormatJsonl
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ressource du dataset couverte par une archive.
+// Ref: #/components/schemas/ExportResource
+type ExportResource string
+
+const (
+	ExportResourceCars          ExportResource = "cars"
+	ExportResourcePlaylist      ExportResource = "playlist"
+	ExportResourceTracks        ExportResource = "tracks"
+	ExportResourcePrStunts      ExportResource = "pr_stunts"
+	ExportResourceEvents        ExportResource = "events"
+	ExportResourceBarnFinds     ExportResource = "barn_finds"
+	ExportResourceTreasureCars  ExportResource = "treasure_cars"
+	ExportResourceMastery       ExportResource = "mastery"
+	ExportResourceJournal       ExportResource = "journal"
+	ExportResourceDlcPacks      ExportResource = "dlc_packs"
+	ExportResourceManufacturers ExportResource = "manufacturers"
+)
+
+// AllValues returns all ExportResource values.
+func (ExportResource) AllValues() []ExportResource {
+	return []ExportResource{
+		ExportResourceCars,
+		ExportResourcePlaylist,
+		ExportResourceTracks,
+		ExportResourcePrStunts,
+		ExportResourceEvents,
+		ExportResourceBarnFinds,
+		ExportResourceTreasureCars,
+		ExportResourceMastery,
+		ExportResourceJournal,
+		ExportResourceDlcPacks,
+		ExportResourceManufacturers,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ExportResource) MarshalText() ([]byte, error) {
+	switch s {
+	case ExportResourceCars:
+		return []byte(s), nil
+	case ExportResourcePlaylist:
+		return []byte(s), nil
+	case ExportResourceTracks:
+		return []byte(s), nil
+	case ExportResourcePrStunts:
+		return []byte(s), nil
+	case ExportResourceEvents:
+		return []byte(s), nil
+	case ExportResourceBarnFinds:
+		return []byte(s), nil
+	case ExportResourceTreasureCars:
+		return []byte(s), nil
+	case ExportResourceMastery:
+		return []byte(s), nil
+	case ExportResourceJournal:
+		return []byte(s), nil
+	case ExportResourceDlcPacks:
+		return []byte(s), nil
+	case ExportResourceManufacturers:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ExportResource) UnmarshalText(data []byte) error {
+	switch ExportResource(data) {
+	case ExportResourceCars:
+		*s = ExportResourceCars
+		return nil
+	case ExportResourcePlaylist:
+		*s = ExportResourcePlaylist
+		return nil
+	case ExportResourceTracks:
+		*s = ExportResourceTracks
+		return nil
+	case ExportResourcePrStunts:
+		*s = ExportResourcePrStunts
+		return nil
+	case ExportResourceEvents:
+		*s = ExportResourceEvents
+		return nil
+	case ExportResourceBarnFinds:
+		*s = ExportResourceBarnFinds
+		return nil
+	case ExportResourceTreasureCars:
+		*s = ExportResourceTreasureCars
+		return nil
+	case ExportResourceMastery:
+		*s = ExportResourceMastery
+		return nil
+	case ExportResourceJournal:
+		*s = ExportResourceJournal
+		return nil
+	case ExportResourceDlcPacks:
+		*s = ExportResourceDlcPacks
+		return nil
+	case ExportResourceManufacturers:
+		*s = ExportResourceManufacturers
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Objet d'une rotation hebdomadaire du Forzathon Shop, achetable contre des Forza Points (qui se
 // reportent d'une semaine à l'autre). Champs non sourcés → omis.
 // Ref: #/components/schemas/ForzathonShopItem
@@ -3136,6 +3380,46 @@ type ListEventsUnauthorized Error
 
 func (*ListEventsUnauthorized) listEventsRes() {}
 
+type ListExportsBadRequest Error
+
+func (*ListExportsBadRequest) listExportsRes() {}
+
+// ListExportsOKHeaders wraps []Export with response headers.
+type ListExportsOKHeaders struct {
+	CacheControl OptString
+	Response     []Export
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *ListExportsOKHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *ListExportsOKHeaders) GetResponse() []Export {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *ListExportsOKHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ListExportsOKHeaders) SetResponse(val []Export) {
+	s.Response = val
+}
+
+func (*ListExportsOKHeaders) listExportsRes() {}
+
+type ListExportsTooManyRequests Error
+
+func (*ListExportsTooManyRequests) listExportsRes() {}
+
+type ListExportsUnauthorized Error
+
+func (*ListExportsUnauthorized) listExportsRes() {}
+
 type ListForzathonShopHistoryBadRequest Error
 
 func (*ListForzathonShopHistoryBadRequest) listForzathonShopHistoryRes() {}
@@ -3920,6 +4204,52 @@ func (o OptFloat64) Get() (v float64, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptFloat64) Or(d float64) float64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGame returns new OptGame with value set to v.
+func NewOptGame(v Game) OptGame {
+	return OptGame{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGame is optional Game.
+type OptGame struct {
+	Value Game
+	Set   bool
+}
+
+// IsSet returns true if OptGame was set.
+func (o OptGame) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGame) Reset() {
+	var v Game
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGame) SetTo(v Game) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGame) Get() (v Game, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGame) Or(d Game) Game {
 	if v, ok := o.Get(); ok {
 		return v
 	}

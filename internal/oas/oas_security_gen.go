@@ -57,6 +57,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	ListChangesOperation:              []string{},
 	ListDlcPacksOperation:             []string{},
 	ListEventsOperation:               []string{},
+	ListExportsOperation:              []string{},
 	ListForzathonShopHistoryOperation: []string{},
 	ListJournalTiersOperation:         []string{},
 	ListManufacturersOperation:        []string{},

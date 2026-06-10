@@ -56,6 +56,8 @@ tags:
     description: Journal des changements de données (nouvelles voitures, packs, séries…).
   - name: Meta
     description: Métadonnées du service (jeux supportés, volumes, fraîcheur des données).
+  - name: Exports
+    description: Archives téléchargeables (JSON/CSV/JSONL) du dataset par jeu, pour usage offline / analyse.
 
 # Lecture publique possible ({}), clé optionnelle via X-API-Key.
 security:
@@ -470,6 +472,44 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Meta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/exports:
+    get:
+      operationId: listExports
+      summary: "Archives téléchargeables du dataset (JSON/CSV/JSONL) par jeu."
+      description: >
+        Manifeste des archives statiques régénérées périodiquement (job
+        quotidien) : un fichier par jeu, ressource et format. Les fichiers sont
+        servis depuis l'edge (cache long + ETag) — récupérer le dataset complet
+        offline sans solliciter l'API de lecture (esprit open-data). Le champ
+        `game` est un filtre OPTIONNEL (le manifeste est cross-jeu, comme
+        `/v1/meta`) : absent → toutes les archives. N'apparaissent que les
+        archives réellement générées (jamais d'URL inventée) : une ressource
+        imbriquée (playlist) n'expose pas de variante CSV. `etag` et `sizeBytes`
+        décrivent le fichier pointé par `url`.
+      tags: [Exports]
+      x-ogen-operation-group: Exports
+      parameters:
+        - name: game
+          in: query
+          required: false
+          description: Filtre optionnel par jeu (absent = toutes les archives, tous jeux).
+          schema: { $ref: '#/components/schemas/Game' }
+      responses:
+        '200':
+          description: Les archives disponibles (filtrées par jeu si fourni).
+          headers:
+            Cache-Control:
+              description: Cache moyen ; le manifeste ne bouge qu'à la régénération (~quotidienne).
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Export' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
@@ -1867,6 +1907,43 @@ components:
           type: string
           format: date-time
           description: Instant de calcul de la réponse (permet d'estimer l'âge des données côté client).
+
+    ExportFormat:
+      type: string
+      description: Format de sérialisation d'une archive.
+      enum: [json, csv, jsonl]
+
+    ExportResource:
+      type: string
+      description: Ressource du dataset couverte par une archive.
+      enum: [cars, playlist, tracks, pr_stunts, events, barn_finds, treasure_cars, mastery, journal, dlc_packs, manufacturers]
+
+    Export:
+      type: object
+      description: >
+        Archive statique téléchargeable d'une ressource pour un jeu, dans un
+        format donné. `url` pointe le fichier servi depuis l'edge (cache long +
+        ETag) ; `etag` et `sizeBytes` décrivent ce fichier ; `generatedAt` =
+        instant de régénération de l'archive.
+      required: [game, resource, format, url, sizeBytes, etag, generatedAt]
+      properties:
+        game: { $ref: '#/components/schemas/Game' }
+        resource: { $ref: '#/components/schemas/ExportResource' }
+        format: { $ref: '#/components/schemas/ExportFormat' }
+        url:
+          type: string
+          description: URL absolue du fichier d'archive (servi depuis l'edge).
+        sizeBytes:
+          type: integer
+          format: int64
+          description: Taille du fichier en octets.
+        etag:
+          type: string
+          description: ETag du fichier (hash de contenu), pour la revalidation conditionnelle.
+        generatedAt:
+          type: string
+          format: date-time
+          description: Instant de régénération de l'archive.
 
     CarObtainMasteryUnlock:
       type: object

@@ -13,6 +13,7 @@ type Handler interface {
 	ChangesHandler
 	DLCHandler
 	EventsHandler
+	ExportsHandler
 	ForzathonShopHandler
 	JournalHandler
 	ManufacturersHandler
@@ -142,6 +143,24 @@ type EventsHandler interface {
 	//
 	// GET /v1/events
 	ListEvents(ctx context.Context, params ListEventsParams) (ListEventsRes, error)
+}
+
+// ExportsHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Exports
+type ExportsHandler interface {
+	// ListExports implements listExports operation.
+	//
+	// Manifeste des archives statiques régénérées périodiquement (job quotidien) : un fichier par
+	// jeu, ressource et format. Les fichiers sont servis depuis l'edge (cache long + ETag) —
+	// récupérer le dataset complet offline sans solliciter l'API de lecture (esprit open-data). Le
+	// champ `game` est un filtre OPTIONNEL (le manifeste est cross-jeu, comme `/v1/meta`) : absent →
+	// toutes les archives. N'apparaissent que les archives réellement générées (jamais d'URL
+	// inventée) : une ressource imbriquée (playlist) n'expose pas de variante CSV. `etag` et
+	// `sizeBytes` décrivent le fichier pointé par `url`.
+	//
+	// GET /v1/exports
+	ListExports(ctx context.Context, params ListExportsParams) (ListExportsRes, error)
 }
 
 // ForzathonShopHandler handles operations described by OpenAPI v3 specification.

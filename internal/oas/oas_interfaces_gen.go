@@ -93,6 +93,10 @@ type ListEventsRes interface {
 	listEventsRes()
 }
 
+type ListExportsRes interface {
+	listExportsRes()
+}
+
 type ListForzathonShopHistoryRes interface {
 	listForzathonShopHistoryRes()
 }

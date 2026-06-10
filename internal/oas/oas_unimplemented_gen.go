@@ -253,6 +253,21 @@ func (UnimplementedHandler) ListEvents(ctx context.Context, params ListEventsPar
 	return r, ht.ErrNotImplemented
 }
 
+// ListExports implements listExports operation.
+//
+// Manifeste des archives statiques régénérées périodiquement (job quotidien) : un fichier par
+// jeu, ressource et format. Les fichiers sont servis depuis l'edge (cache long + ETag) —
+// récupérer le dataset complet offline sans solliciter l'API de lecture (esprit open-data). Le
+// champ `game` est un filtre OPTIONNEL (le manifeste est cross-jeu, comme `/v1/meta`) : absent →
+// toutes les archives. N'apparaissent que les archives réellement générées (jamais d'URL
+// inventée) : une ressource imbriquée (playlist) n'expose pas de variante CSV. `etag` et
+// `sizeBytes` décrivent le fichier pointé par `url`.
+//
+// GET /v1/exports
+func (UnimplementedHandler) ListExports(ctx context.Context, params ListExportsParams) (r ListExportsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListForzathonShopHistory implements listForzathonShopHistory operation.
 //
 // Les objets de toutes les rotations connues du Forzathon Shop pour le jeu, les plus récentes

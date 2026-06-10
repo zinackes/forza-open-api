@@ -33,6 +33,7 @@ type Invoker interface {
 	ChangesInvoker
 	DLCInvoker
 	EventsInvoker
+	ExportsInvoker
 	ForzathonShopInvoker
 	JournalInvoker
 	ManufacturersInvoker
@@ -162,6 +163,24 @@ type EventsInvoker interface {
 	//
 	// GET /v1/events
 	ListEvents(ctx context.Context, params ListEventsParams) (ListEventsRes, error)
+}
+
+// ExportsInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Exports
+type ExportsInvoker interface {
+	// ListExports invokes listExports operation.
+	//
+	// Manifeste des archives statiques régénérées périodiquement (job quotidien) : un fichier par
+	// jeu, ressource et format. Les fichiers sont servis depuis l'edge (cache long + ETag) —
+	// récupérer le dataset complet offline sans solliciter l'API de lecture (esprit open-data). Le
+	// champ `game` est un filtre OPTIONNEL (le manifeste est cross-jeu, comme `/v1/meta`) : absent →
+	// toutes les archives. N'apparaissent que les archives réellement générées (jamais d'URL
+	// inventée) : une ressource imbriquée (playlist) n'expose pas de variante CSV. `etag` et
+	// `sizeBytes` décrivent le fichier pointé par `url`.
+	//
+	// GET /v1/exports
+	ListExports(ctx context.Context, params ListExportsParams) (ListExportsRes, error)
 }
 
 // ForzathonShopInvoker invokes operations described by OpenAPI v3 specification.
@@ -4071,6 +4090,141 @@ func (c *Client) sendListEvents(ctx context.Context, params ListEventsParams) (r
 
 	stage = "DecodeResponse"
 	result, err := decodeListEventsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListExports invokes listExports operation.
+//
+// Manifeste des archives statiques régénérées périodiquement (job quotidien) : un fichier par
+// jeu, ressource et format. Les fichiers sont servis depuis l'edge (cache long + ETag) —
+// récupérer le dataset complet offline sans solliciter l'API de lecture (esprit open-data). Le
+// champ `game` est un filtre OPTIONNEL (le manifeste est cross-jeu, comme `/v1/meta`) : absent →
+// toutes les archives. N'apparaissent que les archives réellement générées (jamais d'URL
+// inventée) : une ressource imbriquée (playlist) n'expose pas de variante CSV. `etag` et
+// `sizeBytes` décrivent le fichier pointé par `url`.
+//
+// GET /v1/exports
+func (c *Client) ListExports(ctx context.Context, params ListExportsParams) (ListExportsRes, error) {
+	res, err := c.sendListExports(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListExports(ctx context.Context, params ListExportsParams) (res ListExportsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listExports"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/v1/exports"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListExportsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/v1/exports"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "game" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "game",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Game.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, ListExportsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{},
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListExportsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
