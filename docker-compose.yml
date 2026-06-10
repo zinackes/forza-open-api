@@ -40,8 +40,13 @@ services:
       DATABASE_URL: "postgres://forza:forza@postgres:5432/forza?sslmode=disable"
       REDIS_URL: "redis://valkey:6379/0"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
+      EXPORTS_DIR: /data/exports
     ports:
       - "${API_HOST_PORT:-8080}:8080"
+    volumes:
+      # Archives générées par le scheduler (bind partagé) : l'API ne fait que les
+      # servir en statique (/static/exports/*) → lecture seule.
+      - ./data/exports:/data/exports:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,13 +67,26 @@ services:
       context: .
       dockerfile: Dockerfile
     entrypoint: ["/scheduler"]
+    # uid hôte (dev) : l'image distroless tourne en nonroot (65532), qui ne peut
+    # pas écrire dans le bind mount ./data/exports possédé par l'utilisateur hôte.
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     environment:
       DATABASE_URL: "postgres://forza:forza@postgres:5432/forza?sslmode=disable"
       REDIS_URL: "redis://valkey:6379/0"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
       PLAYLIST_CRON: "${PLAYLIST_CRON:-0 15 * * 4}"
       PLAYLIST_GAMES: "${PLAYLIST_GAMES:-fh6}"
+      FORZATHON_CRON: "${FORZATHON_CRON:-0 15 * * 4}"
+      FORZATHON_GAMES: "${FORZATHON_GAMES:-fh6}"
+      EXPORTS_CRON: "${EXPORTS_CRON:-0 5 * * *}"
+      EXPORTS_GAMES: "${EXPORTS_GAMES:-fh6}"
+      # Même chemin que l'API : le manifeste (table exports) pointe des URLs
+      # /static/exports/* que l'API sert depuis ce bind partagé.
+      EXPORTS_DIR: /data/exports
+      EXPORTS_BASE_URL: "${EXPORTS_BASE_URL:-http://localhost:8080/static/exports}"
       ALERT_WEBHOOK_URL: "${ALERT_WEBHOOK_URL:-}"
+    volumes:
+      - ./data/exports:/data/exports
     depends_on:
       postgres:
         condition: service_healthy
