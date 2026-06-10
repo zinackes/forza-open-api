@@ -102,13 +102,13 @@ func listKeys(ctx context.Context, logger *slog.Logger) {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "KEY_HASH\tNAME\tRATE_LIMIT\tCREATED_AT\tSTATUS")
+	_, _ = fmt.Fprintln(w, "KEY_HASH\tNAME\tRATE_LIMIT\tCREATED_AT\tSTATUS")
 	for _, k := range keys {
 		status := "active"
 		if k.RevokedAt != nil {
 			status = "revoked " + k.RevokedAt.UTC().Format(time.RFC3339)
 		}
-		fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\n",
 			k.Hash, k.Name, k.RateLimit, k.CreatedAt.UTC().Format(time.RFC3339), status)
 	}
 	_ = w.Flush()
