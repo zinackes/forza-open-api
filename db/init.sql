@@ -342,7 +342,7 @@ CREATE INDEX IF NOT EXISTS data_changes_game_occurred_idx ON data_changes (game,
 CREATE TABLE IF NOT EXISTS api_keys (
     key_hash   TEXT PRIMARY KEY,
     name       TEXT,
-    rate_limit INT,
+    rate_limit INT NOT NULL DEFAULT 1000,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     revoked_at TIMESTAMPTZ
 );
