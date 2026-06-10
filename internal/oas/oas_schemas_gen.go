@@ -427,8 +427,6 @@ func (s *Car) SetUpdatedAt(val OptDateTime) {
 	s.UpdatedAt = val
 }
 
-func (*Car) getCarRes() {}
-
 // Classe Performance Index. R (voitures track-focused) introduite en FH6 ; absente de FH5.
 // Ref: #/components/schemas/CarClass
 type CarClass string
@@ -531,7 +529,33 @@ func (s *CarComparison) SetItems(val []Car) {
 	s.Items = val
 }
 
-func (*CarComparison) compareCarsRes() {}
+// CarComparisonHeaders wraps CarComparison with response headers.
+type CarComparisonHeaders struct {
+	CacheControl OptString
+	Response     CarComparison
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *CarComparisonHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *CarComparisonHeaders) GetResponse() CarComparison {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *CarComparisonHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *CarComparisonHeaders) SetResponse(val CarComparison) {
+	s.Response = val
+}
+
+func (*CarComparisonHeaders) compareCarsRes() {}
 
 // CarHeaders wraps Car with response headers.
 type CarHeaders struct {
@@ -559,6 +583,7 @@ func (s *CarHeaders) SetResponse(val Car) {
 	s.Response = val
 }
 
+func (*CarHeaders) getCarRes()       {}
 func (*CarHeaders) getRandomCarRes() {}
 
 // Ref: #/components/schemas/CarList
@@ -609,7 +634,33 @@ func (s *CarList) SetPageSize(val int) {
 	s.PageSize = val
 }
 
-func (*CarList) listCarsRes() {}
+// CarListHeaders wraps CarList with response headers.
+type CarListHeaders struct {
+	CacheControl OptString
+	Response     CarList
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *CarListHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *CarListHeaders) GetResponse() CarList {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *CarListHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *CarListHeaders) SetResponse(val CarList) {
+	s.Response = val
+}
+
+func (*CarListHeaders) listCarsRes() {}
 
 // Perk de l'arbre Car Mastery FH6 : une case (row, col) de la grille 4×4 de la voiture, débloquée
 // contre des Skill Points. Champs non sourcés → NULL (sourcing progressif : dataset forzagarage.
@@ -1580,14 +1631,26 @@ func (s *Drivetrain) UnmarshalText(data []byte) error {
 	}
 }
 
-// Erreur au format RFC 9457 (application/problem+json).
+// Erreur au format RFC 9457 (application/problem+json). Toutes les réponses d'erreur (400, 401, 404,
+//
+//	429, 5xx) partagent ce format. Le champ `type` porte un code stable (URN, indépendant de l'host)
+//
+// :
+// - urn:forza-open-api:problem:validation — requête invalide (400) ;
+// - urn:forza-open-api:problem:unauthorized — clé API absente/invalide (401) ;
+// - urn:forza-open-api:problem:not-found — ressource introuvable (404) ;
+// - urn:forza-open-api:problem:rate-limited — quota dépassé (429) ;
+// - urn:forza-open-api:problem:internal — erreur interne (500).
 // Ref: #/components/schemas/Error
 type Error struct {
-	Type     OptURI    `json:"type"`
-	Title    OptString `json:"title"`
-	Status   OptInt    `json:"status"`
-	Detail   OptString `json:"detail"`
-	Instance OptURI    `json:"instance"`
+	// Code d'erreur stable (URN). Voir la liste dans la description du schéma. Référence stable dans
+	// le temps, dissociée du statut HTTP.
+	Type   OptURI    `json:"type"`
+	Title  OptString `json:"title"`
+	Status OptInt    `json:"status"`
+	Detail OptString `json:"detail"`
+	// Chemin de la requête à l'origine de l'erreur (ex. /v1/cars/ghost).
+	Instance OptURI `json:"instance"`
 }
 
 // GetType returns the value of Type.

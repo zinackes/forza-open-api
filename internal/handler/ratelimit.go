@@ -7,7 +7,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -80,7 +79,7 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 
 		setRateLimitHeaders(w.Header(), res, rl.window)
 		if !res.Allowed {
-			writeRateLimited(w, res)
+			writeRateLimited(w, r, res)
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -106,19 +105,13 @@ func setRateLimitHeaders(h http.Header, res store.RateLimitResult, window time.D
 
 // writeRateLimited rend un 429 RFC 9457 (application/problem+json) avec
 // Retry-After (delta en secondes, >= 1). Les en-têtes de quota ont déjà été
-// posés par setRateLimitHeaders.
-func writeRateLimited(w http.ResponseWriter, res store.RateLimitResult) {
+// posés par setRateLimitHeaders ; le corps est délégué à writeProblem, l'unique
+// écrivain d'erreur, pour rester strictement au même format que 400/401/404.
+func writeRateLimited(w http.ResponseWriter, r *http.Request, res store.RateLimitResult) {
 	retry := int64(math.Ceil(res.ResetAfter.Seconds()))
 	if retry < 1 {
 		retry = 1
 	}
 	w.Header().Set("Retry-After", strconv.FormatInt(retry, 10))
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(http.StatusTooManyRequests)
-	_ = json.NewEncoder(w).Encode(problem{
-		Type:   "about:blank",
-		Title:  http.StatusText(http.StatusTooManyRequests),
-		Status: http.StatusTooManyRequests,
-		Detail: "rate limit exceeded",
-	})
+	writeProblem(w, r, http.StatusTooManyRequests, "rate limit exceeded")
 }

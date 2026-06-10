@@ -117,35 +117,41 @@ func seedCatalog(ctx context.Context, t *testing.T, pool *pgxpool.Pool) {
 func TestCatalogGolden(t *testing.T) {
 	srv := newSeededCatalogServer(t)
 
+	// carsCC : Cache-Control attendu sur les 200 cacheables du catalogue (cars
+	// list / getCar / compare). Posé par les handlers via le wrapper *Headers du
+	// contrat. Valeur figée ici comme attendu golden des en-têtes.
+	const carsCC = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+
 	cases := []struct {
 		name   string
 		target string
 		status int
+		cache  string // Cache-Control attendu (vide = non vérifié)
 	}{
 		// listCars : liste complète triée, filtres, pagination, cas limites.
-		{"cars_all", "/v1/cars?game=fh6", http.StatusOK},
-		{"cars_make", "/v1/cars?game=fh6&make=Honda", http.StatusOK},
-		{"cars_class_a", "/v1/cars?game=fh6&class=A", http.StatusOK},
-		{"cars_page2", "/v1/cars?game=fh6&page_size=2&page=2", http.StatusOK},
-		{"cars_page_out_of_bounds", "/v1/cars?game=fh6&page=99", http.StatusOK},
-		{"cars_empty_result", "/v1/cars?game=fh6&make=Bugatti", http.StatusOK},
-		{"cars_game_fh5", "/v1/cars?game=fh5", http.StatusOK},
+		{"cars_all", "/v1/cars?game=fh6", http.StatusOK, carsCC},
+		{"cars_make", "/v1/cars?game=fh6&make=Honda", http.StatusOK, carsCC},
+		{"cars_class_a", "/v1/cars?game=fh6&class=A", http.StatusOK, carsCC},
+		{"cars_page2", "/v1/cars?game=fh6&page_size=2&page=2", http.StatusOK, carsCC},
+		{"cars_page_out_of_bounds", "/v1/cars?game=fh6&page=99", http.StatusOK, carsCC},
+		{"cars_empty_result", "/v1/cars?game=fh6&make=Bugatti", http.StatusOK, carsCC},
+		{"cars_game_fh5", "/v1/cars?game=fh5", http.StatusOK, carsCC},
 		// obtain : match par token d'obtain_method multi-valeurs ; valeur hors
 		// enum rejetée en 400 par ogen.
-		{"cars_obtain_wheelspin", "/v1/cars?game=fh6&obtain=wheelspin", http.StatusOK},
-		{"cars_obtain_invalid", "/v1/cars?game=fh6&obtain=bogus", http.StatusBadRequest},
+		{"cars_obtain_wheelspin", "/v1/cars?game=fh6&obtain=wheelspin", http.StatusOK, carsCC},
+		{"cars_obtain_invalid", "/v1/cars?game=fh6&obtain=bogus", http.StatusBadRequest, ""},
 		// getCar : trouvé puis 404 RFC 9457.
-		{"getcar_found", "/v1/cars/honda-civic", http.StatusOK},
-		{"getcar_not_found", "/v1/cars/ghost", http.StatusNotFound},
+		{"getcar_found", "/v1/cars/honda-civic", http.StatusOK, carsCC},
+		{"getcar_not_found", "/v1/cars/ghost", http.StatusNotFound, ""},
 		// compareCars : 2 puis 3 voitures alignées sur l'ordre des ids ; bornes
 		// 2..3 (ogen → 400) ; id inconnu → 404 (comparaison stricte).
-		{"compare_two", "/v1/cars/compare?ids=ford-gt,audi-r8", http.StatusOK},
-		{"compare_three", "/v1/cars/compare?ids=audi-r8,ford-gt,honda-civic", http.StatusOK},
-		{"compare_too_few", "/v1/cars/compare?ids=audi-r8", http.StatusBadRequest},
-		{"compare_too_many", "/v1/cars/compare?ids=audi-r8,ford-gt,honda-civic,mazda-rx7", http.StatusBadRequest},
-		{"compare_missing_id", "/v1/cars/compare?ids=audi-r8,ghost", http.StatusNotFound},
+		{"compare_two", "/v1/cars/compare?ids=ford-gt,audi-r8", http.StatusOK, carsCC},
+		{"compare_three", "/v1/cars/compare?ids=audi-r8,ford-gt,honda-civic", http.StatusOK, carsCC},
+		{"compare_too_few", "/v1/cars/compare?ids=audi-r8", http.StatusBadRequest, ""},
+		{"compare_too_many", "/v1/cars/compare?ids=audi-r8,ford-gt,honda-civic,mazda-rx7", http.StatusBadRequest, ""},
+		{"compare_missing_id", "/v1/cars/compare?ids=audi-r8,ghost", http.StatusNotFound, ""},
 		// manufacturers.
-		{"manufacturers", "/v1/manufacturers?game=fh6", http.StatusOK},
+		{"manufacturers", "/v1/manufacturers?game=fh6", http.StatusOK, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -156,6 +162,11 @@ func TestCatalogGolden(t *testing.T) {
 
 			if rec.Code != tc.status {
 				t.Fatalf("status = %d, want %d\nbody: %s", rec.Code, tc.status, rec.Body.String())
+			}
+			if tc.cache != "" {
+				if got := rec.Header().Get("Cache-Control"); got != tc.cache {
+					t.Errorf("Cache-Control = %q, want %q", got, tc.cache)
+				}
 			}
 			assertGolden(t, tc.name, rec.Body.Bytes())
 		})

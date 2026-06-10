@@ -5,12 +5,18 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"net/url"
 
 	"github.com/zinackes/forza-open-api/internal/oas"
 	"github.com/zinackes/forza-open-api/internal/store"
 )
+
+// carsCacheControl : le catalogue est quasi-statique (ne change qu'à un run
+// d'ingestion). Cache long, mais ETag + If-None-Match (middleware ConditionalGet)
+// rendent la revalidation gratuite (304). max-age : cache navigateur 1 h ;
+// s-maxage : cache bord (Cloudflare) 1 j ; stale-while-revalidate : sert périmé
+// jusqu'à 1 j en revalidant en arrière-plan.
+const carsCacheControl = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
 
 // ListCars implémente GET /v1/cars.
 func (h *Handler) ListCars(ctx context.Context, params oas.ListCarsParams) (oas.ListCarsRes, error) {
@@ -40,7 +46,10 @@ func (h *Handler) ListCars(ctx context.Context, params oas.ListCarsParams) (oas.
 	for _, c := range rows {
 		items = append(items, mapCar(c))
 	}
-	return &oas.CarList{Items: items, Total: total, Page: page, PageSize: size}, nil
+	return &oas.CarListHeaders{
+		CacheControl: oas.NewOptString(carsCacheControl),
+		Response:     oas.CarList{Items: items, Total: total, Page: page, PageSize: size},
+	}, nil
 }
 
 // randomCarCacheControl : un tirage aléatoire ne doit jamais être mis en cache
@@ -64,11 +73,7 @@ func (h *Handler) GetRandomCar(ctx context.Context, params oas.GetRandomCarParam
 		return nil, err
 	}
 	if c == nil {
-		return &oas.GetRandomCarNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no car matches the given filters"),
-		}, nil
+		return nil, errNotFound("no car matches the given filters")
 	}
 	return &oas.CarHeaders{
 		CacheControl: oas.NewOptString(randomCarCacheControl),
@@ -84,14 +89,12 @@ func (h *Handler) GetCar(ctx context.Context, params oas.GetCarParams) (oas.GetC
 		return nil, err
 	}
 	if c == nil {
-		return &oas.GetCarNotFound{
-			Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-			Status: oas.NewOptInt(http.StatusNotFound),
-			Detail: oas.NewOptString("no car with the given id"),
-		}, nil
+		return nil, errNotFound("no car with the given id")
 	}
-	car := mapCar(*c)
-	return &car, nil
+	return &oas.CarHeaders{
+		CacheControl: oas.NewOptString(carsCacheControl),
+		Response:     mapCar(*c),
+	}, nil
 }
 
 // CompareCars implémente GET /v1/cars/compare : 2 à 3 voitures alignées dans
@@ -111,15 +114,14 @@ func (h *Handler) CompareCars(ctx context.Context, params oas.CompareCarsParams)
 	for _, id := range params.Ids {
 		c, ok := byID[id]
 		if !ok {
-			return &oas.CompareCarsNotFound{
-				Title:  oas.NewOptString(http.StatusText(http.StatusNotFound)),
-				Status: oas.NewOptInt(http.StatusNotFound),
-				Detail: oas.NewOptString("no car with id " + id),
-			}, nil
+			return nil, errNotFound("no car with id " + id)
 		}
 		items = append(items, mapCar(c))
 	}
-	return &oas.CarComparison{Items: items}, nil
+	return &oas.CarComparisonHeaders{
+		CacheControl: oas.NewOptString(carsCacheControl),
+		Response:     oas.CarComparison{Items: items},
+	}, nil
 }
 
 // mapCar projette la vue DB d'une voiture sur le modèle du contrat.
