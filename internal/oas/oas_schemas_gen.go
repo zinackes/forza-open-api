@@ -4608,7 +4608,7 @@ type Region string
 // Ref: #/components/schemas/Reward
 type Reward struct {
 	ID        string `json:"id"`
-	AtPercent int    `json:"atPercent"`
+	AtPercent OptInt `json:"atPercent"`
 	Type      string `json:"type"`
 	Item      string `json:"item"`
 }
@@ -4619,7 +4619,7 @@ func (s *Reward) GetID() string {
 }
 
 // GetAtPercent returns the value of AtPercent.
-func (s *Reward) GetAtPercent() int {
+func (s *Reward) GetAtPercent() OptInt {
 	return s.AtPercent
 }
 
@@ -4639,7 +4639,7 @@ func (s *Reward) SetID(val string) {
 }
 
 // SetAtPercent sets the value of AtPercent.
-func (s *Reward) SetAtPercent(val int) {
+func (s *Reward) SetAtPercent(val OptInt) {
 	s.AtPercent = val
 }
 

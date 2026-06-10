@@ -10270,8 +10270,10 @@ func (s *Reward) encodeFields(e *jx.Encoder) {
 		e.Str(s.ID)
 	}
 	{
-		e.FieldStart("atPercent")
-		e.Int(s.AtPercent)
+		if s.AtPercent.Set {
+			e.FieldStart("atPercent")
+			s.AtPercent.Encode(e)
+		}
 	}
 	{
 		e.FieldStart("type")
@@ -10312,11 +10314,9 @@ func (s *Reward) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"id\"")
 			}
 		case "atPercent":
-			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				v, err := d.Int()
-				s.AtPercent = int(v)
-				if err != nil {
+				s.AtPercent.Reset()
+				if err := s.AtPercent.Decode(d); err != nil {
 					return err
 				}
 				return nil
@@ -10357,7 +10357,7 @@ func (s *Reward) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001111,
+		0b00001101,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

@@ -150,3 +150,108 @@ ON CONFLICT (id) DO UPDATE SET
 	}
 	return added, nil
 }
+
+// seriesCols est la liste de colonnes partagée par les lectures d'une série.
+const seriesCols = `id, game, series, name, season, week, starts_at, ends_at, is_current`
+
+// scanSeries projette une ligne (ordre seriesCols) en Series.
+func scanSeries(row pgx.Row, ser *Series) error {
+	return row.Scan(&ser.ID, &ser.Game, &ser.Series, &ser.Name, &ser.Season,
+		&ser.Week, &ser.StartsAt, &ser.EndsAt, &ser.IsCurrent)
+}
+
+// ListSeries renvoie les séries connues d'un jeu, les plus récentes d'abord
+// (série puis semaine décroissantes). Sans enfants : la liste reste légère ; le
+// détail (rewards/challenges) est servi par SeriesDetail/CurrentSeries.
+func (s *Store) ListSeries(ctx context.Context, game string) ([]Series, error) {
+	rows, err := s.DB.Query(ctx,
+		`SELECT `+seriesCols+` FROM series WHERE game = $1
+         ORDER BY series DESC NULLS LAST, week DESC NULLS LAST`, game)
+	if err != nil {
+		return nil, fmt.Errorf("query series (%s): %w", game, err)
+	}
+	defer rows.Close()
+
+	var out []Series
+	for rows.Next() {
+		var ser Series
+		if err := scanSeries(rows, &ser); err != nil {
+			return nil, fmt.Errorf("scan series: %w", err)
+		}
+		out = append(out, ser)
+	}
+	return out, rows.Err()
+}
+
+// SeriesDetail renvoie une série et ses rewards/challenges. (nil, nil, nil, nil)
+// si l'identifiant est inconnu (le handler en fait un 404).
+func (s *Store) SeriesDetail(ctx context.Context, id string) (*Series, []Reward, []Challenge, error) {
+	var ser Series
+	if err := scanSeries(s.DB.QueryRow(ctx, `SELECT `+seriesCols+` FROM series WHERE id = $1`, id), &ser); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil, nil, nil
+		}
+		return nil, nil, nil, fmt.Errorf("query series %s: %w", id, err)
+	}
+	rewards, challenges, err := s.seriesChildren(ctx, id)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return &ser, rewards, challenges, nil
+}
+
+// CurrentSeries renvoie la série courante d'un jeu (is_current) et ses enfants,
+// ou (nil, …) si aucune n'est marquée courante.
+func (s *Store) CurrentSeries(ctx context.Context, game string) (*Series, []Reward, []Challenge, error) {
+	var ser Series
+	if err := scanSeries(s.DB.QueryRow(ctx, `SELECT `+seriesCols+` FROM series WHERE game = $1 AND is_current`, game), &ser); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil, nil, nil
+		}
+		return nil, nil, nil, fmt.Errorf("query current series (%s): %w", game, err)
+	}
+	rewards, challenges, err := s.seriesChildren(ctx, ser.ID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return &ser, rewards, challenges, nil
+}
+
+// seriesChildren charge les rewards et challenges d'une série, dans l'ordre de
+// leur identifiant (= ordre d'ingestion, ids zero-paddés rw%02d/ch%02d).
+func (s *Store) seriesChildren(ctx context.Context, id string) ([]Reward, []Challenge, error) {
+	rRows, err := s.DB.Query(ctx,
+		`SELECT id, series_id, at_percent, type, item FROM rewards WHERE series_id = $1 ORDER BY id`, id)
+	if err != nil {
+		return nil, nil, fmt.Errorf("query rewards %s: %w", id, err)
+	}
+	var rewards []Reward
+	for rRows.Next() {
+		var r Reward
+		if err := rRows.Scan(&r.ID, &r.SeriesID, &r.AtPercent, &r.Type, &r.Item); err != nil {
+			rRows.Close()
+			return nil, nil, fmt.Errorf("scan reward: %w", err)
+		}
+		rewards = append(rewards, r)
+	}
+	rRows.Close()
+	if err := rRows.Err(); err != nil {
+		return nil, nil, fmt.Errorf("iterate rewards %s: %w", id, err)
+	}
+
+	cRows, err := s.DB.Query(ctx,
+		`SELECT id, series_id, scope, name, requirement, reward, expires_at FROM challenges WHERE series_id = $1 ORDER BY id`, id)
+	if err != nil {
+		return nil, nil, fmt.Errorf("query challenges %s: %w", id, err)
+	}
+	defer cRows.Close()
+	var challenges []Challenge
+	for cRows.Next() {
+		var c Challenge
+		if err := cRows.Scan(&c.ID, &c.SeriesID, &c.Scope, &c.Name, &c.Requirement, &c.Reward, &c.ExpiresAt); err != nil {
+			return nil, nil, fmt.Errorf("scan challenge: %w", err)
+		}
+		challenges = append(challenges, c)
+	}
+	return rewards, challenges, cRows.Err()
+}

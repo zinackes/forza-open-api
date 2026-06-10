@@ -1,0 +1,142 @@
+{{game|fh6=y}}{{DISPLAYTITLE:Series 1 - Autumn Season}}{{InfoboxFH6FestivalPlaylist
+|name     = Welcome to Japan
+|image    = 
+|series   = 1
+|season   = autumn
+|duration = May 28, 2026 - June 4, 2026
+|start    = May 28, 2026
+|end      = June 4, 2026
+|challenge= 17
+|seasonal = 24
+|online   = 3
+|monthly  = 1
+|total = 45
+|complete = 45
+|prev = n
+}}{{FH6SeasonOverview|autumn|1|start = May 28, 2026|end = June 4, 2026|total = 45|complete = 45}}
+
+{|class="table" style="width: 100%; text-align: center"
+!<div style="display: grid; grid-template-columns: 1fr 250px; grid-column-start: 1; grid-column-end: 2;>
+<div>Season Progress Milestone</div>
+<div>Reward</div>
+</div>
+|-
+{{FH6FPEvent|seasoncar|15|{{FH6FPReward|ex|Nissan Skyline GT-R V-Spec 1997|[[Nissan Skyline GT-R V-Spec (1997)|Nissan Skyline GT-R V-Spec]]|r}}}}
+{{FH6FPEvent|seasoncar|30|{{FH6FPReward|ex|Honda CRX SiR|[[Honda CR-X SiR]]|c}}}}
+|}
+
+==Challenges==
+===Weekly Challenge: "King of the Road"===
+[[File:FH6 Nissan Silvia K's 1989.png|150px|left]]{{quote|The 1989 Nissan Silvia K's is the highest spec trim level of the S13, earning the 'K for King' variant. This Silvia has stood the test of time with cutting edge Multilink Rear Suspension and a Turbocharged 1.8-liter twin-cam engine producing 173 hp, granting an exquisite and stylish driving experience.|Challenge Description}}
+{|class="table" style="width: 100%; text-align: center"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Chapter and Challenge</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH6FPEvent|w1| |'''Own''' and '''Drive''' the 1989 [[Nissan Silvia K's (1989)|Nissan Silvia K's]]|6 = Drive}}
+{{FH6FPEvent|w2| |'''Earn 3 Stars at [[Forza Horizon 6/PR Stunts/Drift Zones|Drift Zones]]''' in the 1989 Nissan Silvia K's|6 = DriftZone}}
+{{FH6FPEvent|w3| |'''Win a [[Forza Horizon 6/Events/Road Races|Road Race]] in the 1989 Nissan Silvia K's|6 = RoadSprint}}
+{{FH6FPEvent|w4| |'''Complete 2 runs at the Festival Kilometer [[Forza Horizon 6/Drag Meets|Drag Meet]]''' in the 1989 Silvia K's|{{FH6FPReward|cr| |25,000|c}}|6 = DragMeet}}
+|}
+
+===Daily Challenges===
+{|class="table" style="width: 100%; text-align: center"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Chapter and Challenge</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH6FPEvent|d1|Big in Japan|Win a [[Forza Horizon 6/Events/Cross Country|Cross Country]] Race in a [[:Category:Sports Utility Heroes (FH6)|Sports Utility Hero]]|{{FH6FPReward|cr| |5,000|c}}|6 = CrossCountryCircuit}}
+{{FH6FPEvent|d2|Pre-Loved|Purchase an [[Forza Horizon 6/Cars/Aftermarket|Aftermarket Car]]|{{FH6FPReward|cr| |5,000|c}}|6 = Aftermarket}}
+{{FH6FPEvent|d3|In the Zone|Earn a total of {{speed|300}} across [[Forza Horizon 6/PR Stunts/Speed Zones|Speed Zones]]|{{FH6FPReward|cr| |5,000|c}}|6 = SpeedZone}}
+{{FH6FPEvent|d4|Hang Time|Earn 3 Stars at [[Forza Horizon 6/PR Stunts/Danger Signs|Danger Signs]]|{{FH6FPReward|cr| |5,000|c}}|6 = DangerSignStars}}
+{{FH6FPEvent|d5|Link Skiller|Earn a LINK [[Forza Horizon 6/Skills|Skill]]|{{FH6FPReward|cr| |5,000|c}}|6 = LinkSkills}}
+{{FH6FPEvent|d6|Drop the Beat|Earn an Awesome Air Skill in the 1991 [[Honda Beat]]|{{FH6FPReward|cr| |5,000|c}}|6 = AirbornePass}}
+{{FH6FPEvent|d7|Tokyo Drift|Earn 3 Awesome Drift or E-Drift Skills at Shibuya Crossing|{{FH6FPReward|cr| |5,000|c}}|6 = Drifting}}
+|}
+
+===Additional Challenges===
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH6FPEvent|photo|TokyoTower|Take a photo at the base of Tokyo Tower|{{FH6FPReward|link| |Oooh... shiny!|c}}}}
+{{FH6FPEvent|treasure|Minamino Region|Follow the Photo Clue to Discover the Treasure!|{{FH6FPReward|cr| |100,000|r}}}}
+|}
+
+==Seasonal Events==
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;">
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+<!-- Championships -->
+{{FH6FPEvent|dc|Trail Mix|{{FH6CarPI|b|mr}}|{{FH6FPReward|ex|Schuppan 962CR|[[Schuppan 962CR]]|e}}}}
+{{FH6FPEvent|rc|Majestic Domestics|{{FH6CarPI|d|ecd}}|{{FH6FPReward|ex|Abarth 695 Biposto|[[Abarth 695 Biposto|Abarth 695 '16]]|c}}}}
+{{FH6FPEvent|cc|Country Living|{{FH6CarPI|b|uo}}|{{FH6FPReward|ex|Aston Martin DBX|[[Aston Martin DBX|AM DBX '21]]|r}}}}
+<!-- PR -->
+{{FH6FPEvent|ds|Highway Jump|{{FH6CarPI|b|[[:Category:Japan|Country: Japan]]}}{{distance|800.5|ft}} |{{FH6FPReward|wheelspin}}}}
+{{FH6FPEvent|sz|Forest Straight|{{FH6CarPI|b|[[:Category:Japan|Country: Japan]]}} {{speed|85.0}} |{{FH6FPReward|wheelspin}}}}
+{{FH6FPEvent|tb|On Par|{{FH6CarPI|b|[[:Category:Japan|Country: Japan]]}} 30 seconds |{{FH6FPReward|wheelspin}}}}
+{{FH6FPEvent|j|Tokyo City Food Delivery|Complete a full shift.|{{FH6FPReward|ex|Nissan Be-1|[[Nissan Be-1|Nissan Be-1 '87]]|e}}|3}}
+|}
+
+==Online==
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH6FPEvent|tg|Mazda of the Mountain|Complete a Touge Showdown Championship in any [[Mazda]]|{{FH6FPReward|ex|Lamborghini Huracan EVO|[[Lamborghini Huracán EVO]]|e}}|3}}
+|}
+
+==Monthly Events==
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH6FPEvent|rivals|Soni Circuit||{{FH6FPReward|super}}}}
+|}
+
+==Test Drive==
+{|class="table" style="width: 100%"
+!<div style="display: grid; grid-template-columns: 1fr 200px 52px; grid-column-start: 1; grid-column-end: 3;>
+<div>Event</div>
+<div>Reward</div>
+<div>Points</div>
+</div>
+|-
+{{FH6FPEvent|test|2008 [[Mazda Furai]]|Horizon Festival| }}
+|}
+
+==Gallery==
+<gallery widths="200" spacing="small" hideaddbutton="true">
+FH6 S1Autumn PhotoChallenge.jpg|"#TokyoTower" Photo Challenge
+FH6 S1Autumn TreasureHunt.jpg|"Minamino Region" Treasure Hunt
+FH6 S1Autumn Champ1.jpg|"Trail Mix" Seasonal Championship
+FH6 S1Autumn Champ2.jpg|"Majestic Domestics" Seasonal Championship
+FH6 S1Autumn Champ3.jpg|"Country Living" Seasonal Championship
+FH6 S1Autumn DangerSign.jpg|"Highway Jump" Danger Sign
+FH6 S1Autumn SpeedZone.jpg|"Forest Straight" Speed Zone
+FH6 S1Autumn Trailblazer.jpg|"On Par" Trailblazer
+FH6 S1Autumn HorizonPlay.jpg|"Mazda of the Mountain" Touge Showdown
+FH6 S1Autumn Job.jpg|"Tokyo City Food Delivery" Job{{GalleryNote|(Unused image)}}
+FH6 S1 MonthlyRivals.jpg|"Soni Circuit" Monthly Rivals
+FH6 S1Autumn StuntParty.jpg|Stunt Party{{GalleryNote|(Unused challenge)}}
+</gallery>
+
+==References==
+<References />

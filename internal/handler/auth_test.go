@@ -133,10 +133,10 @@ func TestHandleApiKeyAuth(t *testing.T) {
 }
 
 // TestApiKeyAuthHTTP vérifie le comportement bout-en-bout à travers le serveur
-// ogen, sur un endpoint encore en stub (/v1/playlist/series, 501 quand la
-// sécurité passe). La sécurité s'exécute avant le handler : une clé invalide
-// court-circuite en 401 application/problem+json ; sans clé ou avec une clé
-// valide, on atteint le stub (501).
+// ogen sur /v1/playlist/series. La sécurité s'exécute avant le handler : une clé
+// invalide court-circuite en 401 application/problem+json ; sans clé (lecture
+// publique) ou avec une clé valide, on atteint le handler (200, liste vide sur
+// une base de test sans série).
 func TestApiKeyAuthHTTP(t *testing.T) {
 	st := newAuthStore(t)
 	validPlain := mustKey(t, st, "http-active", 0, false)
@@ -153,8 +153,8 @@ func TestApiKeyAuthHTTP(t *testing.T) {
 		key  string
 		want int
 	}{
-		{"sans clé (lecture publique)", "", http.StatusNotImplemented},
-		{"clé valide", validPlain, http.StatusNotImplemented},
+		{"sans clé (lecture publique)", "", http.StatusOK},
+		{"clé valide", validPlain, http.StatusOK},
 		{"clé inconnue", "totally-unknown-key", http.StatusUnauthorized},
 		{"clé révoquée", revokedPlain, http.StatusUnauthorized},
 	}
