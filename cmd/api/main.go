@@ -64,7 +64,7 @@ func main() {
 		logger.Error("oas server", "err", err)
 		os.Exit(1)
 	}
-	rateLimiter := handler.NewRateLimiter(sec, cfg.RateLimitWindow)
+	rateLimiter := handler.NewRateLimiter(sec, cfg.RateLimitWindow, cfg.AnonRateLimit)
 	conditional := handler.ConditionalGet(cfg.DataVersion)
 	cors := handler.NewCORS(cfg.CORSAllowedOrigins, cfg.CORSWriteOrigins)
 

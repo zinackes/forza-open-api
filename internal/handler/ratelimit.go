@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -48,16 +49,22 @@ type RateLimiter struct {
 	// + Postgres), pour partager exactement la même notion de « clé valide ».
 	sec    SecurityHandler
 	window time.Duration
+	// anonLimit borne le trafic SANS clé, par IP source, sur la même fenêtre.
+	// Protection de l'origin tant que le bord (Cloudflare, Phase 5) n'est pas
+	// devant. 0 = désactivé — à faire une fois derrière le bord : le trafic
+	// tunnelé partage une même IP locale et le bord assure déjà cette protection.
+	anonLimit int
 }
 
 // NewRateLimiter construit le middleware. window est la largeur de la fenêtre
-// glissante (cf. config.RateLimitWindow).
-func NewRateLimiter(sec SecurityHandler, window time.Duration) *RateLimiter {
-	return &RateLimiter{sec: sec, window: window}
+// glissante (cf. config.RateLimitWindow) ; anonLimit le quota par IP du trafic
+// anonyme (cf. config.AnonRateLimit, 0 = désactivé).
+func NewRateLimiter(sec SecurityHandler, window time.Duration, anonLimit int) *RateLimiter {
+	return &RateLimiter{sec: sec, window: window, anonLimit: anonLimit}
 }
 
 // Middleware enveloppe next. Comportement :
-//   - sans X-API-Key → lecture publique anonyme, pas de quota par clé (la
+//   - sans X-API-Key → quota par IP source (anonLimit ; 0 = passthrough et la
 //     protection du trafic anonyme relève du bord, Cloudflare) ;
 //   - clé invalide/révoquée → on laisse passer pour qu'ogen renvoie 401 ;
 //   - panne Redis ou résolution impossible → fail-open (on n'érige pas une
@@ -67,7 +74,7 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		raw := r.Header.Get("X-API-Key")
 		if raw == "" {
-			next.ServeHTTP(w, r)
+			rl.serveAnonymous(w, r, next)
 			return
 		}
 
@@ -102,6 +109,42 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 		// restent cohérents, sans second appel Redis.
 		next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, rateLimitResultCtxKey{}, res)))
 	})
+}
+
+// serveAnonymous applique le quota par IP au trafic sans clé. Même fenêtre
+// glissante Redis que les clés ; le seau est dérivé de l'IP source HASHÉE (pas
+// d'IP en clair dans Redis ; les entrées expirent avec la fenêtre). Fail-open
+// sur toute erreur, comme le chemin par clé. Le RateLimitResult n'est PAS posé
+// dans le context : /v1/me exige une clé et le quota anonyme n'y a pas de sens.
+func (rl *RateLimiter) serveAnonymous(w http.ResponseWriter, r *http.Request, next http.Handler) {
+	if rl.anonLimit <= 0 {
+		next.ServeHTTP(w, r)
+		return
+	}
+
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil || ip == "" {
+		// RemoteAddr inattendu (proxy local, test) : fail-open plutôt que de
+		// mettre tout le trafic anonyme dans un seau commun erroné.
+		next.ServeHTTP(w, r)
+		return
+	}
+
+	ctx := r.Context()
+	res, err := rl.sec.store.AllowRequest(ctx,
+		rateLimitKeyPrefix+"anon:"+apikey.Hash(ip), rl.anonLimit, rl.window)
+	if err != nil {
+		slog.WarnContext(ctx, "rate limit: redis unavailable, allowing anonymous", "err", err)
+		next.ServeHTTP(w, r)
+		return
+	}
+
+	setRateLimitHeaders(w.Header(), res, rl.window)
+	if !res.Allowed {
+		writeRateLimited(w, r, res)
+		return
+	}
+	next.ServeHTTP(w, r)
 }
 
 // setRateLimitHeaders pose les deux familles d'en-têtes, qui coexistent pendant
