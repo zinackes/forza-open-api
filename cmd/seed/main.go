@@ -17,6 +17,10 @@
 //	seed exports  [game]                      régénère les archives téléchargeables
 //	                                           du dataset (JSON/CSV/JSONL) par jeu
 //	                                           (déf. tous les EXPORTS_GAMES).
+//	seed manufacturers [game]                 ingère le roster des constructeurs (déf.
+//	                                           fh6) depuis la sous-catégorie wiki du jeu
+//	                                           (Category:Manufacturers (<TAG>)) ; origin
+//	                                           → country. Alimente GET /v1/manufacturers.
 package main
 
 import (
@@ -32,6 +36,7 @@ import (
 	"github.com/zinackes/forza-open-api/internal/export"
 	"github.com/zinackes/forza-open-api/internal/health"
 	"github.com/zinackes/forza-open-api/internal/ingest/cars"
+	"github.com/zinackes/forza-open-api/internal/ingest/manufacturers"
 	"github.com/zinackes/forza-open-api/internal/ingest/playlist"
 	"github.com/zinackes/forza-open-api/internal/ingest/tracks"
 	"github.com/zinackes/forza-open-api/internal/store"
@@ -55,6 +60,8 @@ func main() {
 		seedPlaylistHistory(logger)
 	case "exports":
 		seedExports(logger)
+	case "manufacturers":
+		seedManufacturers(logger)
 	case "health":
 		seedHealth(logger)
 	default:
@@ -63,7 +70,7 @@ func main() {
 }
 
 func usage(logger *slog.Logger) {
-	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game] | seed playlist [game] [SxxWx] | seed playlist-history [game] | seed exports [game] | seed health")
+	logger.Info("usage: seed tracks <dataset.json|URL> | seed cars [game] | seed playlist [game] [SxxWx] | seed playlist-history [game] | seed exports [game] | seed manufacturers [game] | seed health")
 }
 
 func seedTracks(logger *slog.Logger) {
@@ -352,6 +359,54 @@ func seedExports(logger *slog.Logger) {
 			Source: "exports", Game: game, Records: res.Artifacts, Violations: export.CheckRun(res, now),
 		}, started)
 		logger.Info("seed exports ok", "game", game, "artifacts", res.Artifacts, "rows", res.Rows)
+	}
+}
+
+// seedManufacturers ingère le roster des constructeurs d'un jeu : « seed
+// manufacturers [game] » (déf. fh6). Source = sous-catégorie « Category:Manufacturers
+// (<TAG>) » du wiki Forza (API MediaWiki) + l'{{InfoboxMFR}} de chaque page (origin →
+// country). Upsert idempotent (clé game+name) ; country NULL si origin absent ou non
+// mappé (jamais inventé). Alimente GET /v1/manufacturers (car_count agrégé en lecture).
+func seedManufacturers(logger *slog.Logger) {
+	game := "fh6"
+	if len(os.Args) >= 3 {
+		game = os.Args[2]
+	}
+
+	// Réseau borné (liste de catégorie + pages par lots + délais polis) : l'ingestion ne pend pas.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	now := time.Now().UTC()
+
+	st := mustStore(ctx, logger)
+	defer st.Close()
+	monitor := newMonitor(st, logger)
+	started := time.Now()
+
+	logger.Info("seed manufacturers: fetch", "game", game)
+	res, err := manufacturers.IngestManufacturers(ctx, st, game, now, logger)
+	if err != nil {
+		failRun(ctx, monitor, "manufacturers", game, started, fmt.Errorf("ingest manufacturers: %w", err))
+	}
+
+	// Contrôle de santé : catégorie trouvée, pages parsées, country résolu, ≥1 make
+	// rapproché du catalogue (sinon car_count resterait nul = rupture probable).
+	monitor.Observe(ctx, health.Report{
+		Source: "manufacturers", Game: game, Records: res.Manufacturers, Violations: manufacturers.CheckRun(res),
+	}, started)
+
+	logger.Info("seed manufacturers ok",
+		"game", game,
+		"members", res.Members,
+		"pages", res.PagesFetched,
+		"manufacturers", res.Manufacturers,
+		"country_resolved", res.CountryResolved,
+		"no_origin", res.NoOrigin,
+		"matched_to_cars", res.MatchedToCars,
+		"sources", res.Sources,
+	)
+	if len(res.UnknownOrigins) > 0 {
+		logger.Warn("seed manufacturers: codes origin non mappés (anomalies)", "codes", manufacturers.SortedReport(res.UnknownOrigins))
 	}
 }
 

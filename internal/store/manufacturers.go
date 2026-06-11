@@ -62,3 +62,45 @@ ORDER BY m.name`
 	}
 	return out, nil
 }
+
+// UpsertManufacturers enregistre des constructeurs de façon idempotente : INSERT …
+// ON CONFLICT (game, name) DO UPDATE country. Donnée de RÉFÉRENCE (comme les tracks)
+// → pas de journalisation data_changes. country NULL est conservé (champ non sourcé).
+// Rejouable sans doublon ; n'écrit jamais car_count (agrégat calculé en lecture).
+func (s *Store) UpsertManufacturers(ctx context.Context, mfrs []Manufacturer) error {
+	const q = `
+INSERT INTO manufacturers (game, name, country)
+VALUES ($1, $2, $3)
+ON CONFLICT (game, name) DO UPDATE SET country = EXCLUDED.country`
+	for _, m := range mfrs {
+		if _, err := s.DB.Exec(ctx, q, m.Game, m.Name, m.Country); err != nil {
+			return fmt.Errorf("upsert manufacturer %s/%s: %w", m.Game, m.Name, err)
+		}
+	}
+	return nil
+}
+
+// DistinctCarMakes renvoie les makes distincts présents dans le catalogue d'un jeu.
+// Sert au contrôle de santé de l'ingestion manufacturers (rapprochement nom de
+// constructeur ↔ make des voitures, qui alimente car_count en lecture). Lecture seule.
+func (s *Store) DistinctCarMakes(ctx context.Context, game string) ([]string, error) {
+	const q = `SELECT DISTINCT make FROM cars WHERE game = $1 AND make <> ''`
+	rows, err := s.DB.Query(ctx, q, game)
+	if err != nil {
+		return nil, fmt.Errorf("query car makes (%s): %w", game, err)
+	}
+	defer rows.Close()
+
+	out := make([]string, 0)
+	for rows.Next() {
+		var m string
+		if err := rows.Scan(&m); err != nil {
+			return nil, fmt.Errorf("scan car make: %w", err)
+		}
+		out = append(out, m)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate car makes: %w", err)
+	}
+	return out, nil
+}

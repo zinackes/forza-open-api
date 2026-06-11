@@ -7,6 +7,12 @@ Pour chaque type : la source PROPRE et la méthode. Off-limits en bas.
 - Normalisation → table `cars`. Réconciliation des ids via les **CarOrdinal** de la télémétrie quand dispo (source propre à trouver : crowdsourcing Data Out ; les dumps « car ID list » de mods extraits des fichiers du jeu sont OFF-LIMITS).
 - FH6 ~620 voitures / ~87 constructeurs (juin 2026, Japon, kei cars). FH5 en backfill.
 
+## Constructeurs (manufacturers)
+
+- **Wiki Fandom** (API MediaWiki) — source primaire implémentée (`cmd/seed manufacturers`) : la **sous-catégorie PAR JEU** `Category:Manufacturers (<TAG>)` (TAG = FH6, FH5…) donne le roster du jeu, puis l'`{{InfoboxMFR}}` de chaque page fournit `origin` → `country`. La catégorie plate `Category:Manufacturers` (189) est **cross-jeux** : l'attribuer à un seul jeu serait inventer un lien (interdit) — on n'ingère que la sous-catégorie du jeu (FH6 ~86, FH5 ~136).
+- `country` est mappé d'un vocabulaire `origin` **observé** (codes ISO-ish + noms anglais que les éditeurs mélangent : `usa`/`us`, `uk`, `ger`/`germany`, `ita`/`italy`…) ; suffixe drapeau (`usa f`) ignoré (premier champ). Token absent de la table ou origin manquant → `country` **NULL** (jamais inventé) ; un nouveau code non mappé est signalé en anomalie (`many_unknown_origins`).
+- `car_count` n'est **pas stocké** : agrégat calculé **en lecture** (`LEFT JOIN cars.make = manufacturers.name`). Un constructeur du roster sans voiture au catalogue (nom team/livery, divergence de nom) remonte donc avec `car_count` 0. Clé d'idempotence `game+name`. Cadence **mensuelle** (référence quasi-stable) par le scheduler.
+
 ## Festival Playlist
 
 - **forza.net/events** (backé Strapi) : tenter l'API JSON, sinon scrape HTML (URLs SxxWx).

@@ -34,12 +34,17 @@ type Config struct {
 	// sont les jeux rafraîchis (CSV, défaut « fh6 »).
 	//   - PlaylistCron / PlaylistGames : Festival Playlist.
 	//   - ForzathonCron / ForzathonGames : Forzathon Shop (rotation hebdo).
+	//   - ManufacturersCron / ManufacturersGames : constructeurs (roster du wiki par
+	//     jeu, origin → country). Cadence MENSUELLE (référence quasi-stable) — défaut
+	//     « 0 19 1 * * ».
 	// AlertWebhookURL : webhook d'alerte sur échec (vide = log structuré seul).
-	PlaylistCron    string
-	PlaylistGames   []string
-	ForzathonCron   string
-	ForzathonGames  []string
-	AlertWebhookURL string
+	PlaylistCron       string
+	PlaylistGames      []string
+	ForzathonCron      string
+	ForzathonGames     []string
+	ManufacturersCron  string
+	ManufacturersGames []string
+	AlertWebhookURL    string
 	// Exports (cmd/seed exports | cmd/scheduler) — archives téléchargeables du
 	// dataset (GET /v1/exports). ExportsCron : spec cron 5 champs (UTC), défaut
 	// quotidien 05:00. ExportsGames : jeux archivés (CSV). ExportsBaseURL préfixe
@@ -70,11 +75,13 @@ func Load() Config {
 		CORSAllowedOrigins: splitCSV(getenv("CORS_ALLOWED_ORIGINS", "*")),
 		CORSWriteOrigins:   splitCSV(os.Getenv("CORS_WRITE_ORIGINS")),
 
-		PlaylistCron:    getenv("PLAYLIST_CRON", "0 15 * * 4"),
-		PlaylistGames:   splitCSV(getenv("PLAYLIST_GAMES", "fh6")),
-		ForzathonCron:   getenv("FORZATHON_CRON", "0 15 * * 4"),
-		ForzathonGames:  splitCSV(getenv("FORZATHON_GAMES", "fh6")),
-		AlertWebhookURL: os.Getenv("ALERT_WEBHOOK_URL"),
+		PlaylistCron:       getenv("PLAYLIST_CRON", "0 15 * * 4"),
+		PlaylistGames:      splitCSV(getenv("PLAYLIST_GAMES", "fh6")),
+		ForzathonCron:      getenv("FORZATHON_CRON", "0 15 * * 4"),
+		ForzathonGames:     splitCSV(getenv("FORZATHON_GAMES", "fh6")),
+		ManufacturersCron:  getenv("MANUFACTURERS_CRON", "0 19 1 * *"),
+		ManufacturersGames: splitCSV(getenv("MANUFACTURERS_GAMES", "fh6")),
+		AlertWebhookURL:    os.Getenv("ALERT_WEBHOOK_URL"),
 
 		ExportsCron:       getenv("EXPORTS_CRON", "0 5 * * *"),
 		ExportsGames:      splitCSV(getenv("EXPORTS_GAMES", "fh6")),

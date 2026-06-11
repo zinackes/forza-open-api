@@ -27,6 +27,7 @@ import (
 	"github.com/zinackes/forza-open-api/internal/export"
 	"github.com/zinackes/forza-open-api/internal/health"
 	"github.com/zinackes/forza-open-api/internal/ingest/forzathon"
+	"github.com/zinackes/forza-open-api/internal/ingest/manufacturers"
 	"github.com/zinackes/forza-open-api/internal/ingest/playlist"
 	"github.com/zinackes/forza-open-api/internal/scheduler"
 	"github.com/zinackes/forza-open-api/internal/store"
@@ -84,6 +85,22 @@ func main() {
 		},
 	}
 
+	// Constructeurs (roster du wiki par jeu, origin → country) : cadence MENSUELLE
+	// (référence quasi-stable). Idempotente ; borne courte (liste de catégorie + pages
+	// par lots). Alimente GET /v1/manufacturers (car_count agrégé en lecture sur cars).
+	manufacturersRunner := &scheduler.Runner{
+		Source: "manufacturers", Games: cfg.ManufacturersGames, Monitor: monitor, Logger: logger,
+		Ingest: func(ctx context.Context, game string, now time.Time) (health.Report, error) {
+			ctx, cancel := context.WithTimeout(ctx, 3*time.Minute)
+			defer cancel()
+			res, err := manufacturers.IngestManufacturers(ctx, st, game, now, logger)
+			if err != nil {
+				return health.Report{}, err
+			}
+			return health.Report{Records: res.Manufacturers, Violations: manufacturers.CheckRun(res)}, nil
+		},
+	}
+
 	// Génération des archives téléchargeables (GET /v1/exports) : régénère le
 	// dataset complet par jeu en fichiers statiques (R2 en prod, FS local sinon)
 	// et met à jour le manifeste. Cron quotidien (le dataset ne bouge qu'à
@@ -114,6 +131,7 @@ func main() {
 	jobs := []job{
 		{cfg.PlaylistCron, playlistRunner},
 		{cfg.ForzathonCron, forzathonRunner},
+		{cfg.ManufacturersCron, manufacturersRunner},
 		{cfg.ExportsCron, exportsRunner},
 	}
 
@@ -151,6 +169,7 @@ func main() {
 	logger.Info("scheduler up",
 		"playlist_spec", cfg.PlaylistCron, "playlist_games", cfg.PlaylistGames,
 		"forzathon_spec", cfg.ForzathonCron, "forzathon_games", cfg.ForzathonGames,
+		"manufacturers_spec", cfg.ManufacturersCron, "manufacturers_games", cfg.ManufacturersGames,
 		"exports_spec", cfg.ExportsCron, "exports_games", cfg.ExportsGames,
 		"alert_webhook", cfg.AlertWebhookURL != "")
 	c.Start()

@@ -408,3 +408,80 @@ func TestListManufacturers(t *testing.T) {
 		t.Errorf("ghost = %d, want 0", len(none))
 	}
 }
+
+// TestUpsertManufacturers couvre l'ingestion : insert, idempotence (re-run sans
+// doublon), mise à jour de country sur conflit (game,name), et NULL conservé.
+func TestUpsertManufacturers(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mfrs := []store.Manufacturer{
+		{Game: "fh6", Name: "Abarth", Country: strptr("Italy")},
+		{Game: "fh6", Name: "AMG Transport Dynamics", Country: strptr("United States")},
+		{Game: "fh6", Name: "Mystery", Country: nil}, // origin absent → country NULL
+		{Game: "fh5", Name: "Abarth", Country: strptr("Italy")},
+	}
+	if err := st.UpsertManufacturers(ctx, mfrs); err != nil {
+		t.Fatalf("UpsertManufacturers: %v", err)
+	}
+	// Rejouable sans doublon (clé game+name).
+	if err := st.UpsertManufacturers(ctx, mfrs); err != nil {
+		t.Fatalf("UpsertManufacturers (re-run): %v", err)
+	}
+
+	got, err := st.ListManufacturers(ctx, store.ManufacturerFilter{Game: "fh6"})
+	if err != nil {
+		t.Fatalf("ListManufacturers: %v", err)
+	}
+	if len(got) != 3 {
+		t.Fatalf("fh6 manufacturers = %d, want 3 (pas de doublon)", len(got))
+	}
+	by := make(map[string]store.Manufacturer, len(got))
+	for _, m := range got {
+		by[m.Name] = m
+	}
+	if by["Abarth"].Country == nil || *by["Abarth"].Country != "Italy" {
+		t.Errorf("Abarth country = %v, want Italy", by["Abarth"].Country)
+	}
+	if by["Mystery"].Country != nil {
+		t.Errorf("Mystery country = %v, want NULL", by["Mystery"].Country)
+	}
+
+	// ON CONFLICT (game,name) DO UPDATE : country révisé sur re-upsert ; fh5/Abarth intact.
+	if err := st.UpsertManufacturers(ctx, []store.Manufacturer{
+		{Game: "fh6", Name: "Abarth", Country: strptr("Italie")},
+	}); err != nil {
+		t.Fatalf("UpsertManufacturers (update): %v", err)
+	}
+	got, _ = st.ListManufacturers(ctx, store.ManufacturerFilter{Game: "fh6"})
+	for _, m := range got {
+		if m.Name == "Abarth" && (m.Country == nil || *m.Country != "Italie") {
+			t.Errorf("Abarth country après update = %v, want Italie", m.Country)
+		}
+	}
+}
+
+// TestDistinctCarMakes vérifie l'agrégat des makes du catalogue (signal de
+// rapprochement de l'ingestion manufacturers) : distinct, filtré par game, sans vides.
+func TestDistinctCarMakes(t *testing.T) {
+	ctx := context.Background()
+	st := newTestStore(t)
+
+	mustExec(t, st, `INSERT INTO cars (id, game, name, make, class, pi, drivetrain) VALUES
+		('dm-1','fh6','Civic','Honda','A',780,'FWD'),
+		('dm-2','fh6','NSX','Honda','S1',850,'RWD'),
+		('dm-3','fh6','GT','Ford','S2',920,'RWD'),
+		('dm-4','fh5','Beetle','Volkswagen','D',400,'RWD')`)
+
+	makes, err := st.DistinctCarMakes(ctx, "fh6")
+	if err != nil {
+		t.Fatalf("DistinctCarMakes: %v", err)
+	}
+	got := map[string]bool{}
+	for _, m := range makes {
+		got[m] = true
+	}
+	if len(makes) != 2 || !got["Honda"] || !got["Ford"] {
+		t.Fatalf("makes fh6 = %v, want {Honda, Ford}", makes)
+	}
+}
